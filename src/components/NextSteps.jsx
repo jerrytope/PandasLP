@@ -27,7 +27,6 @@ export default function NextSteps({ service, onUpgrade, onBackToLanding }) {
         </div>
 
         <div className="banner" style={{ marginTop: 32 }}>
-          <span className="service-icon">📚</span>
           <p style={{ color: 'var(--text-muted)' }}>We handle all types of claims — not just this one.</p>
           <button type="button" className="btn" onClick={onBackToLanding}>
             Back to Home

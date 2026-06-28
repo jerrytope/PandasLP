@@ -2,7 +2,6 @@ export const SERVICES = [
   {
     id: 'small-claims',
     type: 'document',
-    icon: '⚖️',
     title: 'Small Claims (Debt Recovery)',
     tagline: 'Forms SCA 1 & 2',
     description: 'Recover money owed to you through the Small Claims Court process.',
@@ -23,7 +22,6 @@ export const SERVICES = [
   {
     id: 'tenancy',
     type: 'document',
-    icon: '🏠',
     title: 'Tenancy & Quit Notices',
     tagline: 'Statutory notices',
     description: 'Generate a valid statutory notice to recover your rented property.',
@@ -44,7 +42,6 @@ export const SERVICES = [
   {
     id: 'contracts',
     type: 'document',
-    icon: '📄',
     title: 'Contracts & Agreements',
     tagline: 'NDA, SLA, Employment',
     description: 'Draft a professional, enforceable agreement tailored to your needs.',
@@ -65,7 +62,6 @@ export const SERVICES = [
   {
     id: 'business-registration',
     type: 'document',
-    icon: '🏢',
     title: 'Business Registration',
     tagline: 'CAC forms',
     description: 'Prepare your CAC registration documents to formally launch your business.',
@@ -85,7 +81,7 @@ export const SERVICES = [
 ]
 
 export const CUSTOM_CLAIM_FEE = 2000
-export const LAWYER_CONSULT_FEE = 10000
+export const LAWYER_CONSULT_FEE = 15000
 
 export function getServiceById(id) {
   return SERVICES.find((s) => s.id === id)

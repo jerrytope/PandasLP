@@ -150,15 +150,33 @@ a {
 .hero {
   min-height: 86vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
   padding: 120px 24px 80px;
 }
 
+.hero-grid {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: 48px;
+}
+
+@media (max-width: 860px) {
+  .hero-grid {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .hero-panda {
+    order: -1;
+  }
+}
+
 .hero h1 {
-  font-size: clamp(36px, 6vw, 64px);
+  font-size: clamp(36px, 5vw, 60px);
   line-height: 1.1;
   margin: 0 0 16px;
   font-weight: 700;
@@ -171,15 +189,44 @@ a {
 .hero p {
   color: var(--text-muted);
   font-size: 18px;
-  max-width: 560px;
-  margin: 0 auto 32px;
+  max-width: 480px;
+  margin: 0 0 32px;
+}
+
+@media (max-width: 860px) {
+  .hero p {
+    max-width: 560px;
+    margin: 0 auto 32px;
+  }
 }
 
 .hero-actions {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+@media (max-width: 860px) {
+  .hero-actions {
+    justify-content: center;
+  }
+}
+
+.hero-panda {
+  display: flex;
   justify-content: center;
+}
+
+.hero-panda img {
+  width: 100%;
+  max-width: 360px;
+  filter: drop-shadow(0 30px 60px rgba(230, 57, 70, 0.18));
+  animation: pandaFloat 5s ease-in-out infinite;
+}
+
+@keyframes pandaFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
 }
 
 /* Navbar */
@@ -254,10 +301,6 @@ a {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.service-icon {
-  font-size: 32px;
 }
 
 .service-title {
