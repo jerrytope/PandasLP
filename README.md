@@ -1,16 +1,35 @@
-# React + Vite
+# Pandas LP
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Next.js app for Pandas LP — AI-powered legal document generation and lawyer consultation for Nigeria.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+```
 
-## React Compiler
+Copy `.env.example` to `.env.local` and fill in real values:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `ANTHROPIC_API_KEY` — required for the 5 AI legal agents (chat) to work
+- `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` — Paystack checkout; falls back to a test-mode stub if left as placeholder
+- `NEXT_PUBLIC_CALENDLY_URL` — lawyer consultation booking calendar; falls back to a stub message if left as placeholder
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — reserved for future persistence, not yet wired up
 
-## Expanding the Oxlint configuration
+## Develop
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+npm start
+```
+
+## Structure
+
+- `app/` — Next.js App Router pages and the `/api/chat` Edge function
+- `components/` — UI components, including the 5 `AgentChat` chat modals and the existing document-intake/payment flow
+- `lib/` — `agents.ts` (AI agent definitions + system prompts), `services.js` (document service definitions), `paystackHelper.js`, `pdfGenerator.js`

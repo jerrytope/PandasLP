@@ -1,14 +1,16 @@
+'use client'
+
 import { useState } from 'react'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
-import LandingPage from './components/LandingPage'
-import IntakeForm from './components/IntakeForm'
-import PaymentGate from './components/PaymentGate'
-import DocumentReview from './components/DocumentReview'
-import NextSteps from './components/NextSteps'
-import CustomClaim from './components/CustomClaim'
-import { LawyerConsultIntro, LawyerConsultBooking } from './components/LawyerConsult'
-import { CUSTOM_CLAIM_FEE, LAWYER_CONSULT_FEE } from './data/services'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import LandingPage from '@/components/LandingPage'
+import IntakeForm from '@/components/IntakeForm'
+import PaymentGate from '@/components/PaymentGate'
+import DocumentReview from '@/components/DocumentReview'
+import NextSteps from '@/components/NextSteps'
+import CustomClaim from '@/components/CustomClaim'
+import { LawyerConsultIntro, LawyerConsultBooking } from '@/components/LawyerConsult'
+import { CUSTOM_CLAIM_FEE, LAWYER_CONSULT_FEE } from '@/lib/services'
 
 export default function App() {
   const [step, setStep] = useState('landing')

@@ -1,5 +1,7 @@
+'use client'
+
 import { useState } from 'react'
-import { isPaystackStubbed, payWithPaystack, generateReference } from '../utils/paystackHelper'
+import { isPaystackStubbed, payWithPaystack, generateReference } from '@/lib/paystackHelper'
 
 export default function PaymentGate({ amount, description, onSuccess, onBack }) {
   const [email, setEmail] = useState('')

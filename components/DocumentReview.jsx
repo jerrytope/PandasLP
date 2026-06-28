@@ -1,5 +1,7 @@
+'use client'
+
 import { useEffect, useState } from 'react'
-import { generatePdfBlobUrl, downloadPdf } from '../utils/pdfGenerator'
+import { generatePdfBlobUrl, downloadPdf } from '@/lib/pdfGenerator'
 
 export default function DocumentReview({ service, formData, onNext, onBack }) {
   const [blobUrl, setBlobUrl] = useState('')

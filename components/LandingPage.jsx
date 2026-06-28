@@ -1,5 +1,4 @@
-import ServiceCards from './ServiceCards'
-import pandaHero from '../assets/panda-hero.svg'
+import ServicesSection from './ServicesSection'
 
 export default function LandingPage({ onSelectService, onStartLawyerConsult, onStartCustomClaim }) {
   return (
@@ -27,18 +26,14 @@ export default function LandingPage({ onSelectService, onStartLawyerConsult, onS
             </div>
           </div>
           <div className="hero-panda fade-in" style={{ animationDelay: '0.15s' }}>
-            <img src={pandaHero} alt="Pandas LP mascot" />
+            <img src="/panda-hero.svg" alt="Pandas LP mascot" />
           </div>
         </div>
       </section>
 
       <section className="section" id="services">
         <div className="container">
-          <div className="step-header" style={{ textAlign: 'center' }}>
-            <span className="label-mono">Our Services</span>
-            <h2 style={{ marginTop: 8 }}>Choose what you need</h2>
-          </div>
-          <ServiceCards onSelectService={onSelectService} onStartLawyerConsult={onStartLawyerConsult} />
+          <ServicesSection onSelectService={onSelectService} onStartLawyerConsult={onStartLawyerConsult} />
         </div>
       </section>
 

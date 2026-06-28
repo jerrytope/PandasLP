@@ -1,6 +1,8 @@
-import { LAWYER_CONSULT_FEE } from '../data/services'
+'use client'
 
-const CALENDLY_URL = import.meta.env.VITE_CALENDLY_URL || ''
+import { LAWYER_CONSULT_FEE } from '@/lib/services'
+
+const CALENDLY_URL = process.env.NEXT_PUBLIC_CALENDLY_URL || ''
 const isCalendlyStubbed = !CALENDLY_URL || CALENDLY_URL.includes('placeholder')
 
 export function LawyerConsultIntro({ onProceed, onBack }) {
@@ -51,7 +53,7 @@ export function LawyerConsultBooking({ onBackToLanding }) {
           <div className="card" style={{ maxWidth: 480 }}>
             <span className="badge badge-test">Calendly Not Configured</span>
             <p style={{ color: 'var(--text-muted)', marginTop: 16 }}>
-              Booking calendar will appear here once a Calendly link is added to VITE_CALENDLY_URL.
+              Booking calendar will appear here once a Calendly link is added to NEXT_PUBLIC_CALENDLY_URL.
               Our team will reach out by email to schedule your session in the meantime.
             </p>
           </div>
