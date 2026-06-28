@@ -4,42 +4,28 @@ import { useState } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import LandingPage from '@/components/LandingPage'
-import IntakeForm from '@/components/IntakeForm'
 import PaymentGate from '@/components/PaymentGate'
-import DocumentReview from '@/components/DocumentReview'
 import NextSteps from '@/components/NextSteps'
 import CustomClaim from '@/components/CustomClaim'
-import { LawyerConsultIntro, LawyerConsultBooking } from '@/components/LawyerConsult'
-import { CUSTOM_CLAIM_FEE, LAWYER_CONSULT_FEE } from '@/lib/services'
+import { LawyerConsultBooking } from '@/components/LawyerConsult'
+import AgentChat from '@/components/AgentChat'
+import { AGENTS } from '@/lib/agents'
+import { CUSTOM_CLAIM_FEE } from '@/lib/services'
+import { getAgentPayment } from '@/lib/agentServiceMap'
 
 export default function App() {
   const [step, setStep] = useState('landing')
   const [selectedService, setSelectedService] = useState(null)
-  const [formData, setFormData] = useState(null)
   const [customClaim, setCustomClaim] = useState(null)
   const [paymentContext, setPaymentContext] = useState(null)
+  const [activeAgentId, setActiveAgentId] = useState(null)
 
   function goToLanding() {
     setStep('landing')
     setSelectedService(null)
-    setFormData(null)
     setCustomClaim(null)
     setPaymentContext(null)
-  }
-
-  function handleSelectService(service) {
-    setSelectedService(service)
-    setStep('intake')
-  }
-
-  function handleIntakeSubmit(values) {
-    setFormData(values)
-    setPaymentContext({
-      type: 'service',
-      amount: selectedService.price,
-      description: `Document generation fee for ${selectedService.title}.`,
-    })
-    setStep('payment')
+    setActiveAgentId(null)
   }
 
   function handleStartCustomClaim() {
@@ -49,46 +35,37 @@ export default function App() {
   function handleCustomClaimSubmit(values) {
     setCustomClaim(values)
     setPaymentContext({
-      type: 'custom',
       amount: CUSTOM_CLAIM_FEE,
       description: 'Routing fee to connect your claim with a lawyer.',
     })
     setStep('payment')
   }
 
-  function handleStartLawyerConsult() {
-    setStep('lawyer-intro')
-  }
-
-  function handleLawyerProceed() {
-    setPaymentContext({
-      type: 'lawyer',
-      amount: LAWYER_CONSULT_FEE,
-      description: 'Consultation fee for a 30-minute session with a lawyer.',
-    })
-    setStep('payment')
-  }
-
   function handlePaymentSuccess() {
-    if (paymentContext.type === 'service') {
-      setStep('review')
-    } else if (paymentContext.type === 'custom') {
-      setStep('custom-confirmation')
-    } else if (paymentContext.type === 'lawyer') {
-      setStep('lawyer-booking')
-    }
+    setStep('custom-confirmation')
   }
 
   function handlePaymentBack() {
-    if (paymentContext?.type === 'service') setStep('intake')
-    else if (paymentContext?.type === 'custom') setStep('custom-claim')
-    else if (paymentContext?.type === 'lawyer') setStep('lawyer-intro')
-    else goToLanding()
+    setStep('custom-claim')
+  }
+
+  function handleAgentApproved(agentId) {
+    const payment = getAgentPayment(agentId)
+    setActiveAgentId(null)
+    if (payment.kind === 'lawyer') {
+      setStep('lawyer-booking')
+    } else if (payment.service) {
+      setSelectedService(payment.service)
+      setStep('next-steps')
+    }
   }
 
   function handleUpgradeToFirmManaged() {
-    setStep('lawyer-intro')
+    setActiveAgentId('lawyer-consultation')
   }
+
+  const activeAgent = activeAgentId ? AGENTS[activeAgentId] : null
+  const activePayment = activeAgentId ? getAgentPayment(activeAgentId) : null
 
   return (
     <>
@@ -97,28 +74,18 @@ export default function App() {
         onNavServices={() => {
           if (step !== 'landing') goToLanding()
         }}
-        onStartLawyerConsult={handleStartLawyerConsult}
+        onStartLawyerConsult={() => setActiveAgentId('lawyer-consultation')}
       />
 
       {step === 'landing' && (
         <LandingPage
-          onSelectService={handleSelectService}
-          onStartLawyerConsult={handleStartLawyerConsult}
+          onOpenAgent={(id) => setActiveAgentId(id)}
+          onStartLawyerConsult={() => setActiveAgentId('lawyer-consultation')}
           onStartCustomClaim={handleStartCustomClaim}
         />
       )}
 
-      {step === 'intake' && selectedService && (
-        <IntakeForm service={selectedService} onSubmit={handleIntakeSubmit} onBack={goToLanding} />
-      )}
-
-      {step === 'custom-claim' && (
-        <CustomClaim onSubmit={handleCustomClaimSubmit} onBack={goToLanding} />
-      )}
-
-      {step === 'lawyer-intro' && (
-        <LawyerConsultIntro onProceed={handleLawyerProceed} onBack={goToLanding} />
-      )}
+      {step === 'custom-claim' && <CustomClaim onSubmit={handleCustomClaimSubmit} onBack={goToLanding} />}
 
       {step === 'payment' && paymentContext && (
         <PaymentGate
@@ -129,21 +96,8 @@ export default function App() {
         />
       )}
 
-      {step === 'review' && selectedService && formData && (
-        <DocumentReview
-          service={selectedService}
-          formData={formData}
-          onNext={() => setStep('next-steps')}
-          onBack={() => setStep('payment')}
-        />
-      )}
-
       {step === 'next-steps' && selectedService && (
-        <NextSteps
-          service={selectedService}
-          onUpgrade={handleUpgradeToFirmManaged}
-          onBackToLanding={goToLanding}
-        />
+        <NextSteps service={selectedService} onUpgrade={handleUpgradeToFirmManaged} onBackToLanding={goToLanding} />
       )}
 
       {step === 'custom-confirmation' && customClaim && (
@@ -165,6 +119,16 @@ export default function App() {
       )}
 
       {step === 'lawyer-booking' && <LawyerConsultBooking onBackToLanding={goToLanding} />}
+
+      {activeAgent && activePayment && (
+        <AgentChat
+          agent={activeAgent}
+          amount={activePayment.amount}
+          paymentDescription={activePayment.description}
+          onClose={() => setActiveAgentId(null)}
+          onApproved={handleAgentApproved}
+        />
+      )}
 
       <Footer />
     </>

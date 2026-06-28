@@ -1,6 +1,6 @@
 import ServicesSection from './ServicesSection'
 
-export default function LandingPage({ onSelectService, onStartLawyerConsult, onStartCustomClaim }) {
+export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStartCustomClaim }) {
   return (
     <>
       <section className="hero">
@@ -33,7 +33,7 @@ export default function LandingPage({ onSelectService, onStartLawyerConsult, onS
 
       <section className="section" id="services">
         <div className="container">
-          <ServicesSection onSelectService={onSelectService} onStartLawyerConsult={onStartLawyerConsult} />
+          <ServicesSection onOpenAgent={onOpenAgent} />
         </div>
       </section>
 
