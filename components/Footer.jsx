@@ -13,8 +13,8 @@ export default function Footer() {
           </div>
           <div>
             <p className="label-mono">Contact</p>
-            <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>support@pandaslp.ng</p>
-            <p style={{ color: 'var(--text-muted)' }}>+234 800 000 0000</p>
+            <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>pandaslegalpractitioners@gmail.com</p>
+            <p style={{ color: 'var(--text-muted)' }}>+234 811 808 0189</p>
           </div>
         </div>
         <p className="footer-disclaimer">
