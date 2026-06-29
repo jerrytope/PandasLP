@@ -14,6 +14,8 @@ interface Message {
 interface DraftDocument {
   title: string
   body: string
+  price?: number
+  priceLabel?: string
 }
 
 interface AgentChatProps {
@@ -24,15 +26,19 @@ interface AgentChatProps {
   onApproved: (agentId: AgentId) => void
 }
 
-const DOCUMENT_BLOCK_RE = /<<<DOCUMENT>>>\s*TITLE:\s*(.+?)\s*\n-{3,}\n([\s\S]*?)<<<END_DOCUMENT>>>/
+const DOCUMENT_BLOCK_RE =
+  /<<<DOCUMENT>>>\s*TITLE:\s*(.+?)\s*\n(?:PRICE:\s*(.+?)\s*\n)?(?:PRICE_LABEL:\s*(.+?)\s*\n)?-{3,}\n([\s\S]*?)<<<END_DOCUMENT>>>/
 
 function extractDocument(content: string): { visible: string; doc: DraftDocument | null } {
   const match = content.match(DOCUMENT_BLOCK_RE)
   if (!match) return { visible: content, doc: null }
   const intro = content.slice(0, match.index).trim()
+  const priceRaw = match[2] ? Number(match[2].trim()) : undefined
+  const price = priceRaw !== undefined && !Number.isNaN(priceRaw) ? priceRaw : undefined
+  const priceLabel = match[3] ? match[3].trim() : undefined
   return {
     visible: intro || 'Here is your drafted document — review it in the panel below.',
-    doc: { title: match[1].trim(), body: match[2].trim() },
+    doc: { title: match[1].trim(), body: match[4].trim(), price, priceLabel },
   }
 }
 
@@ -59,6 +65,11 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
   const messagesRef = useRef<HTMLDivElement>(null)
 
   const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'Continue to Next Steps →'
+
+  const effectiveAmount = draftDoc?.price ?? amount
+  const effectiveDescription = draftDoc?.priceLabel
+    ? `${draftDoc.priceLabel} — ${paymentDescription}`
+    : paymentDescription
 
   useEffect(() => {
     function handleKey(e: globalThis.KeyboardEvent) {
@@ -163,8 +174,8 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
         {payOpen && !paid ? (
           <div className={styles.payWrap}>
             <PaymentForm
-              amount={amount}
-              description={paymentDescription}
+              amount={effectiveAmount}
+              description={effectiveDescription}
               onSuccess={() => {
                 setPaid(true)
                 setPayOpen(false)
@@ -208,6 +219,12 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
                   {paid ? <span className="badge">Paid</span> : <span className="badge badge-test">Sample Preview</span>}
                 </div>
 
+                {draftDoc.priceLabel && !paid && (
+                  <div className={styles.documentTitle} style={{ marginTop: -8, marginBottom: 8, opacity: 0.8 }}>
+                    Selected option: {draftDoc.priceLabel}
+                  </div>
+                )}
+
                 {previewUrl && <iframe title="Document preview" src={previewUrl} className={styles.docFrame} />}
 
                 <div className={styles.documentActions}>
@@ -220,7 +237,7 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
                   </button>
                   {!paid ? (
                     <button type="button" className="btn btn-primary" onClick={() => setPayOpen(true)}>
-                      Approve & Pay ₦{amount.toLocaleString()} →
+                      Approve & Pay ₦{effectiveAmount.toLocaleString()} →
                     </button>
                   ) : (
                     <button type="button" className="btn btn-primary" onClick={() => onApproved(agent.id)}>
