@@ -76,29 +76,28 @@ DOCUMENT TEMPLATE BANK:
 When you are ready to draft, use this canonical Letter of Demand template as your structural base. Replace every bracketed placeholder with real information gathered from the user. Leave no placeholders unfilled.
 
 ---TEMPLATE START---
-LETTER OF DEMAND
-
-Date: [DATE]
-
-To: [DEBTOR_NAME]
+[DEBTOR_NAME]
 [DEBTOR_ADDRESS]
 
-From: [CLAIMANT_NAME]
-[CLAIMANT_ADDRESS]
+Dear Sir/Madam,
 
-RE: DEMAND FOR PAYMENT OF THE SUM OF ₦[AMOUNT]
+LETTER OF DEMAND FOR THE PAYMENT OF OUTSTANDING DEBT
 
-I write regarding the outstanding sum of ₦[AMOUNT] owed to [CLAIMANT_NAME] arising from [DESCRIPTION_OF_DEBT].
+We write on the instruction of [CLAIMANT_NAME] of [CLAIMANT_ADDRESS] (hereinafter referred to as "our Client").
 
-TAKE NOTICE that unless the said sum of ₦[AMOUNT] is paid in full within SEVEN (7) DAYS from the date of this letter, [CLAIMANT_NAME] shall be left with no option but to institute proceedings against you at the Small Claims Court without further reference to you, and you shall be liable for all costs incurred in the process.
+Our Client informs us that [DESCRIPTION_OF_DEBT], amounting to the sum of **₦[AMOUNT]**, which became due and payable on **[DUE_DATE]**. Despite this, you have failed, refused, and/or neglected to settle the said outstanding sum.
 
-This letter is written without prejudice to the rights and remedies of [CLAIMANT_NAME], all of which are hereby expressly reserved.
+Consequently, we hereby demand that you pay the outstanding sum of **₦[AMOUNT]** to our Client within **seven (7) days** from the date of this letter.
 
-Yours faithfully,
+TAKE NOTICE that failure, refusal, or neglect to comply with this demand within the stipulated time shall leave our Client with no alternative than to institute legal proceedings against you for the recovery of the debt, interest thereon, and cost of legal action, without further recourse to you. This letter shall also be relied upon in evidence as proof that you were given the opportunity to amicably resolve this matter.
+
+This letter is written without prejudice to the rights and remedies of our Client, all of which are hereby expressly reserved.
+
+Yours Faithfully,
 
 
 ________________________
-[CLAIMANT_NAME]
+For: Pandas LP
 ---TEMPLATE END---
 
 DOCUMENT OUTPUT PROTOCOL:
@@ -107,7 +106,7 @@ Once you have gathered ALL required information and are ready to present the dra
 <<<DOCUMENT>>>
 TITLE: <short descriptive title>
 ---
-<the complete filled document text, no placeholders remaining>
+<the complete filled document text, no placeholders remaining, with the key amounts and dates wrapped in **double asterisks** so they render in bold>
 <<<END_DOCUMENT>>>
 
 If the user later asks for a correction or change, make the change and re-emit a complete, updated <<<DOCUMENT>>> block in the same format. Never emit a partial or placeholder-filled document.`,
@@ -176,20 +175,20 @@ DOCUMENT TEMPLATE BANK:
 When you are ready to draft, use this canonical Notice to Quit template as your structural base. Replace every bracketed placeholder with real information gathered from the user. Leave no placeholders unfilled.
 
 ---TEMPLATE START---
-NOTICE TO QUIT
-
-Date: [DATE]
-
-To: [TENANT_NAME]
+[TENANT_NAME]
 [PROPERTY_ADDRESS]
 
-TAKE NOTICE that I, [LANDLORD_NAME], being the landlord/agent of the premises situate at [PROPERTY_ADDRESS], hereby give you notice to QUIT AND DELIVER UP vacant possession of the said premises which you hold as my tenant, on or before the expiration of [NOTICE_PERIOD] from the date of service of this notice.
+Dear Sir/Madam,
+
+NOTICE TO QUIT AND DELIVER UP VACANT POSSESSION
+
+TAKE NOTICE that I, [LANDLORD_NAME], being the landlord/agent of the premises situate at [PROPERTY_ADDRESS], hereby give you notice to QUIT AND DELIVER UP vacant possession of the said premises which you hold as my tenant, on or before the expiration of **[NOTICE_PERIOD]** from the date of service of this notice.
 
 TAKE FURTHER NOTICE that if you fail to deliver up vacant possession of the said premises within the period stated above, steps will be taken to recover possession through the appropriate court, and you will be held liable for all costs and mesne profits arising therefrom.
 
 GROUNDS: [GROUNDS_FOR_NOTICE]
 
-Dated this day of [DATE].
+Yours Faithfully,
 
 
 ________________________
@@ -203,7 +202,7 @@ Once you have gathered ALL required information and are ready to present the dra
 <<<DOCUMENT>>>
 TITLE: <short descriptive title>
 ---
-<the complete filled document text, no placeholders remaining>
+<the complete filled document text, no placeholders remaining, with the notice period and key dates wrapped in **double asterisks** so they render in bold>
 <<<END_DOCUMENT>>>
 
 If the user later asks for a correction or change, make the change and re-emit a complete, updated <<<DOCUMENT>>> block in the same format. Never emit a partial or placeholder-filled document.`,
@@ -333,7 +332,7 @@ Once you have gathered ALL required information and are ready to present the dra
 <<<DOCUMENT>>>
 TITLE: <short descriptive title>
 ---
-<the complete filled document text, no placeholders remaining>
+<the complete filled document text, no placeholders remaining, with party names, key figures, and key dates wrapped in **double asterisks** so they render in bold>
 <<<END_DOCUMENT>>>
 
 If the user later asks for a correction or change, make the change and re-emit a complete, updated <<<DOCUMENT>>> block in the same format. Never emit a partial or placeholder-filled document.`,
@@ -448,7 +447,7 @@ Once you have gathered ALL required information and are ready to present the dra
 <<<DOCUMENT>>>
 TITLE: <short descriptive title>
 ---
-<the complete filled document text, no placeholders remaining>
+<the complete filled document text, no placeholders remaining, with the proposed name and key figures wrapped in **double asterisks** so they render in bold>
 <<<END_DOCUMENT>>>
 
 If the user later asks for a correction or change, make the change and re-emit a complete, updated <<<DOCUMENT>>> block in the same format. Never emit a partial or placeholder-filled document.`,
@@ -549,7 +548,7 @@ Once you have completed intake and are ready to present the Lawyer Briefing Pack
 <<<DOCUMENT>>>
 TITLE: Lawyer Briefing Pack
 ---
-<the complete Lawyer Briefing Pack content, following the structure given above, with every section filled in>
+<the complete Lawyer Briefing Pack content, following the structure given above, with every section filled in, and key dates, deadlines, and names wrapped in **double asterisks** so they render in bold>
 <<<END_DOCUMENT>>>
 
 If the user later asks you to revise it, make the change and re-emit a complete, updated <<<DOCUMENT>>> block in the same format. Never emit a partial briefing pack.`,
