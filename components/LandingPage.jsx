@@ -6,7 +6,7 @@ import {
   MessageSquare, FileText, Send, Scale, Shield, Clock,
   TrendingUp, ChevronDown, CheckCircle, ArrowUpRight,
   Sparkles, Users, Zap, Gavel, Building2, Briefcase,
-  CalendarCheck, Bell
+  CalendarCheck, Bell, Brain, Eye, AlertTriangle, Heart
 } from 'lucide-react'
 import Reveal from './Reveal'
 
@@ -287,6 +287,163 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ══ AI INTELLIGENCE ══ */}
+      <section className="section ai-intel-section" id="the-ai" aria-label="How the AI thinks">
+        <div className="container">
+          <Reveal>
+            <div className="section-header">
+              <span className="label-mono">The Intelligence</span>
+              <h2>Not a form. Not a chatbot.<br />A trained legal mind.</h2>
+              <p style={{ maxWidth: 560 }}>
+                The interview is run by an AI trained on Nigerian legal procedure, debt recovery case law,
+                and the exact questions a senior partner asks in a first consultation — minus the billable hours.
+              </p>
+            </div>
+          </Reveal>
+
+          {/* 4 feature tiles */}
+          <div className="ai-features-grid">
+            {[
+              {
+                icon: <Brain size={20} strokeWidth={1.5} />,
+                iconBg: 'rgba(245,166,35,0.12)',
+                iconColor: '#F5A623',
+                tag: 'Structured Intake',
+                title: 'Asks the right questions in the right order',
+                body: 'The interview follows the same intake logic a senior litigator uses — debtor identity, relationship to the debt, contract terms, payment history, evidence quality, limitation period. Every time, in the right sequence, nothing skipped.',
+              },
+              {
+                icon: <Eye size={20} strokeWidth={1.5} />,
+                iconBg: 'rgba(62,207,142,0.12)',
+                iconColor: '#3ECF8E',
+                tag: 'Case Analysis',
+                title: 'Spots the holes before the judge does',
+                body: 'If your dates don\'t add up, it flags it. If your only evidence is a verbal promise, it tells you that\'s a weak case and explains why. It asks follow-up questions until your case is tight enough to put in front of a court.',
+              },
+              {
+                icon: <Heart size={20} strokeWidth={1.5} />,
+                iconBg: 'rgba(99,102,241,0.12)',
+                iconColor: '#818CF8',
+                tag: 'Tone & Mood Detection',
+                title: 'Reads how you\'re feeling and adjusts',
+                body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The AI detects these signals and adjusts — calmer when you\'re stressed, more direct when you\'re ready to move.',
+              },
+              {
+                icon: <Scale size={20} strokeWidth={1.5} />,
+                iconBg: 'rgba(56,189,248,0.12)',
+                iconColor: '#38BDF8',
+                tag: 'Nigerian Law',
+                title: 'Grounded in real Nigerian legal framework',
+                body: 'The system is built on the Limitation Law of Lagos State, CAMA 2020, the Small Claims Court Civil Procedure Rules, and Nigerian digital evidence standards — not generic templates. It knows which court to file in, what threshold requires what evidence, and what the debtor\'s defences are likely to be.',
+              },
+            ].map((f, i) => (
+              <Reveal key={i} delay={i * 60}>
+                <div className="ai-feature-card">
+                  <div className="ai-feature-icon" style={{ background: f.iconBg, color: f.iconColor }}>
+                    {f.icon}
+                  </div>
+                  <h3 className="ai-feature-title">{f.title}</h3>
+                  <p className="ai-feature-body">{f.body}</p>
+                  <span className="ai-feature-tag">{f.tag}</span>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Live demo conversation */}
+          <Reveal delay={160}>
+            <div className="ai-demo-wrap" style={{ marginTop: 56 }}>
+              <div className="ai-demo-header">
+                <div className="ai-demo-dot" />
+                <span className="ai-demo-label">Live interview · Small Claims Agent · Debt Recovery</span>
+              </div>
+              <div className="ai-demo-body">
+                <div className="ai-demo-chat">
+                  {/* Turn 1 */}
+                  <div className="ai-demo-msg">
+                    <span className="ai-demo-msg-sender">Pandas AI</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-ai">
+                      Who owes you money, and what was it for?
+                    </div>
+                  </div>
+                  <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
+                    <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-user">
+                      my business partner. we did a construction job together and he took the client payment but never paid my share. about ₦1.2 million
+                    </div>
+                  </div>
+                  {/* Turn 2 — legal precision */}
+                  <div className="ai-demo-msg">
+                    <span className="ai-demo-msg-sender">Pandas AI</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-ai">
+                      Understood. Do you have a written partnership or profit-sharing agreement, or was this verbal?
+                    </div>
+                  </div>
+                  <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
+                    <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-user">
+                      verbal. but we have whatsapp messages where he agreed to the 50/50 split
+                    </div>
+                  </div>
+                  {/* Turn 3 — spots the hole + cites Nigerian law */}
+                  <div className="ai-demo-msg">
+                    <span className="ai-demo-msg-sender">Pandas AI</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-ai">
+                      <span className="ai-demo-highlight">WhatsApp messages are admissible evidence under Nigerian law</span> — that helps.
+                      One thing to flag: a verbal partnership with no written terms weakens your position if he disputes the percentage.
+                      Do you have a message where he specifically confirms your share of this particular job?{' '}
+                      <span className="ai-demo-highlight">That single message will be the most important piece of evidence in your case.</span>
+                    </div>
+                  </div>
+                  <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
+                    <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-user">
+                      yes I have it. also I think I sent him a notice already but I can't remember if I did it properly
+                    </div>
+                  </div>
+                  {/* Turn 4 — catches mistake + reassuring tone */}
+                  <div className="ai-demo-msg">
+                    <span className="ai-demo-msg-sender">Pandas AI</span>
+                    <div className="ai-demo-bubble ai-demo-bubble-ai">
+                      That's important to clarify before we proceed.{' '}
+                      <span className="ai-demo-highlight">If a prior notice wasn't properly served, it could affect our timeline.</span>{' '}
+                      Can you check if you have a copy or a delivery record? I'll wait — getting this right is worth the extra minute.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Annotations panel */}
+                <div className="ai-demo-annotations">
+                  <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)', margin: '0 0 8px' }}>
+                    What the AI is doing
+                  </p>
+                  <div className="ai-annotation">
+                    <div className="ai-annotation-tag">Nigerian Law</div>
+                    <div className="ai-annotation-text">Cites Cybercrimes Act 2015 — electronic records including WhatsApp are court-admissible</div>
+                  </div>
+                  <div className="ai-annotation">
+                    <div className="ai-annotation-tag">Case Analysis</div>
+                    <div className="ai-annotation-text">Flags the verbal-only partnership as a structural weak point before drafting begins</div>
+                  </div>
+                  <div className="ai-annotation">
+                    <div className="ai-annotation-tag">Evidence Prioritisation</div>
+                    <div className="ai-annotation-text">Identifies the single most important piece of evidence and explains why</div>
+                  </div>
+                  <div className="ai-annotation">
+                    <div className="ai-annotation-tag">Tone · Reassuring</div>
+                    <div className="ai-annotation-text">Detects uncertainty in "I can't remember if I did it properly" — slows down, reassures before correcting</div>
+                  </div>
+                  <div className="ai-annotation">
+                    <div className="ai-annotation-tag">Mistake Caught</div>
+                    <div className="ai-annotation-text">Catches the prior notice issue before it becomes a problem at court</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

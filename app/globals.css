@@ -1198,6 +1198,197 @@ h1, h2, h3, h4, h5, h6 {
   .reveal { opacity: 1; transform: none; }
 }
 
+/* ── AI Intelligence Section ── */
+.ai-intel-section { background: var(--bg-1); }
+
+.ai-features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-top: 56px;
+}
+
+.ai-feature-card {
+  background: var(--bg-1);
+  padding: 36px 32px;
+  position: relative;
+  transition: background var(--anim-fast);
+}
+.ai-feature-card:hover { background: var(--bg-2); }
+
+.ai-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.ai-feature-title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  margin: 0 0 10px;
+}
+
+.ai-feature-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text-2);
+  margin: 0;
+}
+
+.ai-feature-tag {
+  display: inline-block;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(245,166,35,0.08);
+  color: var(--accent);
+  border: 1px solid rgba(245,166,35,0.2);
+}
+
+/* AI Demo conversation */
+.ai-demo-wrap {
+  margin-top: 64px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.ai-demo-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.ai-demo-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--secondary);
+  box-shadow: 0 0 6px rgba(62,207,142,0.5);
+}
+
+.ai-demo-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.ai-demo-body {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  min-height: 420px;
+}
+
+.ai-demo-chat {
+  padding: 28px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.ai-demo-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-demo-msg-sender {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.ai-demo-bubble {
+  max-width: 88%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.ai-demo-bubble-ai {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-1);
+  border-radius: 4px 14px 14px 14px;
+  align-self: flex-start;
+}
+
+.ai-demo-bubble-user {
+  background: rgba(245,166,35,0.1);
+  border: 1px solid rgba(245,166,35,0.15);
+  color: var(--text-1);
+  border-radius: 14px 4px 14px 14px;
+  align-self: flex-end;
+}
+
+.ai-demo-highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.ai-demo-annotations {
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: rgba(8,12,10,0.5);
+}
+
+.ai-annotation {
+  padding: 14px 16px;
+  border-left: 2px solid var(--border-focus);
+  background: var(--bg-2);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.ai-annotation-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.ai-annotation-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+@media (max-width: 1024px) {
+  .ai-demo-body { grid-template-columns: 1fr; }
+  .ai-demo-chat { border-right: none; border-bottom: 1px solid var(--border-subtle); }
+  .ai-demo-annotations { display: none; }
+}
+
+@media (max-width: 768px) {
+  .ai-features-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .hero-grid { gap: 40px; }
