@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import LandingPage from '@/components/LandingPage'
@@ -16,6 +17,7 @@ import { getAgentPayment } from '@/lib/agentServiceMap'
 import { supabase } from '@/lib/supabaseClient'
 
 export default function App() {
+  const router = useRouter()
   const [step, setStep] = useState('landing')
   const [selectedService, setSelectedService] = useState(null)
   const [customClaim, setCustomClaim] = useState(null)
@@ -25,6 +27,8 @@ export default function App() {
   // Auth
   const [user, setUser] = useState(null)
   const [authOpen, setAuthOpen] = useState(false)
+  // Store agent to open after login
+  const pendingAgentRef = useRef(null)
 
   // Resume state: pre-load a case from dashboard
   const [resumeData, setResumeData] = useState(null)
@@ -37,6 +41,12 @@ export default function App() {
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
+      // Auto-open pending agent after login
+      if (session?.user && pendingAgentRef.current) {
+        setActiveAgentId(pendingAgentRef.current)
+        pendingAgentRef.current = null
+        setAuthOpen(false)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -105,9 +115,9 @@ export default function App() {
     setResumeData(null)
     if (payment.kind === 'lawyer') {
       setStep('lawyer-booking')
-    } else if (payment.service) {
-      setSelectedService(payment.service)
-      setStep('next-steps')
+    } else {
+      // After payment, send user to their dashboard to track progress
+      router.push('/dashboard')
     }
   }
 
@@ -123,15 +133,36 @@ export default function App() {
       <Navbar
         onLogoClick={goToLanding}
         onNavServices={() => { if (step !== 'landing') goToLanding() }}
-        onStartLawyerConsult={() => setActiveAgentId('lawyer-consultation')}
+        onStartLawyerConsult={() => {
+          if (!user) {
+            pendingAgentRef.current = 'lawyer-consultation'
+            setAuthOpen(true)
+          } else {
+            setActiveAgentId('lawyer-consultation')
+          }
+        }}
         user={user}
         onAuthClick={() => setAuthOpen(true)}
       />
 
       {step === 'landing' && (
         <LandingPage
-          onOpenAgent={(id) => setActiveAgentId(id)}
-          onStartLawyerConsult={() => setActiveAgentId('lawyer-consultation')}
+          onOpenAgent={(id) => {
+            if (!user) {
+              pendingAgentRef.current = id
+              setAuthOpen(true)
+            } else {
+              setActiveAgentId(id)
+            }
+          }}
+          onStartLawyerConsult={() => {
+            if (!user) {
+              pendingAgentRef.current = 'lawyer-consultation'
+              setAuthOpen(true)
+            } else {
+              setActiveAgentId('lawyer-consultation')
+            }
+          }}
           onStartCustomClaim={handleStartCustomClaim}
         />
       )}

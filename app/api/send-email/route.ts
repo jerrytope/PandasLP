@@ -1,7 +1,7 @@
 export const runtime = 'nodejs'
 
 import nodemailer from 'nodemailer'
-import { getFollowUpEmail, type FollowUpEmailData } from '@/lib/emailTemplates'
+import { getFollowUpEmail, getPaymentConfirmedEmail, type FollowUpEmailData } from '@/lib/emailTemplates'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 const GMAIL_USER = 'pandaslegalpractitioners@gmail.com'
@@ -22,14 +22,15 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Email not configured — add GMAIL_APP_PASSWORD to .env.local.' }, { status: 503 })
   }
 
-  let body: { caseId: string; day: 0 | 3 | 7 }
+  let body: { caseId: string; type?: 'payment_confirmed'; day?: 0 | 3 | 7 }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { caseId, day } = body
+  const { caseId, type, day } = body
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
 
   const { data: caseData, error: caseErr } = await supabaseAdmin
     .from('cases')
@@ -47,17 +48,33 @@ export async function POST(req: Request) {
     return Response.json({ error: 'User email not found.' }, { status: 404 })
   }
 
-  const emailData: FollowUpEmailData = {
-    recipientEmail,
-    recipientName: recipientEmail.split('@')[0],
-    debtorName: caseData.document_title ?? 'the debtor',
-    amount: caseData.amount_paid ?? 0,
-    caseId,
-    day,
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
-  }
+  const recipientName = recipientEmail.split('@')[0]
+  let subject: string
+  let html: string
 
-  const { subject, html } = getFollowUpEmail(emailData)
+  if (type === 'payment_confirmed') {
+    ;({ subject, html } = getPaymentConfirmedEmail({
+      recipientEmail,
+      recipientName,
+      caseTitle: caseData.document_title ?? 'Demand Letter',
+      amountPaid: caseData.amount_paid ?? 0,
+      siteUrl,
+    }))
+  } else {
+    if (day === undefined) {
+      return Response.json({ error: 'Missing day for follow-up email.' }, { status: 400 })
+    }
+    const emailData: FollowUpEmailData = {
+      recipientEmail,
+      recipientName,
+      debtorName: caseData.document_title ?? 'the debtor',
+      amount: caseData.amount_paid ?? 0,
+      caseId,
+      day,
+      siteUrl,
+    }
+    ;({ subject, html } = getFollowUpEmail(emailData))
+  }
 
   try {
     await getTransporter().sendMail({
@@ -71,10 +88,12 @@ export async function POST(req: Request) {
     return Response.json({ error: message }, { status: 502 })
   }
 
-  await supabaseAdmin
-    .from('cases')
-    .update({ [`email_day${day}_sent`]: true })
-    .eq('id', caseId)
+  if (type !== 'payment_confirmed' && day !== undefined) {
+    await supabaseAdmin
+      .from('cases')
+      .update({ [`email_day${day}_sent`]: true })
+      .eq('id', caseId)
+  }
 
   return Response.json({ ok: true })
 }

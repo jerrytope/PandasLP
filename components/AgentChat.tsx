@@ -104,7 +104,7 @@ export default function AgentChat({
   const messagesRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'Continue to Next Steps →'
+  const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'View My Case Dashboard →'
   const effectiveAmount = draftDoc?.price ?? amount
   const effectiveDescription = draftDoc?.priceLabel
     ? `${draftDoc.priceLabel} — ${paymentDescription}`
@@ -191,6 +191,13 @@ export default function AgentChat({
           delivery_option: draftDoc?.priceLabel?.toLowerCase().includes('pandas') ? 'pandas-serves' : 'self-serve',
         })
         .eq('id', caseId)
+
+      // Fire confirmation email — non-blocking
+      fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, type: 'payment_confirmed' }),
+      }).catch(() => {})
     }
   }
 

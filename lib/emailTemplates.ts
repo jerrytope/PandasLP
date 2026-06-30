@@ -1,3 +1,11 @@
+export interface PaymentConfirmedEmailData {
+  recipientEmail: string
+  recipientName: string
+  caseTitle: string
+  amountPaid: number
+  siteUrl: string
+}
+
 export interface FollowUpEmailData {
   recipientEmail: string
   recipientName: string
@@ -52,6 +60,42 @@ function baseWrapper(content: string) {
 </table>
 </body>
 </html>`
+}
+
+export function getPaymentConfirmedEmail(data: PaymentConfirmedEmailData): { subject: string; html: string } {
+  const { recipientName, caseTitle, amountPaid, siteUrl } = data
+  const dashboardUrl = `${siteUrl}/dashboard`
+  const formatted = `₦${amountPaid.toLocaleString()}`
+
+  return {
+    subject: `We've received your case — Pandas LP`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#f2efe8;letter-spacing:-0.01em;">
+        Case received. We're on it.
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#9c9690;line-height:1.6;">
+        Hi ${recipientName},
+      </p>
+      <p style="margin:0 0 14px;font-size:15px;color:#9c9690;line-height:1.6;">
+        We have received your payment of <strong style="color:#F5A623;">${formatted}</strong> and your case —
+        <strong style="color:#f2efe8;">${caseTitle}</strong> — is now with the Pandas LP legal team.
+      </p>
+      <p style="margin:0 0 14px;font-size:15px;color:#9c9690;line-height:1.6;">
+        We are working towards getting this resolved on your behalf.
+        A member of our team will reach out to you shortly to ensure they have full context on your matter
+        before we proceed.
+      </p>
+      <p style="margin:0 0 28px;font-size:15px;color:#9c9690;line-height:1.6;">
+        You can track the progress of your case at any time from your dashboard.
+      </p>
+      <a href="${dashboardUrl}" style="display:inline-block;background:#F5A623;color:#080C0A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">
+        View My Case Dashboard →
+      </a>
+      <p style="margin:28px 0 0;font-size:12px;color:#4A5950;line-height:1.6;">
+        If you have any questions before we reach out, reply to this email or call us on +234 811 808 0189.
+      </p>
+    `),
+  }
 }
 
 export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; html: string } {
