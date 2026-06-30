@@ -8,10 +8,9 @@ import styles from './ServiceCard.module.css'
 interface ServiceCardProps {
   agent: Agent
   onOpen: () => void
-  animationDelay?: string
 }
 
-export default function ServiceCard({ agent, onOpen, animationDelay }: ServiceCardProps) {
+export default function ServiceCard({ agent, onOpen }: ServiceCardProps) {
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -21,8 +20,7 @@ export default function ServiceCard({ agent, onOpen, animationDelay }: ServiceCa
 
   return (
     <div
-      className="card card-gradient card-interactive service-card fade-in"
-      style={{ animationDelay }}
+      className="card card-gradient card-interactive service-card"
       onClick={onOpen}
       onKeyDown={handleKeyDown}
       role="button"

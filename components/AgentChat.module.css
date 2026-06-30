@@ -2,12 +2,18 @@
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(6, 6, 5, 0.78);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  animation: overlayIn 0.25s var(--ease-out) both;
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
@@ -21,6 +27,19 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: modalIn 0.35s var(--ease-out) both;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .modal {
+    animation: none;
+  }
 }
 
 @media (min-width: 720px) {
@@ -29,11 +48,12 @@
   }
 
   .modal {
-    width: 512px;
-    height: min(720px, 90vh);
+    width: 540px;
+    height: min(740px, 90vh);
     max-height: 90vh;
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-strong);
     border-radius: var(--radius);
+    box-shadow: 0 40px 80px -32px rgba(0, 0, 0, 0.7);
   }
 }
 
@@ -59,8 +79,9 @@
 }
 
 .headerName {
+  font-family: var(--font-display), sans-serif;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -254,7 +275,7 @@
   border-radius: 12px;
   padding: 10px 12px;
   color: var(--text);
-  font-family: var(--font-body);
+  font-family: var(--font-sans), sans-serif;
   font-size: 14px;
   outline: none;
 }
