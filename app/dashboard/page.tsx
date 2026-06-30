@@ -268,13 +268,29 @@ export default function DashboardPage() {
 
                     {/* Escalate to Court Filing — shown after deadline passes */}
                     {(isServed && overdue) && (
-                      <Link
-                        href={`/?resume=${c.id}&escalate=sca`}
-                        className="btn btn-primary"
-                        style={{ fontSize: 13 }}
-                      >
-                        Escalate to Court Filing →
-                      </Link>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                        <div style={{
+                          background: 'rgba(245,166,35,0.06)',
+                          border: '1px solid rgba(245,166,35,0.2)',
+                          borderRadius: 10,
+                          padding: '12px 16px',
+                          fontSize: 13,
+                          color: 'var(--text-2)',
+                          lineHeight: 1.6,
+                        }}>
+                          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Court filing fee applies. </span>
+                          The Small Claims Court charges a filing fee based on your claim amount — typically
+                          between <span style={{ color: 'var(--text-1)', fontWeight: 500 }}>₦5,000 and ₦15,000</span>.
+                          You will see the exact breakdown before paying.
+                        </div>
+                        <Link
+                          href={`/?resume=${c.id}&escalate=sca`}
+                          className="btn btn-primary"
+                          style={{ fontSize: 13, alignSelf: 'flex-start' }}
+                        >
+                          Escalate to Court Filing →
+                        </Link>
+                      </div>
                     )}
 
                     {/* Enforce Judgment — shown after judgment won */}

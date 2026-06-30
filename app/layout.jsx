@@ -20,8 +20,8 @@ const mono = DM_Mono({
 })
 
 export const metadata = {
-  title: 'Pandas LP — Professional Legal Services, Powered by AI',
-  description: 'Pandas LP — Professional Legal Services, Powered by AI.',
+  title: 'Pandas LP — Your AI Legal Team',
+  description: 'Recover what you\'re owed. AI drafts the demand letter, real lawyers take it to court. Nigeria\'s first AI-native law firm.',
   icons: { icon: '/favicon.svg' },
 }
 

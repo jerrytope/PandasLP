@@ -1,31 +1,114 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { PandasLogoMark } from './PandasLogo'
+
 export default function Footer() {
+  const [email, setEmail] = useState('')
+  const [sent, setSent] = useState(false)
+
+  function handleSubscribe(e) {
+    e.preventDefault()
+    if (email) { setSent(true); setEmail('') }
+  }
+
   return (
-    <footer className="footer" id="contact">
+    <footer className="footer" id="contact" role="contentinfo">
       <div className="container">
         <div className="footer-grid">
+
+          {/* Brand */}
           <div>
-            <div className="logo">
-              Pandas <span className="accent">LP</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <PandasLogoMark size={32} />
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.025em', color: 'var(--text-1)' }}>
+                Pandas <span style={{ color: 'var(--accent)' }}>LP</span>
+              </span>
             </div>
-            <p className="label-mono" style={{ marginTop: 8 }}>
-              Professional Legal Services, Powered by AI
+            <p className="footer-brand-tagline">
+              Nigeria's first AI-native law firm. AI does the work,
+              real lawyers take it to court.
             </p>
+            <div style={{ marginTop: 20 }}>
+              <p className="field-label" style={{ marginBottom: 8 }}>Legal tips for Nigerian businesses</p>
+              {sent ? (
+                <p style={{ fontSize: 13, color: 'var(--secondary)', marginTop: 4 }}>✓ You're subscribed</p>
+              ) : (
+                <form className="footer-newsletter" onSubmit={handleSubscribe} noValidate>
+                  <input
+                    type="email"
+                    className="footer-newsletter-input"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    aria-label="Email for newsletter"
+                    autoComplete="email"
+                    required
+                  />
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={!email}>
+                    Subscribe
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
+
+          {/* Services */}
           <div>
-            <p className="label-mono">Contact</p>
-            <p style={{ marginTop: 8, color: 'var(--text-muted)' }}>pandaslegalpractitioners@gmail.com</p>
-            <p style={{ color: 'var(--text-muted)' }}>+234 811 808 0189</p>
+            <p className="footer-col-title">Services</p>
+            <nav className="footer-links" aria-label="Services links">
+              <a href="#services">Debt Recovery</a>
+              <a href="#services">Judgment Enforcement</a>
+              <a href="#services">Recovery of Premises</a>
+              <a href="#services">Contracts & Commercial</a>
+              <a href="#services">CAC Registration</a>
+              <a href="#services">Lawyer Consultation</a>
+            </nav>
+          </div>
+
+          {/* Company */}
+          <div>
+            <p className="footer-col-title">Company</p>
+            <nav className="footer-links" aria-label="Company links">
+              <Link href="/blog">Legal Resources</Link>
+              <a href="#how-it-works">How It Works</a>
+              <a href="#pricing">Pricing</a>
+              <Link href="/dashboard">My Cases</Link>
+            </nav>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <p className="footer-col-title">Contact</p>
+            <div className="footer-links">
+              <a href="mailto:pandaslegalpractitioners@gmail.com" style={{ wordBreak: 'break-all' }}>
+                pandaslegalpractitioners@gmail.com
+              </a>
+              <a href="tel:+2348118080189">+234 811 808 0189</a>
+              <span style={{ color: 'var(--text-3)', fontSize: 13 }}>Lagos, Nigeria</span>
+            </div>
+            <div style={{ marginTop: 20 }}>
+              <span className="badge badge-accent" style={{ fontSize: 10 }}>
+                CAC Registered
+              </span>
+            </div>
           </div>
         </div>
-        <p className="footer-disclaimer">
-          Pandas LP is an AI-native law firm. Our AI agents conduct a guided interview and draft
-          your documents from real Nigerian legal templates — for select documents, like a Letter
-          of Demand, we can also serve it on the other party on your behalf. Where you need a
-          licensed legal practitioner to advise, file, or represent you in court, our lawyers are
-          available through the "Speak to a Lawyer" service. AI-generated documents are prepared
-          for your use and do not substitute for advice from a licensed legal practitioner.
-        </p>
-        <p className="footer-disclaimer">© {new Date().getFullYear()} Pandas LP. All rights reserved.</p>
+
+        {/* Bottom bar */}
+        <div className="footer-bottom">
+          <p className="footer-disclaimer">
+            Pandas LP is a CAC-registered company and AI-native law firm. Our AI agents conduct a guided
+            interview and draft court-ready legal documents from Nigerian legal templates. For matters
+            requiring a licensed legal practitioner to advise, file, or appear in court, our lawyers are
+            available and handle all filings on your behalf. AI-generated documents are prepared for your
+            use and are reviewed by our legal team before service or filing.
+          </p>
+          <p className="footer-copyright">
+            © {new Date().getFullYear()} Pandas LP. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   )
