@@ -18,12 +18,12 @@ export default function Footer() {
           </div>
         </div>
         <p className="footer-disclaimer">
-          Pandas LP is a legal technology platform. Our AI agents conduct a guided interview and
-          draft your document from real Nigerian legal templates — for select documents, like a
-          Letter of Demand, we can also deliver it to the other party on your behalf as a paid
-          logistics service. We are not a law firm, and nothing generated here constitutes legal
-          advice. For legal advice or representation, use our "Speak to a Lawyer" service to
-          connect with a licensed Nigerian legal practitioner.
+          Pandas LP is an AI-native law firm. Our AI agents conduct a guided interview and draft
+          your documents from real Nigerian legal templates — for select documents, like a Letter
+          of Demand, we can also serve it on the other party on your behalf. Where you need a
+          licensed legal practitioner to advise, file, or represent you in court, our lawyers are
+          available through the "Speak to a Lawyer" service. AI-generated documents are prepared
+          for your use and do not substitute for advice from a licensed legal practitioner.
         </p>
         <p className="footer-disclaimer">© {new Date().getFullYear()} Pandas LP. All rights reserved.</p>
       </div>
