@@ -34,6 +34,8 @@ interface AgentChatProps {
 const DOCUMENT_BLOCK_RE =
   /<<<DOCUMENT>>>\s*TITLE:\s*(.+?)\s*\n(?:PRICE:\s*(.+?)\s*\n)?(?:PRICE_LABEL:\s*(.+?)\s*\n)?-{3,}\n([\s\S]*?)<<<END_DOCUMENT>>>/
 
+const OPTIONS_BLOCK_RE = /<<<OPTIONS>>>\n([\s\S]*?)<<<END_OPTIONS>>>/
+
 function extractDocument(content: string): { visible: string; doc: DraftDocument | null } {
   const match = content.match(DOCUMENT_BLOCK_RE)
   if (!match) return { visible: content, doc: null }
@@ -47,15 +49,31 @@ function extractDocument(content: string): { visible: string; doc: DraftDocument
   }
 }
 
+function extractOptions(content: string): { visible: string; options: string[] } {
+  const match = content.match(OPTIONS_BLOCK_RE)
+  if (!match) return { visible: content, options: [] }
+  const options = match[1].split('\n').map((s) => s.trim()).filter(Boolean)
+  const visible = content.replace(OPTIONS_BLOCK_RE, '').trim()
+  return { visible, options }
+}
+
 function renderContent(text: string): ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g)
-  return parts.map((part, i) =>
-    part.startsWith('**') && part.endsWith('**') ? (
-      <strong key={i}>{part.slice(2, -2)}</strong>
-    ) : (
-      <span key={i}>{part}</span>
-    ),
-  )
+  const lines = text.split('\n')
+  return lines.map((line, li) => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g)
+    return (
+      <span key={li}>
+        {parts.map((part, i) =>
+          part.startsWith('**') && part.endsWith('**') ? (
+            <strong key={i}>{part.slice(2, -2)}</strong>
+          ) : (
+            <span key={i}>{part}</span>
+          ),
+        )}
+        {li < lines.length - 1 && <br />}
+      </span>
+    )
+  })
 }
 
 export default function AgentChat({
@@ -363,16 +381,64 @@ export default function AgentChat({
         ) : (
           <>
             <div className={styles.messages} ref={messagesRef}>
-              {messages.map((m, i) => (
-                <div
-                  key={i}
-                  className={`${styles.bubbleRow} ${m.role === 'user' ? styles.bubbleRowUser : styles.bubbleRowAssistant}`}
-                >
-                  <div className={`${styles.bubble} ${m.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant}`}>
-                    {renderContent(m.content)}
+              {messages.map((m, i) => {
+                const isLastMsg = i === messages.length - 1
+                const { visible, options } = m.role === 'assistant'
+                  ? extractOptions(m.content)
+                  : { visible: m.content, options: [] }
+
+                return (
+                  <div key={i}>
+                    <div
+                      className={`${styles.bubbleRow} ${m.role === 'user' ? styles.bubbleRowUser : styles.bubbleRowAssistant}`}
+                    >
+                      <div className={`${styles.bubble} ${m.role === 'user' ? styles.bubbleUser : styles.bubbleAssistant}`}>
+                        {renderContent(visible)}
+                      </div>
+                    </div>
+                    {/* Quick-reply buttons — only on last AI message, only while not loading */}
+                    {m.role === 'assistant' && isLastMsg && !loading && options.length > 0 && (
+                      <div className={styles.optionsRow}>
+                        {options.map((opt, oi) => (
+                          <button
+                            key={oi}
+                            type="button"
+                            className={styles.optionBtn}
+                            onClick={() => {
+                              setInput(opt)
+                              setTimeout(() => {
+                                setInput('')
+                                const userMsg: Message = { role: 'user', content: opt }
+                                const nextMessages: Message[] = [...messages, userMsg]
+                                setMessages(nextMessages)
+                                setError('')
+                                setLoading(true)
+                                fetch('/api/chat', {
+                                  method: 'POST',
+                                  headers: { 'content-type': 'application/json' },
+                                  body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
+                                })
+                                  .then((r) => r.json())
+                                  .then((data) => {
+                                    const { visible: v, doc } = extractDocument(data.response ?? '')
+                                    const assistantMsg: Message = { role: 'assistant', content: v }
+                                    setMessages((prev) => [...prev, assistantMsg])
+                                    if (doc) setDraftDoc(doc)
+                                    saveTurn(userMsg, assistantMsg, doc).catch(() => {})
+                                  })
+                                  .catch(() => setError('Network error. Please try again.'))
+                                  .finally(() => setLoading(false))
+                              }, 0)
+                            }}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
               {loading && (
                 <div className={`${styles.bubbleRow} ${styles.bubbleRowAssistant}`}>
