@@ -300,6 +300,14 @@ h3 {
   align-items: center;
   justify-content: space-between;
   padding: 18px 24px;
+  gap: 16px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -390,6 +398,68 @@ h3 {
   font-family: var(--font-mono), monospace;
   font-size: 13px;
   color: var(--text-muted);
+}
+
+/* Escalation path */
+.escalation-path {
+  padding: 64px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.escalation-steps {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.escalation-step {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.escalation-step:first-child { padding-left: 0; }
+.escalation-step:last-child  { padding-right: 0; }
+
+.escalation-num {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.escalation-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.escalation-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.65;
+}
+
+.escalation-arrow {
+  font-size: 20px;
+  color: var(--border-strong);
+  padding: 24px 4px 0;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .escalation-steps { flex-direction: column; gap: 32px; }
+  .escalation-arrow { display: none; }
+  .escalation-step { padding: 0; min-width: unset; }
 }
 
 /* Banner */
@@ -608,4 +678,33 @@ textarea.input {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+/* Blog article content */
+.blog-content {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.blog-content h2 {
+  font-family: var(--font-display), sans-serif;
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  margin: 40px 0 14px;
+}
+
+.blog-content p   { margin: 0 0 18px; }
+.blog-content ul,
+.blog-content ol  { margin: 0 0 18px; padding-left: 22px; }
+.blog-content li  { margin-bottom: 8px; }
+
+.blog-content strong { color: var(--text); font-weight: 600; }
+
+.blog-content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: rgba(230, 57, 70, 0.4);
 }

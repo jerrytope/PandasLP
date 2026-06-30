@@ -6,6 +6,7 @@ export const AGENT_TO_SERVICE_ID: Partial<Record<AgentId, string>> = {
   'recovery-of-premises': 'tenancy',
   contracts: 'contracts',
   'cac-registration': 'business-registration',
+  'judgment-enforcement': 'judgment-enforcement',
 }
 
 export interface AgentPayment {

@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react'
 import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
+import { supabase } from '@/lib/supabaseClient'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
 
@@ -24,6 +25,10 @@ interface AgentChatProps {
   paymentDescription: string
   onClose: () => void
   onApproved: (agentId: AgentId) => void
+  userId?: string
+  initialCaseId?: string
+  initialMessages?: Message[]
+  initialDraftDoc?: DraftDocument | null
 }
 
 const DOCUMENT_BLOCK_RE =
@@ -53,19 +58,35 @@ function renderContent(text: string): ReactNode {
   )
 }
 
-export default function AgentChat({ agent, amount, paymentDescription, onClose, onApproved }: AgentChatProps) {
-  const [messages, setMessages] = useState<Message[]>([{ role: 'assistant', content: agent.starterMessage }])
+export default function AgentChat({
+  agent,
+  amount,
+  paymentDescription,
+  onClose,
+  onApproved,
+  userId,
+  initialCaseId,
+  initialMessages,
+  initialDraftDoc,
+}: AgentChatProps) {
+  const [messages, setMessages] = useState<Message[]>(
+    initialMessages && initialMessages.length > 0
+      ? initialMessages
+      : [{ role: 'assistant', content: agent.starterMessage }],
+  )
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [draftDoc, setDraftDoc] = useState<DraftDocument | null>(null)
+  const [draftDoc, setDraftDoc] = useState<DraftDocument | null>(initialDraftDoc ?? null)
   const [paid, setPaid] = useState(false)
   const [payOpen, setPayOpen] = useState(false)
   const [previewUrl, setPreviewUrl] = useState('')
+  const [caseId, setCaseId] = useState<string | null>(initialCaseId ?? null)
+  const [extracting, setExtracting] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'Continue to Next Steps →'
-
   const effectiveAmount = draftDoc?.price ?? amount
   const effectiveDescription = draftDoc?.priceLabel
     ? `${draftDoc.priceLabel} — ${paymentDescription}`
@@ -95,18 +116,167 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
     return () => URL.revokeObjectURL(url)
   }, [draftDoc, paid])
 
+  // ----- Supabase persistence helpers -----
+
+  async function ensureCase(): Promise<string | null> {
+    if (!userId) return null
+    if (caseId) return caseId
+
+    const { data, error: dbErr } = await supabase
+      .from('cases')
+      .insert({ user_id: userId, agent_id: agent.id, status: 'draft' })
+      .select('id')
+      .single()
+
+    if (dbErr || !data) return null
+    setCaseId(data.id)
+    return data.id
+  }
+
+  async function saveTurn(userMsg: Message, assistantMsg: Message, newDoc: DraftDocument | null) {
+    const id = await ensureCase()
+    if (!id) return
+
+    await supabase.from('messages').insert([
+      { case_id: id, role: 'user', content: userMsg.content },
+      { case_id: id, role: 'assistant', content: assistantMsg.content },
+    ])
+
+    if (newDoc) {
+      const deadline =
+        agent.id === 'small-claims'
+          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          : null
+
+      await supabase
+        .from('cases')
+        .update({
+          document_title: newDoc.title,
+          document_body: newDoc.body,
+          status: 'document_ready',
+          ...(deadline ? { deadline_at: deadline } : {}),
+        })
+        .eq('id', id)
+    }
+  }
+
+  async function handlePaymentDone() {
+    setPaid(true)
+    setPayOpen(false)
+
+    if (caseId && userId) {
+      await supabase
+        .from('cases')
+        .update({
+          status: 'paid',
+          amount_paid: effectiveAmount,
+          delivery_option: draftDoc?.priceLabel?.toLowerCase().includes('pandas') ? 'pandas-serves' : 'self-serve',
+        })
+        .eq('id', caseId)
+    }
+  }
+
+  // ----- Chat -----
+
+  // ----- File upload -----
+
+  async function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+
+    const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!ALLOWED.includes(file.type)) {
+      setError('Unsupported file type. Please upload a PDF, JPG, PNG, or WEBP.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File too large. Maximum size is 10 MB.')
+      return
+    }
+
+    // Convert to base64
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const result = reader.result as string
+        resolve(result.split(',')[1]) // strip data URL prefix
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+
+    // Show attachment bubble
+    const attachMsg: Message = {
+      role: 'user',
+      content: `📎 Attached: ${file.name}`,
+    }
+    setMessages((prev) => [...prev, attachMsg])
+    setExtracting(true)
+    setError('')
+
+    try {
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ fileBase64: base64, mediaType: file.type, filename: file.name }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || data.error) {
+        setError(data.error || 'Could not read the document. Please try again.')
+        setExtracting(false)
+        return
+      }
+
+      // Inject extracted facts as a user context message, then get AI to acknowledge and continue
+      const factsMsg: Message = {
+        role: 'user',
+        content: `DOCUMENT CONTEXT — Facts extracted from ${file.name}:\n${data.facts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
+      }
+      const nextMessages: Message[] = [...messages, attachMsg, factsMsg]
+      setMessages(nextMessages)
+      setExtracting(false)
+      setLoading(true)
+
+      const chatRes = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
+      })
+      const chatData = await chatRes.json()
+
+      if (!chatRes.ok || chatData.error) {
+        setError(chatData.error || 'Something went wrong. Please try again.')
+      } else {
+        const { visible, doc } = extractDocument(chatData.response)
+        const assistantMsg: Message = { role: 'assistant', content: visible }
+        setMessages((prev) => [...prev, assistantMsg])
+        if (doc) setDraftDoc(doc)
+        saveTurn(factsMsg, assistantMsg, doc).catch(() => {})
+      }
+    } catch {
+      setError('Network error during document analysis.')
+    } finally {
+      setExtracting(false)
+      setLoading(false)
+    }
+  }
+
   function handleClear() {
     setMessages([{ role: 'assistant', content: agent.starterMessage }])
     setError('')
     setDraftDoc(null)
     setPaid(false)
     setPayOpen(false)
+    setCaseId(null)
   }
 
   async function handleSend() {
     const text = input.trim()
     if (!text || loading) return
-    const nextMessages: Message[] = [...messages, { role: 'user', content: text }]
+    const userMsg: Message = { role: 'user', content: text }
+    const nextMessages: Message[] = [...messages, userMsg]
     setMessages(nextMessages)
     setInput('')
     setError('')
@@ -122,8 +292,11 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
         setError(data.error || 'Something went wrong. Please try again.')
       } else {
         const { visible, doc } = extractDocument(data.response)
-        setMessages((prev) => [...prev, { role: 'assistant', content: visible }])
+        const assistantMsg: Message = { role: 'assistant', content: visible }
+        setMessages((prev) => [...prev, assistantMsg])
         if (doc) setDraftDoc(doc)
+        // Fire-and-forget persistence
+        saveTurn(userMsg, assistantMsg, doc).catch(() => {})
       }
     } catch {
       setError('Network error. Please check your connection and try again.')
@@ -151,7 +324,14 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
           <span className={styles.headerDot} style={{ background: agent.color }} />
           <div className={styles.headerInfo}>
             <div className={styles.headerName}>{agent.name}</div>
-            <div className={styles.headerSub}>Pandas LP · Nigerian Law</div>
+            <div className={styles.headerSub}>
+              Pandas LP · Nigerian Law
+              {!userId && (
+                <span style={{ marginLeft: 8, opacity: 0.6, fontSize: 11 }}>
+                  · Sign in to save progress
+                </span>
+              )}
+            </div>
           </div>
           <div className={styles.headerActions}>
             <button
@@ -176,10 +356,7 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
             <PaymentForm
               amount={effectiveAmount}
               description={effectiveDescription}
-              onSuccess={() => {
-                setPaid(true)
-                setPayOpen(false)
-              }}
+              onSuccess={handlePaymentDone}
               onBack={() => setPayOpen(false)}
             />
           </div>
@@ -216,7 +393,7 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
               <div className={styles.documentPanel}>
                 <div className={styles.documentHeader}>
                   <span className={styles.documentTitle}>{draftDoc.title}</span>
-                  {paid ? <span className="badge">Paid</span> : <span className="badge badge-test">Sample Preview</span>}
+                  {paid ? <span className="badge">Paid — Clean Copy</span> : <span className="badge badge-test">Free Preview</span>}
                 </div>
 
                 {draftDoc.priceLabel && !paid && (
@@ -248,17 +425,43 @@ export default function AgentChat({ agent, amount, paymentDescription, onClose, 
               </div>
             )}
 
+            {extracting && (
+              <div className={styles.extractingRow}>
+                <div className={styles.extractingBubble}>
+                  <span className="spinner" style={{ width: 14, height: 14 }} />
+                  Analysing document…
+                </div>
+              </div>
+            )}
+
             {!paid && (
               <div className={styles.inputRow}>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  style={{ display: 'none' }}
+                  onChange={handleFileSelect}
+                />
+                <button
+                  type="button"
+                  className={styles.uploadBtn}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={loading || extracting}
+                  title="Attach a document or invoice"
+                  aria-label="Attach file"
+                >
+                  📎
+                </button>
                 <textarea
                   className={styles.textarea}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Type your message…"
+                  placeholder="Type your message or attach a document…"
                   rows={1}
                 />
-                <button type="button" className="btn btn-primary" onClick={handleSend} disabled={loading || !input.trim()}>
+                <button type="button" className="btn btn-primary" onClick={handleSend} disabled={loading || extracting || !input.trim()}>
                   Send
                 </button>
               </div>

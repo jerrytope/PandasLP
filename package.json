@@ -9,8 +9,11 @@
     "start": "next start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.109.0",
+    "@types/nodemailer": "^8.0.1",
     "jspdf": "^4.2.1",
     "next": "^16.2.9",
+    "nodemailer": "^9.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

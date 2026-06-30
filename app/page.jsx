@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import LandingPage from '@/components/LandingPage'
@@ -9,9 +9,11 @@ import NextSteps from '@/components/NextSteps'
 import CustomClaim from '@/components/CustomClaim'
 import { LawyerConsultBooking } from '@/components/LawyerConsult'
 import AgentChat from '@/components/AgentChat'
+import AuthModal from '@/components/AuthModal'
 import { AGENTS } from '@/lib/agents'
 import { CUSTOM_CLAIM_FEE } from '@/lib/services'
 import { getAgentPayment } from '@/lib/agentServiceMap'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function App() {
   const [step, setStep] = useState('landing')
@@ -20,12 +22,60 @@ export default function App() {
   const [paymentContext, setPaymentContext] = useState(null)
   const [activeAgentId, setActiveAgentId] = useState(null)
 
+  // Auth
+  const [user, setUser] = useState(null)
+  const [authOpen, setAuthOpen] = useState(false)
+
+  // Resume state: pre-load a case from dashboard
+  const [resumeData, setResumeData] = useState(null)
+  // { caseId, messages, draftDoc }
+
+  // Initialise auth listener once
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // Handle ?resume=<caseId> from dashboard
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const resumeId = params.get('resume')
+    if (!resumeId) return
+
+    // Clean URL without reload
+    window.history.replaceState({}, '', window.location.pathname)
+
+    async function loadResume() {
+      const [{ data: caseData }, { data: msgs }] = await Promise.all([
+        supabase.from('cases').select('*').eq('id', resumeId).single(),
+        supabase.from('messages').select('role, content').eq('case_id', resumeId).order('created_at'),
+      ])
+      if (!caseData) return
+
+      const draftDoc =
+        caseData.document_title && caseData.document_body
+          ? { title: caseData.document_title, body: caseData.document_body }
+          : null
+
+      setResumeData({ caseId: resumeId, messages: msgs ?? [], draftDoc })
+      setActiveAgentId(caseData.agent_id)
+    }
+
+    loadResume().catch(console.error)
+  }, [])
+
   function goToLanding() {
     setStep('landing')
     setSelectedService(null)
     setCustomClaim(null)
     setPaymentContext(null)
     setActiveAgentId(null)
+    setResumeData(null)
   }
 
   function handleStartCustomClaim() {
@@ -52,6 +102,7 @@ export default function App() {
   function handleAgentApproved(agentId) {
     const payment = getAgentPayment(agentId)
     setActiveAgentId(null)
+    setResumeData(null)
     if (payment.kind === 'lawyer') {
       setStep('lawyer-booking')
     } else if (payment.service) {
@@ -71,10 +122,10 @@ export default function App() {
     <>
       <Navbar
         onLogoClick={goToLanding}
-        onNavServices={() => {
-          if (step !== 'landing') goToLanding()
-        }}
+        onNavServices={() => { if (step !== 'landing') goToLanding() }}
         onStartLawyerConsult={() => setActiveAgentId('lawyer-consultation')}
+        user={user}
+        onAuthClick={() => setAuthOpen(true)}
       />
 
       {step === 'landing' && (
@@ -125,10 +176,16 @@ export default function App() {
           agent={activeAgent}
           amount={activePayment.amount}
           paymentDescription={activePayment.description}
-          onClose={() => setActiveAgentId(null)}
+          onClose={() => { setActiveAgentId(null); setResumeData(null) }}
           onApproved={handleAgentApproved}
+          userId={user?.id}
+          initialCaseId={resumeData?.caseId}
+          initialMessages={resumeData?.messages}
+          initialDraftDoc={resumeData?.draftDoc}
         />
       )}
+
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
 
       <Footer />
     </>
