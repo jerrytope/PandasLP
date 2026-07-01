@@ -23,14 +23,18 @@ export async function POST(req: Request) {
   }
 
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: { user: GMAIL_USER, pass: appPassword },
   })
 
   await transporter.sendMail({
     from: `Pandas LP <${GMAIL_USER}>`,
     to: GMAIL_USER,
+    replyTo: email,
     subject: `Waitlist signup — ${service}`,
+    text: `${email} signed up to be notified when ${service} goes live on Pandas LP.`,
     html: `
       <p><strong>${email}</strong> signed up to be notified when <strong>${service}</strong> goes live on Pandas LP.</p>
       <p style="color:#8A9B8F;font-size:13px;">Sent from the Pandas LP waitlist form.</p>

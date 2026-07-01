@@ -62,13 +62,27 @@ function baseWrapper(content: string) {
 </html>`
 }
 
-export function getPaymentConfirmedEmail(data: PaymentConfirmedEmailData): { subject: string; html: string } {
+export function getPaymentConfirmedEmail(data: PaymentConfirmedEmailData): { subject: string; html: string; text: string } {
   const { recipientName, caseTitle, amountPaid, siteUrl } = data
   const dashboardUrl = `${siteUrl}/dashboard`
   const formatted = `₦${amountPaid.toLocaleString()}`
 
+  const text = `Hi ${recipientName},
+
+We have received your payment of ${formatted} and your case — ${caseTitle} — is now with the Pandas LP legal team.
+
+We are working towards getting this resolved on your behalf. A member of our team will reach out to you shortly to ensure they have full context on your matter before we proceed.
+
+View your case: ${dashboardUrl}
+
+If you have any questions before we reach out, reply to this email or call us on +234 811 808 0189.
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`
+
   return {
     subject: `We've received your case — Pandas LP`,
+    text,
     html: baseWrapper(`
       <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#f2efe8;letter-spacing:-0.01em;">
         Case received. We're on it.
@@ -98,7 +112,7 @@ export function getPaymentConfirmedEmail(data: PaymentConfirmedEmailData): { sub
   }
 }
 
-export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; html: string } {
+export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; html: string; text: string } {
   const { recipientName, debtorName, amount, caseId, day, siteUrl } = data
   const dashboardUrl = `${siteUrl}/dashboard`
   const resumeUrl   = `${siteUrl}/?resume=${caseId}`
@@ -107,6 +121,16 @@ export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; ht
   if (day === 0) {
     return {
       subject: `Your Letter of Demand has been served — ${debtorName}`,
+      text: `Hi ${recipientName},
+
+Your Letter of Demand for ${formatted} has been formally served on ${debtorName}. The clock is now running.
+
+The debtor has 7 days to respond or make payment. We will notify you automatically at Day 3 and Day 7.
+
+View your case: ${dashboardUrl}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
       html: baseWrapper(`
         <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#f2efe8;letter-spacing:-0.01em;">
           Letter served successfully
@@ -131,6 +155,16 @@ export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; ht
   if (day === 3) {
     return {
       subject: `Deadline reminder: ${debtorName} has 4 days left to respond`,
+      text: `Hi ${recipientName},
+
+It has been 3 days since your Letter of Demand was served on ${debtorName} for ${formatted}.
+
+The debtor has 4 days remaining. If they do not respond or pay by the deadline, you can instruct us to escalate the matter to the Small Claims Court.
+
+View case status: ${dashboardUrl}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
       html: baseWrapper(`
         <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#f2efe8;letter-spacing:-0.01em;">
           4 days left on the deadline
@@ -157,6 +191,16 @@ export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; ht
   // day === 7
   return {
     subject: `Deadline has passed — escalate against ${debtorName}?`,
+    text: `Hi ${recipientName},
+
+${debtorName} has not responded to your Letter of Demand for ${formatted} within the 7-day period.
+
+You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf — the conversation you've already had with our agent will be pre-loaded, so there's no need to start over.
+
+Resume your case and instruct us to file: ${resumeUrl}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
     html: baseWrapper(`
       <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#f2efe8;letter-spacing:-0.01em;">
         The 7-day deadline has passed

@@ -8,7 +8,9 @@ const GMAIL_USER = 'pandaslegalpractitioners@gmail.com'
 
 function getTransporter() {
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
       user: GMAIL_USER,
       pass: process.env.GMAIL_APP_PASSWORD,
@@ -51,9 +53,10 @@ export async function POST(req: Request) {
   const recipientName = recipientEmail.split('@')[0]
   let subject: string
   let html: string
+  let text: string
 
   if (type === 'payment_confirmed') {
-    ;({ subject, html } = getPaymentConfirmedEmail({
+    ;({ subject, html, text } = getPaymentConfirmedEmail({
       recipientEmail,
       recipientName,
       caseTitle: caseData.document_title ?? 'Demand Letter',
@@ -73,14 +76,16 @@ export async function POST(req: Request) {
       day,
       siteUrl,
     }
-    ;({ subject, html } = getFollowUpEmail(emailData))
+    ;({ subject, html, text } = getFollowUpEmail(emailData))
   }
 
   try {
     await getTransporter().sendMail({
       from: `Pandas LP <${GMAIL_USER}>`,
       to: recipientEmail,
+      replyTo: GMAIL_USER,
       subject,
+      text,
       html,
     })
   } catch (err: unknown) {
