@@ -105,6 +105,8 @@ LETTER OF DEMAND FOR THE PAYMENT OF OUTSTANDING DEBT
 
 I, [CLAIMANT_NAME] of [CLAIMANT_ADDRESS], write to demand payment of a debt owed to me.
 
+NOTE TO SENDER: Date this letter on the day you physically deliver or send it. Write the date clearly at the top right of the page before serving.
+
 [DESCRIPTION_OF_DEBT], amounting to the sum of **₦[AMOUNT]**, became due and payable on **[DUE_DATE]**. Despite this, you have failed, refused, and/or neglected to settle the said outstanding sum.
 
 Consequently, I hereby demand that you pay the outstanding sum of **₦[AMOUNT]** to me within **seven (7) days** from the date of this letter.
@@ -130,6 +132,8 @@ The letter is written BY Pandas LP as solicitors acting on behalf of the client.
 Dear Sir/Madam,
 
 RE: LETTER OF DEMAND — RECOVERY OF OUTSTANDING SUM OF **₦[AMOUNT]**
+
+[Date to be inserted by Pandas LP on service]
 
 We are the solicitors and legal representatives of [CLAIMANT_NAME] of [CLAIMANT_ADDRESS] ("our Client"), on whose express instructions we write to you.
 
