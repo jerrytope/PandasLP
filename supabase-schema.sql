@@ -6,6 +6,7 @@
 -- Cases table
 CREATE TABLE IF NOT EXISTS public.cases (
   id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_number      BIGSERIAL   NOT NULL UNIQUE,
   user_id          UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   agent_id         TEXT        NOT NULL,
   service_id       TEXT,
@@ -79,3 +80,5 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day7_sent BOOLEAN NOT NULL DEFAULT FALSE;
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS parent_case_id  UUID REFERENCES public.cases(id);
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS judgment_amount INTEGER;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS case_number BIGSERIAL UNIQUE;
+--   ^ Powers the "Our Ref: PLP/<year>/<case_number>" line on generated letters (see lib/agents.ts).

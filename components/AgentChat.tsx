@@ -103,6 +103,7 @@ export default function AgentChat({
   const [extracting, setExtracting] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const caseRefRef = useRef<string>('')
 
   const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'View My Case Dashboard →'
   const effectiveAmount = draftDoc?.price ?? amount
@@ -124,6 +125,23 @@ export default function AgentChat({
     }
   }, [messages, loading, draftDoc])
 
+  // Resuming an existing case — fetch its file reference so later corrections reuse the
+  // same number instead of falling back to a fresh PENDING placeholder.
+  useEffect(() => {
+    if (!initialCaseId) return
+    supabase
+      .from('cases')
+      .select('case_number, created_at')
+      .eq('id', initialCaseId)
+      .single()
+      .then(({ data }) => {
+        if (data?.case_number != null) {
+          const year = new Date(data.created_at).getFullYear()
+          caseRefRef.current = `PLP/${year}/${String(data.case_number).padStart(6, '0')}`
+        }
+      })
+  }, [initialCaseId])
+
   useEffect(() => {
     if (!draftDoc) {
       setPreviewUrl('')
@@ -136,24 +154,39 @@ export default function AgentChat({
 
   // ----- Supabase persistence helpers -----
 
-  async function ensureCase(): Promise<string | null> {
+  async function ensureCase(): Promise<{ id: string; ref: string } | null> {
     if (!userId) return null
-    if (caseId) return caseId
+    if (caseId) return { id: caseId, ref: caseRefRef.current }
 
     const { data, error: dbErr } = await supabase
       .from('cases')
       .insert({ user_id: userId, agent_id: agent.id, status: 'draft' })
-      .select('id')
+      .select('id, case_number, created_at')
       .single()
 
     if (dbErr || !data) return null
     setCaseId(data.id)
-    return data.id
+    if (data.case_number != null) {
+      const year = new Date(data.created_at).getFullYear()
+      caseRefRef.current = `PLP/${year}/${String(data.case_number).padStart(6, '0')}`
+    }
+    return { id: data.id, ref: caseRefRef.current }
+  }
+
+  // The document template leaves a literal {{REF_NUMBER}} token for the AI to copy verbatim —
+  // this substitutes in the real, DB-assigned file reference once the case exists.
+  async function finalizeDocument(doc: DraftDocument | null): Promise<DraftDocument | null> {
+    if (!doc) return doc
+    if (!doc.body.includes('{{REF_NUMBER}}')) return doc
+    const caseInfo = await ensureCase()
+    const ref = caseInfo?.ref || `PLP/${new Date().getFullYear()}/PENDING`
+    return { ...doc, body: doc.body.split('{{REF_NUMBER}}').join(ref) }
   }
 
   async function saveTurn(userMsg: Message, assistantMsg: Message, newDoc: DraftDocument | null) {
-    const id = await ensureCase()
-    if (!id) return
+    const caseInfo = await ensureCase()
+    if (!caseInfo) return
+    const id = caseInfo.id
 
     await supabase.from('messages').insert([
       { case_id: id, role: 'user', content: userMsg.content },
@@ -274,9 +307,10 @@ export default function AgentChat({
       if (!chatRes.ok || chatData.error) {
         setError(chatData.error || 'Something went wrong. Please try again.')
       } else {
-        const { visible, doc } = extractDocument(chatData.response)
+        const { visible, doc: rawDoc } = extractDocument(chatData.response)
         const assistantMsg: Message = { role: 'assistant', content: visible }
         setMessages((prev) => [...prev, assistantMsg])
+        const doc = await finalizeDocument(rawDoc)
         if (doc) setDraftDoc(doc)
         saveTurn(factsMsg, assistantMsg, doc).catch(() => {})
       }
@@ -295,6 +329,7 @@ export default function AgentChat({
     setPaid(false)
     setPayOpen(false)
     setCaseId(null)
+    caseRefRef.current = ''
   }
 
   async function handleSend() {
@@ -316,9 +351,10 @@ export default function AgentChat({
       if (!res.ok || data.error) {
         setError(data.error || 'Something went wrong. Please try again.')
       } else {
-        const { visible, doc } = extractDocument(data.response)
+        const { visible, doc: rawDoc } = extractDocument(data.response)
         const assistantMsg: Message = { role: 'assistant', content: visible }
         setMessages((prev) => [...prev, assistantMsg])
+        const doc = await finalizeDocument(rawDoc)
         if (doc) setDraftDoc(doc)
         // Fire-and-forget persistence
         saveTurn(userMsg, assistantMsg, doc).catch(() => {})
@@ -426,10 +462,11 @@ export default function AgentChat({
                                   body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
                                 })
                                   .then((r) => r.json())
-                                  .then((data) => {
-                                    const { visible: v, doc } = extractDocument(data.response ?? '')
+                                  .then(async (data) => {
+                                    const { visible: v, doc: rawDoc } = extractDocument(data.response ?? '')
                                     const assistantMsg: Message = { role: 'assistant', content: v }
                                     setMessages((prev) => [...prev, assistantMsg])
+                                    const doc = await finalizeDocument(rawDoc)
                                     if (doc) setDraftDoc(doc)
                                     saveTurn(userMsg, assistantMsg, doc).catch(() => {})
                                   })
