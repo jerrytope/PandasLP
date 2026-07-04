@@ -122,7 +122,14 @@ export default function DashboardPage() {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ caseId, day: 0 }),
-    }).catch(() => {})
+    }).catch((err) => console.error('Failed to send day-0 follow-up email:', err))
+    await fetchCases()
+    setUpdatingId(null)
+  }
+
+  async function markFiled(caseId: string) {
+    setUpdatingId(caseId)
+    await supabase.from('cases').update({ status: 'filed' }).eq('id', caseId)
     await fetchCases()
     setUpdatingId(null)
   }
@@ -283,20 +290,31 @@ export default function DashboardPage() {
                           between <span style={{ color: 'var(--text-1)', fontWeight: 500 }}>₦5,000 and ₦15,000</span>.
                           You will see the exact breakdown before paying.
                         </div>
-                        <Link
-                          href={`/?resume=${c.id}&escalate=sca`}
-                          className="btn btn-primary"
-                          style={{ fontSize: 13, alignSelf: 'flex-start' }}
-                        >
-                          Escalate to Court Filing →
-                        </Link>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          <Link
+                            href={`/?resume=${c.id}&fileCourt=1`}
+                            className="btn btn-primary"
+                            style={{ fontSize: 13, alignSelf: 'flex-start' }}
+                          >
+                            Prepare Court Filing →
+                          </Link>
+                          <button
+                            type="button"
+                            className="btn"
+                            style={{ fontSize: 13 }}
+                            disabled={updatingId === c.id}
+                            onClick={() => markFiled(c.id)}
+                          >
+                            {updatingId === c.id ? 'Updating…' : "I've Already Filed This"}
+                          </button>
+                        </div>
                       </div>
                     )}
 
                     {/* Enforce Judgment — shown after judgment won */}
                     {isJudgment && (
                       <Link
-                        href={`/?resume=${c.id}&escalate=enforcement`}
+                        href={`/?enforceFrom=${c.id}`}
                         className="btn btn-primary"
                         style={{ fontSize: 13 }}
                       >

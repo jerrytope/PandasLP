@@ -1,11 +1,7 @@
 import { getAgent } from '@/lib/agents'
+import { capHistory, type ChatMessage } from '@/lib/chatHistory'
 
 export const runtime = 'edge'
-
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-}
 
 export async function POST(req: Request) {
   let body: { messages?: ChatMessage[]; agentId?: string }
@@ -52,7 +48,7 @@ export async function POST(req: Request) {
         system: `${agent.systemPrompt}
 
 DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`,
-        messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        messages: capHistory(messages).map((m) => ({ role: m.role, content: m.content })),
       }),
     })
 

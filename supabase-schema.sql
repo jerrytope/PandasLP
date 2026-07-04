@@ -37,9 +37,26 @@ CREATE TABLE IF NOT EXISTS public.messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Custom claims — the "describe your own claim" intake, submitted by users who may not
+-- be signed in. No owner to scope RLS to, so it's written and read only via the
+-- service-role API route (app/api/custom-claim/route.ts), never directly from the browser.
+CREATE TABLE IF NOT EXISTS public.custom_claims (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT        NOT NULL,
+  email        TEXT        NOT NULL,
+  phone        TEXT,
+  description  TEXT        NOT NULL,
+  amount_paid  INTEGER     NOT NULL DEFAULT 0,
+  status       TEXT        NOT NULL DEFAULT 'new',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Row Level Security
-ALTER TABLE public.cases    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cases         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_claims ENABLE ROW LEVEL SECURITY;
+-- No policies on custom_claims: RLS with zero policies blocks anon/authenticated roles
+-- entirely, while the service-role client (used only server-side) always bypasses RLS.
 
 -- Drop existing policies if re-running
 DROP POLICY IF EXISTS "owner_cases"    ON public.cases;

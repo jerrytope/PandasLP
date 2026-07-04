@@ -4,20 +4,16 @@ import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type
 import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
 import { supabase } from '@/lib/supabaseClient'
+import { extractDocument, extractOptions, type DraftDocument } from '@/lib/agentChatParsing'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
 
-interface Message {
+export interface Message {
   role: 'user' | 'assistant'
   content: string
 }
 
-interface DraftDocument {
-  title: string
-  body: string
-  price?: number
-  priceLabel?: string
-}
+export type { DraftDocument }
 
 interface AgentChatProps {
   agent: Agent
@@ -29,32 +25,9 @@ interface AgentChatProps {
   initialCaseId?: string
   initialMessages?: Message[]
   initialDraftDoc?: DraftDocument | null
-}
-
-const DOCUMENT_BLOCK_RE =
-  /<<<DOCUMENT>>>\s*TITLE:\s*(.+?)\s*\n(?:PRICE:\s*(.+?)\s*\n)?(?:PRICE_LABEL:\s*(.+?)\s*\n)?-{3,}\n([\s\S]*?)<<<END_DOCUMENT>>>/
-
-const OPTIONS_BLOCK_RE = /<<<OPTIONS>>>\n([\s\S]*?)<<<END_OPTIONS>>>/
-
-function extractDocument(content: string): { visible: string; doc: DraftDocument | null } {
-  const match = content.match(DOCUMENT_BLOCK_RE)
-  if (!match) return { visible: content, doc: null }
-  const intro = content.slice(0, match.index).trim()
-  const priceRaw = match[2] ? Number(match[2].trim()) : undefined
-  const price = priceRaw !== undefined && !Number.isNaN(priceRaw) ? priceRaw : undefined
-  const priceLabel = match[3] ? match[3].trim() : undefined
-  return {
-    visible: intro || 'Here is your drafted document — review it in the panel below.',
-    doc: { title: match[1].trim(), body: match[4].trim(), price, priceLabel },
-  }
-}
-
-function extractOptions(content: string): { visible: string; options: string[] } {
-  const match = content.match(OPTIONS_BLOCK_RE)
-  if (!match) return { visible: content, options: [] }
-  const options = match[1].split('\n').map((s) => s.trim()).filter(Boolean)
-  const visible = content.replace(OPTIONS_BLOCK_RE, '').trim()
-  return { visible, options }
+  // Sent automatically as the first user turn on mount — used to hand the agent context
+  // (e.g. escalating an existing case) without making the user retype it.
+  initialAutoMessage?: string
 }
 
 function renderContent(text: string): ReactNode {
@@ -86,6 +59,7 @@ export default function AgentChat({
   initialCaseId,
   initialMessages,
   initialDraftDoc,
+  initialAutoMessage,
 }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessages && initialMessages.length > 0
@@ -230,11 +204,54 @@ export default function AgentChat({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ caseId, type: 'payment_confirmed' }),
-      }).catch(() => {})
+      }).catch((err) => console.error('Failed to send payment confirmation email:', err))
     }
   }
 
   // ----- Chat -----
+
+  // Single request/response/persistence pipeline shared by every place a message can be
+  // sent to the agent (typed input, quick-reply options, and auto-kickoff on mount) — keeps
+  // the request contract in one place instead of re-implemented per call site.
+  async function sendToAgent(nextMessages: Message[], msgToPersist: Message) {
+    setMessages(nextMessages)
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setError(data.error || 'Something went wrong. Please try again.')
+        return
+      }
+      const { visible, doc: rawDoc } = extractDocument(data.response ?? '')
+      const assistantMsg: Message = { role: 'assistant', content: visible }
+      setMessages((prev) => [...prev, assistantMsg])
+      const doc = await finalizeDocument(rawDoc)
+      if (doc) setDraftDoc(doc)
+      saveTurn(msgToPersist, assistantMsg, doc).catch((err) => console.error('Failed to save conversation turn:', err))
+    } catch (err) {
+      console.error('Chat request failed:', err)
+      setError('Network error. Please check your connection and try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Auto-kickoff — used when the agent is opened with pre-supplied context (e.g. escalating
+  // an existing case) so the user doesn't have to retype what already happened.
+  const autoSentRef = useRef(false)
+  useEffect(() => {
+    if (!initialAutoMessage || autoSentRef.current) return
+    autoSentRef.current = true
+    const userMsg: Message = { role: 'user', content: initialAutoMessage }
+    sendToAgent([...messages, userMsg], userMsg)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAutoMessage])
 
   // ----- File upload -----
 
@@ -283,7 +300,6 @@ export default function AgentChat({
 
       if (!res.ok || data.error) {
         setError(data.error || 'Could not read the document. Please try again.')
-        setExtracting(false)
         return
       }
 
@@ -292,33 +308,12 @@ export default function AgentChat({
         role: 'user',
         content: `DOCUMENT CONTEXT — Facts extracted from ${file.name}:\n${data.facts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
       }
-      const nextMessages: Message[] = [...messages, attachMsg, factsMsg]
-      setMessages(nextMessages)
-      setExtracting(false)
-      setLoading(true)
-
-      const chatRes = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
-      })
-      const chatData = await chatRes.json()
-
-      if (!chatRes.ok || chatData.error) {
-        setError(chatData.error || 'Something went wrong. Please try again.')
-      } else {
-        const { visible, doc: rawDoc } = extractDocument(chatData.response)
-        const assistantMsg: Message = { role: 'assistant', content: visible }
-        setMessages((prev) => [...prev, assistantMsg])
-        const doc = await finalizeDocument(rawDoc)
-        if (doc) setDraftDoc(doc)
-        saveTurn(factsMsg, assistantMsg, doc).catch(() => {})
-      }
-    } catch {
+      await sendToAgent([...messages, attachMsg, factsMsg], factsMsg)
+    } catch (err) {
+      console.error('Document extraction failed:', err)
       setError('Network error during document analysis.')
     } finally {
       setExtracting(false)
-      setLoading(false)
     }
   }
 
@@ -332,38 +327,12 @@ export default function AgentChat({
     caseRefRef.current = ''
   }
 
-  async function handleSend() {
+  function handleSend() {
     const text = input.trim()
     if (!text || loading) return
     const userMsg: Message = { role: 'user', content: text }
-    const nextMessages: Message[] = [...messages, userMsg]
-    setMessages(nextMessages)
     setInput('')
-    setError('')
-    setLoading(true)
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
-      })
-      const data = await res.json()
-      if (!res.ok || data.error) {
-        setError(data.error || 'Something went wrong. Please try again.')
-      } else {
-        const { visible, doc: rawDoc } = extractDocument(data.response)
-        const assistantMsg: Message = { role: 'assistant', content: visible }
-        setMessages((prev) => [...prev, assistantMsg])
-        const doc = await finalizeDocument(rawDoc)
-        if (doc) setDraftDoc(doc)
-        // Fire-and-forget persistence
-        saveTurn(userMsg, assistantMsg, doc).catch(() => {})
-      }
-    } catch {
-      setError('Network error. Please check your connection and try again.')
-    } finally {
-      setLoading(false)
-    }
+    sendToAgent([...messages, userMsg], userMsg)
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -452,26 +421,7 @@ export default function AgentChat({
                               setTimeout(() => {
                                 setInput('')
                                 const userMsg: Message = { role: 'user', content: opt }
-                                const nextMessages: Message[] = [...messages, userMsg]
-                                setMessages(nextMessages)
-                                setError('')
-                                setLoading(true)
-                                fetch('/api/chat', {
-                                  method: 'POST',
-                                  headers: { 'content-type': 'application/json' },
-                                  body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
-                                })
-                                  .then((r) => r.json())
-                                  .then(async (data) => {
-                                    const { visible: v, doc: rawDoc } = extractDocument(data.response ?? '')
-                                    const assistantMsg: Message = { role: 'assistant', content: v }
-                                    setMessages((prev) => [...prev, assistantMsg])
-                                    const doc = await finalizeDocument(rawDoc)
-                                    if (doc) setDraftDoc(doc)
-                                    saveTurn(userMsg, assistantMsg, doc).catch(() => {})
-                                  })
-                                  .catch(() => setError('Network error. Please try again.'))
-                                  .finally(() => setLoading(false))
+                                sendToAgent([...messages, userMsg], userMsg)
                               }, 0)
                             }}
                           >

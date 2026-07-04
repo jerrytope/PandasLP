@@ -1,26 +1,11 @@
 export const runtime = 'nodejs'
 
-import nodemailer from 'nodemailer'
 import { getFollowUpEmail, getPaymentConfirmedEmail, type FollowUpEmailData } from '@/lib/emailTemplates'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-
-const GMAIL_USER = 'pandaslegalpractitioners@gmail.com'
-
-function getTransporter() {
-  return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  })
-}
+import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 
 export async function POST(req: Request) {
-  const appPassword = process.env.GMAIL_APP_PASSWORD
-  if (!appPassword || appPassword === 'REPLACE_WITH_GOOGLE_APP_PASSWORD') {
+  if (!isMailerConfigured()) {
     return Response.json({ error: 'Email not configured — add GMAIL_APP_PASSWORD to .env.local.' }, { status: 503 })
   }
 
@@ -80,8 +65,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    await getTransporter().sendMail({
-      from: `Pandas LP <${GMAIL_USER}>`,
+    await sendMail({
       to: recipientEmail,
       replyTo: GMAIL_USER,
       subject,

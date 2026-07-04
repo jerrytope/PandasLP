@@ -1,12 +1,9 @@
 export const runtime = 'nodejs'
 
-import nodemailer from 'nodemailer'
-
-const GMAIL_USER = 'pandaslegalpractitioners@gmail.com'
+import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 
 export async function POST(req: Request) {
-  const appPassword = process.env.GMAIL_APP_PASSWORD
-  if (!appPassword || appPassword === 'REPLACE_WITH_GOOGLE_APP_PASSWORD') {
+  if (!isMailerConfigured()) {
     return Response.json({ error: 'Email not configured.' }, { status: 503 })
   }
 
@@ -22,24 +19,21 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Missing fields.' }, { status: 400 })
   }
 
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: { user: GMAIL_USER, pass: appPassword },
-  })
-
-  await transporter.sendMail({
-    from: `Pandas LP <${GMAIL_USER}>`,
-    to: GMAIL_USER,
-    replyTo: email,
-    subject: `Waitlist signup — ${service}`,
-    text: `${email} signed up to be notified when ${service} goes live on Pandas LP.`,
-    html: `
-      <p><strong>${email}</strong> signed up to be notified when <strong>${service}</strong> goes live on Pandas LP.</p>
-      <p style="color:#8A9B8F;font-size:13px;">Sent from the Pandas LP waitlist form.</p>
-    `,
-  })
+  try {
+    await sendMail({
+      to: GMAIL_USER,
+      replyTo: email,
+      subject: `Waitlist signup — ${service}`,
+      text: `${email} signed up to be notified when ${service} goes live on Pandas LP.`,
+      html: `
+        <p><strong>${email}</strong> signed up to be notified when <strong>${service}</strong> goes live on Pandas LP.</p>
+        <p style="color:#8A9B8F;font-size:13px;">Sent from the Pandas LP waitlist form.</p>
+      `,
+    })
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return Response.json({ error: message }, { status: 502 })
+  }
 
   return Response.json({ ok: true })
 }
