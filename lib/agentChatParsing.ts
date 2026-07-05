@@ -15,6 +15,19 @@ const DOCUMENT_BLOCK_RE =
 
 const OPTIONS_BLOCK_RE = /<<<OPTIONS>>>\n([\s\S]*?)<<<END_OPTIONS>>>/
 
+const CLIENT_PHONE_BLOCK_RE = /<<<CLIENT_PHONE>>>\s*([\s\S]*?)\s*<<<END_CLIENT_PHONE>>>/
+
+// Some agents (e.g. small-claims, once the ₦25,000 "Pandas LP serves it" option is chosen)
+// ask for a callback number so a lawyer can reach the client after payment. The model hands
+// it back in this block so it never leaks into the visible chat or the letter itself.
+export function extractClientPhone(content: string): { visible: string; phone: string | null } {
+  const match = content.match(CLIENT_PHONE_BLOCK_RE)
+  if (!match) return { visible: content, phone: null }
+  const phone = match[1].trim() || null
+  const visible = content.replace(CLIENT_PHONE_BLOCK_RE, '').trim()
+  return { visible, phone }
+}
+
 export function extractDocument(content: string): { visible: string; doc: DraftDocument | null } {
   const match = content.match(DOCUMENT_BLOCK_RE)
   if (!match) return { visible: content, doc: null }

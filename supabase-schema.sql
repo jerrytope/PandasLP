@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS public.cases (
   document_title   TEXT,
   document_body    TEXT,
   delivery_option  TEXT,
+  -- callback number for the pandas-serves (₦25,000) tier — collected during intake so a
+  -- lawyer can reach the client once payment is confirmed; see lib/agents.ts CLIENT_PHONE block
+  client_phone     TEXT,
   amount_paid      INTEGER     NOT NULL DEFAULT 0,
   deadline_at      TIMESTAMPTZ,
   -- follow-up email tracking
@@ -99,3 +102,5 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS judgment_amount INTEGER;
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS case_number BIGSERIAL UNIQUE;
 --   ^ Powers the "Our Ref: PLP/<year>/<case_number>" line on generated letters (see lib/agents.ts).
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_phone TEXT;
+--   ^ Callback number for the pandas-serves (₦25,000) tier — see lib/agents.ts CLIENT_PHONE block.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractDocument, extractOptions } from '../agentChatParsing'
+import { extractDocument, extractOptions, extractClientPhone } from '../agentChatParsing'
 
 describe('extractDocument', () => {
   it('returns the content untouched when there is no document block', () => {
@@ -88,5 +88,32 @@ describe('extractOptions', () => {
     const content = ['<<<OPTIONS>>>', 'Yes', '', 'No', '<<<END_OPTIONS>>>'].join('\n')
     const { options } = extractOptions(content)
     expect(options).toEqual(['Yes', 'No'])
+  })
+})
+
+describe('extractClientPhone', () => {
+  it('returns null and the original text when there is no phone block', () => {
+    const result = extractClientPhone('Just a normal reply, no phone number here.')
+    expect(result.phone).toBeNull()
+    expect(result.visible).toBe('Just a normal reply, no phone number here.')
+  })
+
+  it('extracts the phone number and strips the block from the visible text', () => {
+    const content = [
+      'Got it — a lawyer will call you once payment is confirmed.',
+      '<<<CLIENT_PHONE>>>',
+      '+234 811 234 5678',
+      '<<<END_CLIENT_PHONE>>>',
+    ].join('\n')
+
+    const { visible, phone } = extractClientPhone(content)
+    expect(phone).toBe('+234 811 234 5678')
+    expect(visible).toBe('Got it — a lawyer will call you once payment is confirmed.')
+  })
+
+  it('treats an empty block as no phone number', () => {
+    const content = ['<<<CLIENT_PHONE>>>', '', '<<<END_CLIENT_PHONE>>>'].join('\n')
+    const { phone } = extractClientPhone(content)
+    expect(phone).toBeNull()
   })
 })

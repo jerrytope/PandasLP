@@ -15,6 +15,8 @@ interface CaseRow {
   amount_paid: number
   created_at: string
   deadline_at: string | null
+  delivery_option: string | null
+  client_phone: string | null
 }
 
 const STAGE_ORDER = ['draft', 'document_ready', 'paid', 'letter_served', 'filed', 'judgment_obtained', 'closed']
@@ -254,6 +256,27 @@ export default function DashboardPage() {
                       </Link>
                     </div>
                   </div>
+
+                  {/* Callback number — pandas-serves tier, once paid, so a lawyer can call the client */}
+                  {isPaid && c.delivery_option === 'pandas-serves' && c.client_phone && (
+                    <div style={{
+                      marginTop: 14,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      background: 'rgba(62,207,142,0.08)',
+                      border: '1px solid rgba(62,207,142,0.25)',
+                      fontSize: 13,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      flexWrap: 'wrap',
+                    }}>
+                      <span>📞 Client requested a callback —</span>
+                      <a href={`tel:${c.client_phone}`} style={{ color: 'var(--text-1)', fontWeight: 600 }}>
+                        {c.client_phone}
+                      </a>
+                    </div>
+                  )}
 
                   {/* Timeline (demand-letter cases that have been paid) */}
                   {isDebt && isPaid && <CaseTimeline status={c.status} />}

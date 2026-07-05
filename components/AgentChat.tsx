@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type
 import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
 import { supabase } from '@/lib/supabaseClient'
-import { extractDocument, extractOptions, type DraftDocument } from '@/lib/agentChatParsing'
+import { extractDocument, extractOptions, extractClientPhone, type DraftDocument } from '@/lib/agentChatParsing'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
 
@@ -185,6 +185,12 @@ export default function AgentChat({
     }
   }
 
+  async function saveClientPhone(phone: string) {
+    const caseInfo = await ensureCase()
+    if (!caseInfo) return
+    await supabase.from('cases').update({ client_phone: phone }).eq('id', caseInfo.id)
+  }
+
   async function handlePaymentDone() {
     setPaid(true)
     setPayOpen(false)
@@ -228,11 +234,13 @@ export default function AgentChat({
         setError(data.error || 'Something went wrong. Please try again.')
         return
       }
-      const { visible, doc: rawDoc } = extractDocument(data.response ?? '')
+      const { visible: afterPhone, phone } = extractClientPhone(data.response ?? '')
+      const { visible, doc: rawDoc } = extractDocument(afterPhone)
       const assistantMsg: Message = { role: 'assistant', content: visible }
       setMessages((prev) => [...prev, assistantMsg])
       const doc = await finalizeDocument(rawDoc)
       if (doc) setDraftDoc(doc)
+      if (phone) saveClientPhone(phone).catch((err) => console.error('Failed to save client phone:', err))
       saveTurn(msgToPersist, assistantMsg, doc).catch((err) => console.error('Failed to save conversation turn:', err))
     } catch (err) {
       console.error('Chat request failed:', err)
