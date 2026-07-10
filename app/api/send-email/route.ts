@@ -9,6 +9,16 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Email not configured — add GMAIL_APP_PASSWORD to .env.local.' }, { status: 503 })
   }
 
+  const authHeader = req.headers.get('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+  if (!token) {
+    return Response.json({ error: 'Missing Authorization header.' }, { status: 401 })
+  }
+  const { data: callerData, error: callerErr } = await supabaseAdmin.auth.getUser(token)
+  if (callerErr || !callerData?.user) {
+    return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
+  }
+
   let body: { caseId: string; type?: 'payment_confirmed'; day?: 0 | 3 | 7 }
   try {
     body = await req.json()
@@ -27,6 +37,10 @@ export async function POST(req: Request) {
 
   if (caseErr || !caseData) {
     return Response.json({ error: 'Case not found.' }, { status: 404 })
+  }
+
+  if (caseData.user_id !== callerData.user.id) {
+    return Response.json({ error: 'You do not have access to this case.' }, { status: 403 })
   }
 
   const { data: userData } = await supabaseAdmin.auth.admin.getUserById(caseData.user_id)

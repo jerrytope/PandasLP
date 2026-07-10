@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { isPaystackStubbed, payWithPaystack, generateReference } from '@/lib/paystackHelper'
 
-export default function PaymentForm({ amount, description, onSuccess, onBack, backLabel = '← Back' }) {
+export default function PaymentForm({ amount, description, onSuccess, onBack, backLabel = '← Back', busy = false }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -68,7 +68,7 @@ export default function PaymentForm({ amount, description, onSuccess, onBack, ba
 
       <div className="row">
         {onBack && (
-          <button type="button" className="btn" onClick={onBack} disabled={loading}>
+          <button type="button" className="btn" onClick={onBack} disabled={loading || busy}>
             {backLabel}
           </button>
         )}
@@ -76,9 +76,9 @@ export default function PaymentForm({ amount, description, onSuccess, onBack, ba
           type="button"
           className="btn btn-primary"
           onClick={isPaystackStubbed ? handleStubPayment : handleRealPayment}
-          disabled={loading}
+          disabled={loading || busy}
         >
-          {loading ? <span className="spinner" /> : `Pay ₦${amount.toLocaleString()} with Paystack`}
+          {loading || busy ? <span className="spinner" /> : `Pay ₦${amount.toLocaleString()} with Paystack`}
         </button>
       </div>
     </div>

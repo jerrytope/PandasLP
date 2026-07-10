@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 
@@ -120,7 +120,7 @@ export default function DashboardPage() {
     const deadlineAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
     await supabase.from('cases').update({ status: 'letter_served', deadline_at: deadlineAt }).eq('id', caseId)
     // Trigger Day 0 follow-up email
-    await fetch('/api/send-email', {
+    await authedFetch('/api/send-email', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ caseId, day: 0 }),

@@ -1,3 +1,5 @@
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+
 export const runtime = 'nodejs'
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
@@ -5,7 +7,19 @@ const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const DOC_TYPES   = ['application/pdf']
 
+const RATE_LIMIT = 10
+const RATE_WINDOW_MS = 10 * 60 * 1000
+const MAX_FILE_BYTES = 10 * 1024 * 1024
+
 export async function POST(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`extract:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many uploads — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey || apiKey.includes('placeholder')) {
     return Response.json({ error: 'API not configured.' }, { status: 503 })
@@ -21,6 +35,14 @@ export async function POST(req: Request) {
   const { fileBase64, mediaType, filename } = body
   if (!fileBase64 || !mediaType || !filename) {
     return Response.json({ error: 'Missing file data.' }, { status: 400 })
+  }
+
+  // Base64 inflates size by ~4/3 — this is only an estimate, but it's enough to reject the
+  // pathological "send something huge directly to the API" case the client-side check
+  // (AgentChat.tsx) can't enforce on its own.
+  const approxBytes = (fileBase64.length * 3) / 4
+  if (approxBytes > MAX_FILE_BYTES) {
+    return Response.json({ error: 'File too large. Maximum size is 10 MB.' }, { status: 413 })
   }
 
   const isImage = IMAGE_TYPES.includes(mediaType)

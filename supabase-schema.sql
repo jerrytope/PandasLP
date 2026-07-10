@@ -17,6 +17,10 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- callback number for the pandas-serves (₦25,000) tier — collected during intake so a
   -- lawyer can reach the client once payment is confirmed; see lib/agents.ts CLIENT_PHONE block
   client_phone     TEXT,
+  -- the price quoted for THIS case's drafted document (varies by agent/delivery choice) —
+  -- set when the document is finalized, checked against the real Paystack amount at
+  -- /api/verify-payment so a client can't just declare an arbitrary amount "paid"
+  expected_amount  INTEGER,
   amount_paid      INTEGER     NOT NULL DEFAULT 0,
   deadline_at      TIMESTAMPTZ,
   -- follow-up email tracking
@@ -104,3 +108,6 @@ CREATE TRIGGER cases_touch
 --   ^ Powers the "Our Ref: PLP/<year>/<case_number>" line on generated letters (see lib/agents.ts).
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_phone TEXT;
 --   ^ Callback number for the pandas-serves (₦25,000) tier — see lib/agents.ts CLIENT_PHONE block.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS expected_amount INTEGER;
+--   ^ Quoted price for this case, checked against the real Paystack amount at payment time
+--     (see app/api/verify-payment/route.ts).

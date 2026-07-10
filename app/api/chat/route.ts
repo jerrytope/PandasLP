@@ -1,9 +1,21 @@
 import { getAgent } from '@/lib/agents'
 import { capHistory, type ChatMessage } from '@/lib/chatHistory'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 
 export const runtime = 'edge'
 
+const RATE_LIMIT = 30
+const RATE_WINDOW_MS = 5 * 60 * 1000
+
 export async function POST(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`chat:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
   let body: { messages?: ChatMessage[]; agentId?: string }
   try {
     body = await req.json()

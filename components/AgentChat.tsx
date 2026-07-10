@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react'
 import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { extractDocument, extractOptions, extractClientPhone, type DraftDocument } from '@/lib/agentChatParsing'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
@@ -72,6 +72,8 @@ export default function AgentChat({
   const [draftDoc, setDraftDoc] = useState<DraftDocument | null>(initialDraftDoc ?? null)
   const [paid, setPaid] = useState(false)
   const [payOpen, setPayOpen] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [payError, setPayError] = useState('')
   const [previewUrl, setPreviewUrl] = useState('')
   const [caseId, setCaseId] = useState<string | null>(initialCaseId ?? null)
   const [extracting, setExtracting] = useState(false)
@@ -179,6 +181,7 @@ export default function AgentChat({
           document_title: newDoc.title,
           document_body: newDoc.body,
           status: 'document_ready',
+          expected_amount: newDoc.price ?? amount,
           ...(deadline ? { deadline_at: deadline } : {}),
         })
         .eq('id', id)
@@ -191,26 +194,54 @@ export default function AgentChat({
     await supabase.from('cases').update({ client_phone: phone }).eq('id', caseInfo.id)
   }
 
-  async function handlePaymentDone() {
-    setPaid(true)
-    setPayOpen(false)
+  // Paystack (or the stub checkout) reports success client-side, but that alone proves
+  // nothing — anyone can call this with a fabricated reference. The case is only marked
+  // paid once /api/verify-payment independently confirms the transaction with Paystack
+  // (or, in stub mode, once we've confirmed there's genuinely no live gateway to check
+  // against). The watermark-free document preview reads `paid` state, so this is also
+  // what keeps an unpaid visitor from getting a clean copy of the letter.
+  async function handlePaymentDone(response: { reference: string; stub?: boolean }) {
+    if (!caseId || !userId) {
+      // No case/user to attach a payment to — nothing to verify. Shouldn't happen in
+      // practice since sign-in is required before a case exists.
+      setPaid(true)
+      setPayOpen(false)
+      return
+    }
 
-    if (caseId && userId) {
-      await supabase
-        .from('cases')
-        .update({
-          status: 'paid',
-          amount_paid: effectiveAmount,
-          delivery_option: draftDoc?.priceLabel?.toLowerCase().includes('pandas') ? 'pandas-serves' : 'self-serve',
-        })
-        .eq('id', caseId)
+    setVerifying(true)
+    setPayError('')
+    try {
+      const res = await authedFetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          caseId,
+          reference: response.reference,
+          amount: effectiveAmount,
+          stub: Boolean(response.stub),
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setPayError(data.error || 'Could not verify your payment. Please try again.')
+        return
+      }
+
+      setPaid(true)
+      setPayOpen(false)
 
       // Fire confirmation email — non-blocking
-      fetch('/api/send-email', {
+      authedFetch('/api/send-email', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ caseId, type: 'payment_confirmed' }),
       }).catch((err) => console.error('Failed to send payment confirmation email:', err))
+    } catch (err) {
+      console.error('Payment verification failed:', err)
+      setPayError('Network error while verifying your payment. Please try again.')
+    } finally {
+      setVerifying(false)
     }
   }
 
@@ -396,7 +427,14 @@ export default function AgentChat({
               description={effectiveDescription}
               onSuccess={handlePaymentDone}
               onBack={() => setPayOpen(false)}
+              busy={verifying}
             />
+            {verifying && (
+              <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 10 }}>
+                Verifying your payment…
+              </p>
+            )}
+            {payError && <p className={styles.bubbleError} style={{ marginTop: 10 }}>{payError}</p>}
           </div>
         ) : (
           <>

@@ -17,7 +17,7 @@ This is NOT a document template tool. Pandas LP is a law firm that can represent
 | Database | Supabase PostgreSQL — `cases` + `messages` tables with RLS |
 | Email | Nodemailer + Gmail SMTP — follow-up emails at Day 0 / Day 3 / Day 7 after letter served |
 | PDF | jsPDF v4 — vector panda logo, letterhead, watermark, rich text |
-| Payments | Paystack Inline (stub when key is placeholder) |
+| Payments | Paystack Inline (stub when key is placeholder), independently verified server-side before a case is marked paid |
 | Fonts | next/font/google — Bricolage Grotesque (display), Inter (body), DM Mono (mono) |
 | Animations | CSS-only IntersectionObserver scroll reveals (`Reveal.jsx`) |
 
@@ -31,7 +31,8 @@ NEXT_PUBLIC_SUPABASE_URL   — https://xpjjndslodmpgcykajlm.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY — Supabase anon/public key
 SUPABASE_SERVICE_ROLE_KEY  — sb_secret_... (server-side only, never in client code)
 GMAIL_APP_PASSWORD         — Google App Password for pandaslegalpractitioners@gmail.com (not the regular password)
-NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY — Paystack public key
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY — Paystack public key (client-side checkout)
+PAYSTACK_SECRET_KEY        — Paystack secret key (server-side only — verifies payments in app/api/verify-payment/route.ts). Placeholder = stub mode, same as the public key.
 NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.ng)
 ```
 
@@ -57,8 +58,13 @@ NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.ng)
 
 ### Dashboard & Follow-up
 - `app/dashboard/page.tsx` — Case history. Visual 4-step timeline (Paid → Served → Filed → Judgment Won). Mark as Served button (triggers Day 0 email + sets 7-day deadline). Escalate to Court Filing CTA (appears when deadline passes). Enforce Judgment CTA (appears after judgment won).
-- `app/api/send-email/route.ts` — Sends Resend email for day 0/3/7. Updates `email_dayN_sent` on the case.
+- `app/api/send-email/route.ts` — Sends the Nodemailer/Gmail SMTP email for payment-confirmed or day 0/3/7. Requires the caller's session to match the case's owner (see Payments below for the same pattern). Updates `email_dayN_sent` on the case.
 - `lib/emailTemplates.ts` — HTML email templates for Day 0, Day 3, Day 7 follow-ups.
+
+### Payments
+- `app/api/verify-payment/route.ts` — Node runtime. The only place a case is ever marked `paid`. Requires the caller's session to own the case, then independently confirms the transaction with Paystack's `/transaction/verify` endpoint (or, if `PAYSTACK_SECRET_KEY` is still a placeholder, accepts the stub checkout's result — there's no real gateway to check against yet). Compares the verified amount to `cases.expected_amount` and rejects a mismatch. For `small-claims`, `delivery_option` (`self-serve` vs `pandas-serves`) is derived from the verified amount, never trusted from the client.
+- `cases.expected_amount` — set in `AgentChat.tsx` when a document is finalized (`newDoc.price ?? amount`), i.e. the price actually quoted for that case. This is what `/api/verify-payment` checks the real payment against.
+- `components/PaymentForm.jsx` / `lib/paystackHelper.js` — client-side checkout only (real Paystack Inline or the stub timeout). Never itself marks anything paid — always hands the result to `AgentChat.tsx`'s `handlePaymentDone`, which calls `/api/verify-payment`.
 
 ### Blog
 - `lib/blogPosts.ts` — 4 debt recovery articles as TypeScript objects with inline HTML content.
