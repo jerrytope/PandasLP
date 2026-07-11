@@ -156,13 +156,13 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </div>
 
             <h1 className="hero-headline" style={{ animation: 'fade-in-up 0.6s ease 0.1s both' }}>
-              Your AI<br />
-              legal team.
+              They owe you money.<br />
+              We'll get it back.
             </h1>
 
             <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 0.2s both' }}>
-              Recover what you're owed. AI drafts the demand letter,
-              real lawyers take it to court. From ₦10,000.
+              AI drafts the demand letter. Real lawyers take it to court.
+              From ₦10,000.
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 0.3s both' }}>

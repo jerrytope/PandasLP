@@ -20,8 +20,8 @@ const mono = DM_Mono({
 })
 
 export const metadata = {
-  title: 'Pandas LP — Your AI Legal Team',
-  description: 'Recover what you\'re owed. AI drafts the demand letter, real lawyers take it to court. Nigeria\'s first AI-native law firm.',
+  title: 'Pandas LP — They owe you money. We\'ll get it back.',
+  description: 'AI drafts the demand letter, real lawyers take it to court. Nigeria\'s first AI-native law firm. From ₦10,000.',
   icons: { icon: '/favicon.png' },
 }
 

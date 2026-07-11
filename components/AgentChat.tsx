@@ -28,6 +28,8 @@ interface AgentChatProps {
   // Sent automatically as the first user turn on mount — used to hand the agent context
   // (e.g. escalating an existing case) without making the user retype it.
   initialAutoMessage?: string
+  // Render as a page-filling section (no dark backdrop, no floating card) instead of a modal overlay
+  fullPage?: boolean
 }
 
 function renderContent(text: string): ReactNode {
@@ -60,6 +62,7 @@ export default function AgentChat({
   initialMessages,
   initialDraftDoc,
   initialAutoMessage,
+  fullPage = false,
 }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessages && initialMessages.length > 0
@@ -383,12 +386,21 @@ export default function AgentChat({
 
   return (
     <div
-      className={styles.overlay}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
+      className={fullPage ? styles.pageOuter : styles.overlay}
+      onMouseDown={
+        fullPage
+          ? undefined
+          : (e) => {
+              if (e.target === e.currentTarget) onClose()
+            }
+      }
     >
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label={agent.name}>
+      <div
+        className={fullPage ? styles.pageModal : styles.modal}
+        role={fullPage ? undefined : 'dialog'}
+        aria-modal={fullPage ? undefined : true}
+        aria-label={agent.name}
+      >
         <div className={styles.header}>
           <span className={styles.headerDot} style={{ background: agent.color }} />
           <div className={styles.headerInfo}>

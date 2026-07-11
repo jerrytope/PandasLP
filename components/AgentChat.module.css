@@ -57,6 +57,42 @@
   }
 }
 
+.pageOuter {
+  position: relative;
+  min-height: 100dvh;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  padding: 88px 0 0;
+}
+
+.pageModal {
+  width: 100%;
+  max-width: 820px;
+  height: calc(100dvh - 88px);
+  max-height: calc(100dvh - 88px);
+  background: var(--surface);
+  border: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalIn 0.35s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pageModal {
+    animation: none;
+  }
+}
+
+@media (min-width: 720px) {
+  .pageModal {
+    border-left: 1px solid var(--border-subtle);
+    border-right: 1px solid var(--border-subtle);
+  }
+}
+
 .header {
   display: flex;
   align-items: center;

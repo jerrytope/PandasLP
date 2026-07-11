@@ -62,7 +62,7 @@ function CaseTimeline({ status }: { status: string }) {
               <div style={{
                 width: 10, height: 10, borderRadius: '50%',
                 background: done ? 'var(--accent)' : 'var(--border-strong)',
-                boxShadow: active ? '0 0 0 3px rgba(230,57,70,0.25)' : 'none',
+                boxShadow: active ? '0 0 0 3px rgba(214,187,128,0.25)' : 'none',
                 transition: 'background 0.2s',
               }} />
               <span style={{
@@ -208,7 +208,7 @@ export default function DashboardPage() {
                   className="card"
                   style={{
                     padding: '22px 24px',
-                    borderColor: urgent ? 'rgba(230,57,70,0.35)' : overdue ? 'rgba(230,57,70,0.6)' : undefined,
+                    borderColor: urgent ? 'rgba(239,68,68,0.35)' : overdue ? 'rgba(239,68,68,0.6)' : undefined,
                   }}
                 >
                   {/* Top row */}
@@ -248,7 +248,7 @@ export default function DashboardPage() {
                       )}
                       <span className="badge">{STAGE_LABEL[c.status] ?? c.status}</span>
                       <Link
-                        href={`/?resume=${c.id}`}
+                        href={`/agent/${c.agent_id}?resume=${c.id}`}
                         className="btn"
                         style={{ fontSize: 12, padding: '7px 14px', borderRadius: 10 }}
                       >
@@ -263,8 +263,8 @@ export default function DashboardPage() {
                       marginTop: 14,
                       padding: '10px 14px',
                       borderRadius: 10,
-                      background: 'rgba(62,207,142,0.08)',
-                      border: '1px solid rgba(62,207,142,0.25)',
+                      background: 'rgba(143,174,198,0.08)',
+                      border: '1px solid rgba(143,174,198,0.25)',
                       fontSize: 13,
                       display: 'flex',
                       alignItems: 'center',
@@ -300,8 +300,8 @@ export default function DashboardPage() {
                     {(isServed && overdue) && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                         <div style={{
-                          background: 'rgba(245,166,35,0.06)',
-                          border: '1px solid rgba(245,166,35,0.2)',
+                          background: 'rgba(214,187,128,0.06)',
+                          border: '1px solid rgba(214,187,128,0.2)',
                           borderRadius: 10,
                           padding: '12px 16px',
                           fontSize: 13,
@@ -315,7 +315,7 @@ export default function DashboardPage() {
                         </div>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <Link
-                            href={`/?resume=${c.id}&fileCourt=1`}
+                            href={`/agent/${c.agent_id}?resume=${c.id}&fileCourt=1`}
                             className="btn btn-primary"
                             style={{ fontSize: 13, alignSelf: 'flex-start' }}
                           >
