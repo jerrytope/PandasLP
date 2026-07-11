@@ -661,7 +661,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               { icon: <Clock size={18} strokeWidth={1.5} />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 3, Day 7 — escalating pressure on the debtor, zero effort from you.' },
               { icon: <TrendingUp size={18} strokeWidth={1.5} />,title: 'Transparent Pricing',      body: 'Know exactly what you\'ll pay before you start. No retainers, no surprise bills.' },
               { icon: <Users size={18} strokeWidth={1.5} />,     title: 'Real Lawyers',             body: 'AI drafts, humans review. Licensed practitioners file and appear in court on your behalf.' },
-              { icon: <Shield size={18} strokeWidth={1.5} />,    title: 'Bank-Grade Security',      body: 'Supabase row-level encryption. Only you and your assigned lawyer can see your case.' },
             ].map((f, i) => (
               <Reveal key={f.title} delay={(i + 1) * 60}>
                 <div className="bento-card">

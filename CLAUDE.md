@@ -46,9 +46,14 @@ NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.ng)
 - `app/api/extract/route.ts` — Node runtime. Receives `{fileBase64, mediaType, filename}`, sends to Claude for fact extraction from uploaded PDFs/images. Returns `{facts}` string.
 
 ### Document Flow
-- `components/AgentChat.tsx` — Main chat modal. Handles: interview, file upload (📎), document block parsing (`<<<DOCUMENT>>>`), watermarked PDF preview, payment, Supabase persistence.
+- `components/AgentChat.tsx` — Handles: interview, file upload (📎), document block parsing (`<<<DOCUMENT>>>`), watermarked PDF preview, payment, Supabase persistence. Takes a `fullPage` prop: `false` renders the original floating modal card (`.overlay`/`.modal` in `AgentChat.module.css`); `true` renders as a page-filling section (`.pageOuter`/`.pageModal`) with no dark backdrop, used by the dedicated chat route below.
 - `lib/pdfGenerator.js` — jsPDF: panda logo, letterhead, footer, watermark, bold text rendering, ₦→N substitution.
 - `DOCUMENT_BLOCK_RE` regex in AgentChat: parses `<<<DOCUMENT>>>TITLE/PRICE/PRICE_LABEL/---/body<<<END_DOCUMENT>>>`.
+
+### Chat Page vs. Marketing Page
+- `app/page.jsx` — Marketing homepage only (hero, pricing, agents, FAQ via `LandingPage.jsx`) plus the custom-claim intake, payment-gate, and judgment-enforcement judgment-amount intake steps. It no longer renders `AgentChat` directly — every "open an agent" action calls `router.push('/agent/<agentId>')`.
+- `app/agent/[agentId]/page.jsx` — The chat's own route (e.g. `/agent/small-claims`). Client component: resolves `agentId` against `AGENTS`/`getAgentPayment`, redirects to `/` if invalid, shows `AuthModal` inline if signed out (no redirect-then-return — the user finishes sign-in on this same page via cross-tab session detection), and renders `AgentChat` with `fullPage`. Reads `?resume=<caseId>` (loads case + messages from Supabase, same as the old in-page flow), `?fileCourt=1` (injects the standard court-filing escalation auto-message), and `?auto=<urlencoded text>` (arbitrary auto-message — used by the judgment-enforcement handoff from `EnforcementIntake`). On approval, `lawyer-consultation` shows `LawyerConsultBooking` in place; every other agent redirects to `/dashboard`.
+- Dashboard "Resume" / "Prepare Court Filing" links point at `/agent/<agentId>?resume=<id>[&fileCourt=1]`. "Enforce Judgment" still points at `/?enforceFrom=<id>` — the judgment-amount intake (`EnforcementIntake`) stays on the homepage since the agent isn't known until it creates the case, then it pushes to `/agent/judgment-enforcement?resume=<id>&auto=...`.
 
 ### Auth & Database
 - `lib/supabaseClient.ts` — Browser Supabase client (anon key, localStorage session).
@@ -76,7 +81,7 @@ NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.ng)
 - `lib/agentServiceMap.ts` — Maps AgentId → service. `getAgentPayment(agentId)` returns `{amount, description, kind}`.
 
 ### Design System
-- `app/globals.css` — Full design system. Tokens: `--bg #060605`, `--accent #e63946`, `--gold #c9a36a`, `--ease-out cubic-bezier(0.16,1,0.3,1)`.
+- `app/globals.css` — Navy + gold design system (rebranded from an earlier dark-green/amber palette — if you see hardcoded `rgba(245,166,35,...)`, `rgba(62,207,142,...)`, or `rgba(8,12,10,...)` anywhere, that's leftover old-palette drift, not intentional). Core tokens: `--bg-0 #182A3A`, `--bg-1 #1F3446`, `--bg-2 #28455A`, `--accent #D6BB80` (glow `rgba(214,187,128,0.3)`), `--accent-hover #C7A968`, `--secondary #8FAEC6`, `--danger #EF4444`, `--text-1 #F3EFE3`, `--ease-out cubic-bezier(0.16,1,0.3,1)`. Legacy aliases (`--bg`, `--surface`, `--border`) map onto these so older component CSS didn't need touching.
 - `components/Reveal.jsx` — IntersectionObserver scroll reveal wrapper. Props: `delay` (ms).
 
 ---
