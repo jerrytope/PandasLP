@@ -90,7 +90,7 @@ export default function Footer() {
             </div>
             <div style={{ marginTop: 20 }}>
               <span className="badge badge-accent" style={{ fontSize: 10 }}>
-                CAC Registered
+                CAC BN 9646741
               </span>
             </div>
           </div>
@@ -99,7 +99,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="footer-bottom">
           <p className="footer-disclaimer">
-            Pandas LP is a CAC-registered company and AI-native law firm. Our AI agents conduct a guided
+            Pandas LP (CAC BN 9646741) is a CAC-registered business and AI-native law firm. Our AI agents conduct a guided
             interview and draft court-ready legal documents from Nigerian legal templates. For matters
             requiring a licensed legal practitioner to advise, file, or appear in court, our lawyers are
             available and handle all filings on your behalf. AI-generated documents are prepared for your

@@ -58,7 +58,7 @@ const COMING_SOON_SERVICES = [
 
 /* ── Trust badges marquee items ── */
 const TRUST_BADGES = [
-  { label: 'CAC Registered' },
+  { label: 'CAC BN 9646741' },
   { label: 'AI-Powered Documents' },
   { label: 'Licensed Lawyers' },
   { label: 'Supabase Encrypted' },
@@ -72,7 +72,7 @@ const FAQ_TABS = ['Getting Started', 'Pricing', 'Legal Process', 'Security']
 
 const FAQ_DATA = {
   'Getting Started': [
-    { q: 'Is Pandas LP a real law firm?', a: 'Yes. Pandas LP is a registered company with the Nigerian Corporate Affairs Commission (CAC). Our AI agents draft your documents; our licensed lawyers review, serve, and file them.' },
+    { q: 'Is Pandas LP a real law firm?', a: 'Yes. Pandas LP is a registered business with the Nigerian Corporate Affairs Commission (CAC BN 9646741). Our AI agents draft your documents; our licensed lawyers review, serve, and file them.' },
     { q: 'How quickly can I get started?', a: 'Most clients complete the AI interview and receive a draft demand letter in under 10 minutes. From there, you\'ll review, pay, and Pandas LP serves the letter within 24 business hours.' },
     { q: 'Do I need to know anything about law?', a: 'Not at all. Our AI agent asks you plain-English questions about who owes you, how much, and why. You answer in your own words. The AI handles the legal language.' },
   ],
@@ -99,7 +99,6 @@ const LAWYER_EQUIV = 80000
 /* ── Comparison rows ── */
 const COMPARE = [
   { label: 'Time to start',       pandas: '10 minutes',           trad: '2–4 weeks',       diy: 'Weeks of research' },
-  { label: 'Cost',                pandas: 'From ₦10,000',         trad: '₦50,000+',        diy: 'Free but risky' },
   { label: 'Legal expertise',     pandas: '✓ AI + lawyers',       trad: '✓ Lawyers only',  diy: '✗ None' },
   { label: 'Automated follow-up', pandas: '✓ Day 0, 3, 7',        trad: 'Manual',          diy: 'You chase them' },
   { label: 'Court filing',        pandas: '✓ Handled by us',      trad: '✓ Handled',       diy: '✗ Figure it out' },
@@ -156,13 +155,13 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </div>
 
             <h1 className="hero-headline" style={{ animation: 'fade-in-up 0.6s ease 0.1s both' }}>
-              They owe you money.<br />
-              We'll get it back.
+              They owe you.<br />
+              We go after it.
             </h1>
 
             <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 0.2s both' }}>
-              AI drafts the demand letter. Real lawyers take it to court.
-              From ₦10,000.
+              AI drafts the demand letter. A licensed lawyer serves it and,
+              if needed, takes it to court.
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 0.3s both' }}>
@@ -179,7 +178,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </div>
 
             <div className="hero-trust" style={{ animation: 'fade-in-up 0.6s ease 0.4s both' }}>
-              <span>CAC Registered</span>
+              <span>CAC BN 9646741</span>
               <span className="hero-trust-dot" />
               <span>AI-Powered</span>
               <span className="hero-trust-dot" />
@@ -269,8 +268,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               {
                 num: '03',
                 icon: <Send size={22} strokeWidth={1.5} />,
-                title: 'We serve it and follow up',
-                body: 'Pandas LP serves the letter on the debtor. Escalating follow-up emails go out at Day 3 and Day 7 automatically. If they ignore all three, we file your court claim.',
+                title: 'A licensed lawyer serves it and follows up',
+                body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor — not an email bot. Escalating follow-up notices go out at Day 3 and Day 7 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
                 detail: 'Day 0 → Day 3 → Day 7 → Court',
               },
             ].map((step, i) => (
@@ -309,16 +308,16 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             {[
               {
                 icon: <Brain size={20} strokeWidth={1.5} />,
-                iconBg: 'rgba(245,166,35,0.12)',
-                iconColor: '#F5A623',
+                iconBg: 'rgba(214, 187, 128, 0.12)',
+                iconColor: '#D6BB80',
                 tag: 'Structured Intake',
                 title: 'Asks the right questions in the right order',
                 body: 'The interview follows the same intake logic a senior litigator uses — debtor identity, relationship to the debt, contract terms, payment history, evidence quality, limitation period. Every time, in the right sequence, nothing skipped.',
               },
               {
                 icon: <Eye size={20} strokeWidth={1.5} />,
-                iconBg: 'rgba(62,207,142,0.12)',
-                iconColor: '#3ECF8E',
+                iconBg: 'rgba(143, 174, 198, 0.12)',
+                iconColor: '#8FAEC6',
                 tag: 'Case Analysis',
                 title: 'Spots the holes before the judge does',
                 body: 'If your dates don\'t add up, it flags it. If your only evidence is a verbal promise, it tells you that\'s a weak case and explains why. It asks follow-up questions until your case is tight enough to put in front of a court.',
@@ -463,8 +462,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <span className="label-mono">Available for Testing</span>
               <span style={{
-                background: 'rgba(245,166,35,0.12)', color: 'var(--accent)',
-                border: '1px solid rgba(245,166,35,0.25)',
+                background: 'rgba(214, 187, 128, 0.12)', color: 'var(--accent)',
+                border: '1px solid rgba(214, 187, 128, 0.25)',
                 borderRadius: 'var(--radius-pill)', padding: '3px 10px',
                 fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
               }}>BETA</span>
@@ -494,8 +493,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                         {svc.icon}
                       </div>
                       <span style={{
-                        background: 'rgba(245,166,35,0.1)', color: 'var(--accent)',
-                        border: '1px solid rgba(245,166,35,0.2)',
+                        background: 'rgba(214, 187, 128, 0.1)', color: 'var(--accent)',
+                        border: '1px solid rgba(214, 187, 128, 0.2)',
                         borderRadius: 4, padding: '2px 7px',
                         fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
                       }}>BETA</span>
@@ -810,7 +809,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <div aria-hidden="true" style={{
                 position: 'absolute', top: '-60%', left: '50%', transform: 'translateX(-50%)',
                 width: 500, height: 300,
-                background: 'radial-gradient(circle, rgba(245,166,35,0.07) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(214, 187, 128, 0.07) 0%, transparent 70%)',
                 pointerEvents: 'none',
               }} />
 

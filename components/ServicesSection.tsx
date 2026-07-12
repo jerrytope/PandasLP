@@ -34,22 +34,22 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
             position: 'relative',
             overflow: 'hidden',
             padding: 'clamp(28px,4vw,48px) clamp(24px,5vw,56px)',
-            borderColor: 'rgba(230,57,70,0.35)',
+            borderColor: 'rgba(214, 187, 128, 0.35)',
           }}
         >
           {/* accent bar */}
           <span style={{
             position: 'absolute', top: 0, left: 0,
             width: '100%', height: 3,
-            background: 'linear-gradient(90deg, #e63946, #c9a36a)',
+            background: 'linear-gradient(90deg, #D6BB80, #A08348)',
           }} />
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div style={{ flex: '1 1 320px', minWidth: 0 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
                 <span style={{
-                  background: 'rgba(230,57,70,0.15)', color: 'var(--accent)',
-                  border: '1px solid rgba(230,57,70,0.3)',
+                  background: 'rgba(214, 187, 128, 0.15)', color: 'var(--accent)',
+                  border: '1px solid rgba(214, 187, 128, 0.3)',
                   borderRadius: 4, padding: '3px 10px',
                   fontSize: 11, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
                 }}>FLAGSHIP SERVICE</span>
@@ -113,8 +113,8 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
             <span className="label-mono">Also Available</span>
             <span style={{
-              background: 'rgba(201,163,106,0.15)', color: 'var(--gold)',
-              border: '1px solid rgba(201,163,106,0.3)',
+              background: 'rgba(214, 187, 128, 0.15)', color: 'var(--gold)',
+              border: '1px solid rgba(214, 187, 128, 0.3)',
               borderRadius: 4, padding: '2px 8px',
               fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
             }}>AVAILABLE FOR TESTING</span>
@@ -144,8 +144,8 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{agent.shortName}</span>
                     <span style={{
-                      background: 'rgba(201,163,106,0.1)', color: 'var(--gold)',
-                      border: '1px solid rgba(201,163,106,0.25)',
+                      background: 'rgba(214, 187, 128, 0.1)', color: 'var(--gold)',
+                      border: '1px solid rgba(214, 187, 128, 0.25)',
                       borderRadius: 3, padding: '1px 6px',
                       fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
                     }}>BETA</span>

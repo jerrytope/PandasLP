@@ -1,7 +1,7 @@
 # Pandas LP — Project Context for Claude
 
 ## What This Is
-Pandas LP is an AI-native law firm in Nigeria. It is a registered company (CAC) and will notify the NBA shortly. The product is a Next.js web app where AI agents conduct a guided legal interview, draft court-ready documents, and Pandas LP's team serves and files them on behalf of clients.
+Pandas LP is an AI-native law firm in Nigeria. It is a registered business with the CAC (Business Name, BN 9646741 — not a limited liability company registration) and will notify the NBA shortly. The product is a Next.js web app where AI agents conduct a guided legal interview, draft court-ready documents, and Pandas LP's team serves and files them on behalf of clients.
 
 This is NOT a document template tool. Pandas LP is a law firm that can represent clients in court.
 
@@ -113,8 +113,6 @@ After `judgment_obtained`: "Enforce Judgment" button appears (opens `judgment-en
 
 ## Deferred Work (Do Not Build Until Asked)
 
-**Phase 1 — CAC Credibility Signals:** Add RC number to footer + hero trust strip. **Hold until incorporation documents arrive.**
-
 **Phase 7 — Accounting Integrations:** Wave, QuickBooks, Sage — detect overdue invoices automatically. **Hold until user is ready to scale.**
 
 ---
@@ -148,3 +146,4 @@ npm run dev
 - Email: pandaslegalpractitioners@gmail.com
 - Phone: +234 811 808 0189
 - Domain: pandaslp.ng
+- CAC registration: BN 9646741 (Business Name, not a limited liability company registration — this is a different CAC registration type than "RC"; site copy says "registered business," not "registered company," for this reason). Shown in the hero trust strip, the homepage trust badges marquee, and the footer.

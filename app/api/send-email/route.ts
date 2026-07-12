@@ -72,6 +72,7 @@ export async function POST(req: Request) {
       debtorName: caseData.document_title ?? 'the debtor',
       amount: caseData.amount_paid ?? 0,
       caseId,
+      agentId: caseData.agent_id,
       day,
       siteUrl,
     }
