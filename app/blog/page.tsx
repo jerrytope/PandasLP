@@ -2,9 +2,24 @@ import Link from 'next/link'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 import type { Metadata } from 'next'
 
+const TITLE = 'Legal Resources'
+const DESCRIPTION = 'Plain-English guides on Nigerian debt recovery, Letters of Demand, Small Claims Court, and your legal rights.'
+
 export const metadata: Metadata = {
-  title: 'Legal Resources — Pandas LP',
-  description: 'Plain-English guides on Nigerian debt recovery, Letters of Demand, Small Claims Court, and your legal rights.',
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: '/blog' },
+  openGraph: {
+    type: 'website',
+    title: `${TITLE} — Pandas LP`,
+    description: DESCRIPTION,
+    url: '/blog',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${TITLE} — Pandas LP`,
+    description: DESCRIPTION,
+  },
 }
 
 function formatDate(iso: string) {

@@ -16,10 +16,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = getPostBySlug(slug)
   if (!post) return {}
   return {
-    title: `${post.title} — Pandas LP`,
+    title: post.title,
     description: post.description,
+    alternates: { canonical: `/blog/${post.slug}` },
+    openGraph: {
+      type: 'article',
+      title: `${post.title} — Pandas LP`,
+      description: post.description,
+      url: `/blog/${post.slug}`,
+      publishedTime: post.date,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${post.title} — Pandas LP`,
+      description: post.description,
+    },
   }
 }
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.ng'
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -30,8 +45,28 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getPostBySlug(slug)
   if (!post) notFound()
 
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: { '@type': 'Organization', name: 'Pandas LP' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Pandas LP',
+      logo: { '@type': 'ImageObject', url: `${SITE_URL}/logo-mark.png` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/blog/${post.slug}` },
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <header className="navbar">
         <div className="container navbar-inner">
           <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
