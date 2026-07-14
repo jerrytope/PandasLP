@@ -9,6 +9,7 @@ import {
   CalendarCheck, Bell, Brain, Eye, AlertTriangle, Heart
 } from 'lucide-react'
 import Reveal from './Reveal'
+import HiwFlowLine from './HiwFlowLine'
 
 /* ── Services config ── */
 const TESTING_SERVICES = [
@@ -145,6 +146,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
       {/* ══ HERO ══ */}
       <section className="hero" aria-label="Hero">
         <div className="hero-glow" aria-hidden="true" />
+        <div className="hero-glow-secondary" aria-hidden="true" />
 
         <div className="hero-grid container">
           {/* Left copy */}
@@ -248,6 +250,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <p>Our AI handles the paperwork. Our lawyers handle the court. You just answer a few questions.</p>
             </div>
           </Reveal>
+
+          <HiwFlowLine />
 
           <div className="hiw-grid">
             {[
@@ -806,7 +810,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               overflow: 'hidden',
             }}>
               {/* Background glow */}
-              <div aria-hidden="true" style={{
+              <div className="founding-glow" aria-hidden="true" style={{
                 position: 'absolute', top: '-60%', left: '50%', transform: 'translateX(-50%)',
                 width: 500, height: 300,
                 background: 'radial-gradient(circle, rgba(214, 187, 128, 0.07) 0%, transparent 70%)',
@@ -935,8 +939,14 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
       </section>
 
       {/* ══ BOTTOM CTA ══ */}
-      <section className="section" aria-label="Get started">
-        <div className="container" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto' }}>
+      <section className="section" aria-label="Get started" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="bottom-cta-glow" aria-hidden="true" style={{
+          position: 'absolute', bottom: '-40%', left: '50%', transform: 'translateX(-50%)',
+          width: 520, height: 320,
+          background: 'radial-gradient(circle, rgba(214, 187, 128, 0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div className="container" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto', position: 'relative' }}>
           <Reveal>
             <span className="label-mono">Ready to start?</span>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,4vw,48px)', fontWeight: 800, letterSpacing: '-0.03em', marginTop: 10, marginBottom: 16, lineHeight: 1.1 }}>

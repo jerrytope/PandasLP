@@ -508,6 +508,31 @@ h1, h2, h3, h4, h5, h6 {
   height: 600px;
   background: radial-gradient(circle, rgba(214, 187, 128,0.06) 0%, transparent 70%);
   pointer-events: none;
+  animation: heroGlowDrift 14s ease-in-out infinite alternate;
+}
+
+.hero-glow-secondary {
+  position: absolute;
+  bottom: -15%;
+  left: -8%;
+  width: 460px;
+  height: 460px;
+  background: radial-gradient(circle, rgba(143, 174, 198, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  animation: heroGlowDrift 18s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes heroGlowDrift {
+  0% { transform: translate(0, 0) scale(1); opacity: 0.75; }
+  100% { transform: translate(-36px, 28px) scale(1.15); opacity: 1; }
+}
+
+.founding-glow, .bottom-cta-glow {
+  animation: heroGlowDrift 16s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-glow, .hero-glow-secondary, .founding-glow, .bottom-cta-glow { animation: none; }
 }
 
 .hero-grid {
@@ -754,6 +779,50 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-3);
   font-size: 20px;
   align-self: center;
+}
+
+.hiw-flow-line {
+  display: none;
+  width: 100%;
+  height: 28px;
+  margin-top: 40px;
+  overflow: visible;
+}
+@media (min-width: 860px) {
+  .hiw-flow-line { display: block; }
+  .hiw-flow-line + .hiw-grid { margin-top: 8px; }
+}
+
+.hiw-flow-path {
+  fill: none;
+  stroke: var(--border-focus);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+.hiw-flow-path-drawn {
+  stroke: var(--accent);
+  stroke-dasharray: 68;
+  stroke-dashoffset: 68;
+  animation: hiwDraw 1.4s var(--ease-out) forwards;
+}
+@keyframes hiwDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+.hiw-flow-node {
+  fill: var(--bg-1);
+  stroke: var(--border-focus);
+  stroke-width: 0.4;
+}
+
+.hiw-flow-pulse {
+  fill: var(--accent);
+  filter: drop-shadow(0 0 3px var(--accent-glow));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-flow-path-drawn { animation: none; stroke-dashoffset: 0; }
+  .hiw-flow-pulse { display: none; }
 }
 
 /* ── Bento Grid ── */
@@ -1232,6 +1301,25 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   margin-bottom: 20px;
+  transition: transform var(--anim-med), box-shadow var(--anim-med);
+  animation: aiIconBreathe 4.5s ease-in-out infinite;
+}
+.ai-feature-card:nth-child(2) .ai-feature-icon { animation-delay: 0.5s; }
+.ai-feature-card:nth-child(3) .ai-feature-icon { animation-delay: 1s; }
+.ai-feature-card:nth-child(4) .ai-feature-icon { animation-delay: 1.5s; }
+
+@keyframes aiIconBreathe {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 0%, transparent); }
+  50% { box-shadow: 0 0 16px 2px color-mix(in srgb, currentColor 35%, transparent); }
+}
+
+.ai-feature-card:hover .ai-feature-icon {
+  transform: scale(1.1);
+  box-shadow: 0 0 22px 3px color-mix(in srgb, currentColor 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-feature-icon { animation: none; }
 }
 
 .ai-feature-title {
