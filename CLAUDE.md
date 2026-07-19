@@ -33,7 +33,7 @@ SUPABASE_SERVICE_ROLE_KEY  — sb_secret_... (server-side only, never in client 
 GMAIL_APP_PASSWORD         — Google App Password for pandaslegalpractitioners@gmail.com (not the regular password)
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY — Paystack public key (client-side checkout)
 PAYSTACK_SECRET_KEY        — Paystack secret key (server-side only — verifies payments in app/api/verify-payment/route.ts). Placeholder = stub mode, same as the public key.
-NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.ng)
+NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
 ```
 
 ---
@@ -136,7 +136,7 @@ npm install
 # Run supabase-schema.sql in Supabase SQL editor
 # Add redirect URLs in Supabase → Auth → URL Configuration:
 #   http://localhost:3000/auth/callback
-#   https://pandaslp.ng/auth/callback
+#   https://pandaslp.com.ng/auth/callback
 npm run dev
 ```
 
@@ -145,5 +145,5 @@ npm run dev
 ## Contact Details (Production)
 - Email: pandaslegalpractitioners@gmail.com
 - Phone: +234 811 808 0189
-- Domain: pandaslp.ng
+- Domain: pandaslp.com.ng
 - CAC registration: BN 9646741 (Business Name, not a limited liability company registration — this is a different CAC registration type than "RC"; site copy says "registered business," not "registered company," for this reason). Shown in the hero trust strip, the homepage trust badges marquee, and the footer.

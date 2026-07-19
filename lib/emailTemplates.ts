@@ -52,7 +52,7 @@ function baseWrapper(content: string) {
           <p style="margin:0;font-size:11px;color:#ABB1A2;line-height:1.6;">
             Pandas LP — Professional Legal Services, Powered by AI<br/>
             pandaslegalpractitioners@gmail.com · +234 811 808 0189<br/>
-            <a href="https://pandaslp.ng" style="color:#ABB1A2;">pandaslp.ng</a>
+            <a href="https://pandaslp.com.ng" style="color:#ABB1A2;">pandaslp.com.ng</a>
           </p>
         </td>
       </tr>

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.ng'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({

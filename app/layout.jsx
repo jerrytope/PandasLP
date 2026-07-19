@@ -19,7 +19,7 @@ const mono = DM_Mono({
   weight: ['400', '500'],
 })
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.ng'
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 const TITLE = 'Pandas LP — They owe you. We go after it.'
 const DESCRIPTION = 'AI drafts the demand letter. A licensed lawyer serves it and, if needed, takes it to court. Nigeria\'s first AI-native law firm.'
 

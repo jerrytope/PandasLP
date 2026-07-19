@@ -73,7 +73,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 3, background: '#D6BB80', display: 'flex' }} />
           <span style={{ fontSize: 20, color: '#ABB1A2', letterSpacing: '0.02em' }}>
-            pandaslp.ng
+            pandaslp.com.ng
           </span>
         </div>
       </div>
