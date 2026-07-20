@@ -132,7 +132,7 @@ I, [CLAIMANT_NAME] of [CLAIMANT_ADDRESS], write to demand payment of a debt owed
 
 [PARTICULARS_PARAGRAPH]
 
-Consequently, I hereby demand that you pay the outstanding sum of **₦[AMOUNT]** to me within **seven (7) days** from the date of this letter.
+Consequently, I hereby demand that you pay the outstanding sum of **₦[AMOUNT]** to me within **fourteen (14) days** from the date of this letter.
 
 TAKE NOTICE that failure, refusal, or neglect to comply with this demand within the stipulated time shall leave me with no alternative than to institute legal proceedings against you for the recovery of the debt, interest thereon, and cost of legal action, without further recourse to you. This letter shall also be relied upon in evidence as proof that you were given the opportunity to amicably resolve this matter.
 
@@ -164,7 +164,7 @@ We are the solicitors and legal representatives of [CLAIMANT_NAME] of [CLAIMANT_
 
 [PARTICULARS_PARAGRAPH — written in "our Client" voice]
 
-We are therefore instructed to, and hereby do, demand that you pay the sum of **₦[AMOUNT]** to our Client within **seven (7) days** from the date of this letter.
+We are therefore instructed to, and hereby do, demand that you pay the sum of **₦[AMOUNT]** to our Client within **fourteen (14) days** from the date of this letter.
 
 TAKE NOTICE that your failure, refusal, or neglect to comply with this demand within the stipulated time will leave our Client with no alternative but to institute legal proceedings against you in the appropriate court for the recovery of the full debt, interest thereon, and the cost of this action, without further recourse to you. This letter shall be tendered in evidence as proof that you were afforded the opportunity to resolve this matter amicably.
 

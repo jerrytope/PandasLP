@@ -15,7 +15,7 @@ This is NOT a document template tool. Pandas LP is a law firm that can represent
 | AI | Anthropic Claude API (`claude-sonnet-4-6`, `max_tokens: 4096`), Edge Runtime |
 | Auth | Supabase Auth — email magic link (no password) |
 | Database | Supabase PostgreSQL — `cases` + `messages` tables with RLS |
-| Email | Nodemailer + Gmail SMTP — follow-up emails at Day 0 / Day 3 / Day 7 after letter served |
+| Email | Nodemailer + Gmail SMTP — follow-up emails at Day 0 / Day 7 / Day 14 after letter served (Vercel Cron drives Day 7/14, see app/api/cron/follow-ups) |
 | PDF | jsPDF v4 — vector panda logo, letterhead, watermark, rich text |
 | Payments | Paystack Inline (stub when key is placeholder), independently verified server-side before a case is marked paid |
 | Fonts | next/font/google — Bricolage Grotesque (display), Inter (body), DM Mono (mono) |
@@ -62,9 +62,11 @@ NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
 - `supabase-schema.sql` — Full schema with RLS. Run in Supabase SQL editor. **If tables already exist, use the ALTER TABLE section at the bottom.**
 
 ### Dashboard & Follow-up
-- `app/dashboard/page.tsx` — Case history. Visual 4-step timeline (Paid → Served → Filed → Judgment Won). Mark as Served button (triggers Day 0 email + sets 7-day deadline). Escalate to Court Filing CTA (appears when deadline passes). Enforce Judgment CTA (appears after judgment won).
-- `app/api/send-email/route.ts` — Sends the Nodemailer/Gmail SMTP email for payment-confirmed or day 0/3/7. Requires the caller's session to match the case's owner (see Payments below for the same pattern). Updates `email_dayN_sent` on the case.
-- `lib/emailTemplates.ts` — HTML email templates for Day 0, Day 3, Day 7 follow-ups.
+- `app/dashboard/page.tsx` — Case history. Visual 4-step timeline (Paid → Served → Filed → Judgment Won). Mark as Served button (triggers Day 0 email + sets 14-day deadline — see "14-day response period" below for why 14, not 7). Escalate to Court Filing CTA (appears when deadline passes). Enforce Judgment CTA (appears after judgment won).
+- `app/api/send-email/route.ts` — Session-triggered sends (payment-confirmed, the Day 0 "mark served" email). Requires the caller's session to match the case's owner. Thin wrapper around `lib/sendCaseEmail.ts`.
+- `app/api/cron/follow-ups/route.ts` — Vercel Cron hits this daily (see `vercel.json`), authenticated via `CRON_SECRET` (not a user session — there is no user for a scheduled job). Finds every `letter_served` case whose Day 7 or Day 14 checkpoint is due and hasn't been sent yet, and sends it. This is the only thing that makes the "escalating follow-up, zero effort from you" promise on the homepage actually true — without it, Day 7/14 emails would need a human to remember to trigger them manually, which defeats the point.
+- `lib/sendCaseEmail.ts` — Shared email-sending logic (resolve recipient, build template, send, mark `email_dayN_sent`) used by both `/api/send-email` (session-triggered) and `/api/cron/follow-ups` (system-triggered), so there's one implementation instead of two copies drifting apart.
+- `lib/emailTemplates.ts` — HTML email templates for Day 0, Day 7, Day 14 follow-ups.
 
 ### Payments
 - `app/api/verify-payment/route.ts` — Node runtime. The only place a case is ever marked `paid`. Requires the caller's session to own the case, then independently confirms the transaction with Paystack's `/transaction/verify` endpoint (or, if `PAYSTACK_SECRET_KEY` is still a placeholder, accepts the stub checkout's result — there's no real gateway to check against yet). Compares the verified amount to `cases.expected_amount` and rejects a mismatch. For `small-claims`, `delivery_option` (`self-serve` vs `pandas-serves`) is derived from the verified amount, never trusted from the client.
@@ -105,7 +107,7 @@ NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
 draft → document_ready → paid → letter_served → filed → judgment_obtained → closed
 ```
 
-After `letter_served`: `deadline_at` is set to 7 days ahead. Dashboard shows countdown.
+After `letter_served`: `deadline_at` is set to 14 days ahead (Form SCA 1's prescribed response period for a letter of demand — see lib/agents.ts). Dashboard shows countdown.
 After deadline passes: "Escalate to Court Filing" button appears.
 After `judgment_obtained`: "Enforce Judgment" button appears (opens `judgment-enforcement` agent).
 

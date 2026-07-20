@@ -23,10 +23,13 @@ CREATE TABLE IF NOT EXISTS public.cases (
   expected_amount  INTEGER,
   amount_paid      INTEGER     NOT NULL DEFAULT 0,
   deadline_at      TIMESTAMPTZ,
-  -- follow-up email tracking
+  -- follow-up email tracking — 14-day response period (see lib/agents.ts demand letter
+  -- templates), so the checkpoints are Day 0 (served), Day 7 (reminder), Day 14 (deadline
+  -- passed), not the old Day 0/3/7 cadence these columns are still named after in any
+  -- database that predates the fix.
   email_day0_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
-  email_day3_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
   email_day7_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
+  email_day14_sent BOOLEAN     NOT NULL DEFAULT FALSE,
   -- escalation linkage (enforcement → original demand case)
   parent_case_id   UUID        REFERENCES public.cases(id),
   -- enforcement specifics
@@ -110,9 +113,12 @@ CREATE TRIGGER cases_touch
 -- IF YOU ALREADY RAN THE PREVIOUS SCHEMA, run only these ALTERs
 -- to add the new columns without recreating the tables:
 -- ============================================================
--- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day0_sent BOOLEAN NOT NULL DEFAULT FALSE;
--- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day3_sent BOOLEAN NOT NULL DEFAULT FALSE;
--- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day7_sent BOOLEAN NOT NULL DEFAULT FALSE;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day0_sent  BOOLEAN NOT NULL DEFAULT FALSE;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day7_sent  BOOLEAN NOT NULL DEFAULT FALSE;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day14_sent BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ For a database that never had any email_dayN_sent columns at all. If you already have
+--     email_day3_sent/email_day7_sent from before the 14-day fix, use the RENAME migration
+--     further down instead of these ADD COLUMN lines.
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS parent_case_id  UUID REFERENCES public.cases(id);
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS judgment_amount INTEGER;
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS case_number BIGSERIAL UNIQUE;
@@ -132,3 +138,12 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.waitlist_signups ENABLE ROW LEVEL SECURITY;
 --   ^ Persists "notify me" signups so the admin dashboard has something to list — previously
 --     these only existed as a one-off email that vanished if it failed to send.
+--
+-- ALTER TABLE public.cases RENAME COLUMN email_day7_sent TO email_day14_sent;
+-- ALTER TABLE public.cases RENAME COLUMN email_day3_sent TO email_day7_sent;
+--   ^ Run these TWO lines IN THIS EXACT ORDER (7->14 first, then 3->7) or the second RENAME
+--     will collide with the still-existing email_day7_sent column — renaming 7->14 first is
+--     what frees up the "email_day7_sent" name for the second rename to use. This is the fix
+--     for the 7-day -> 14-day response period correction — the old column names were left
+--     over from before that fix and no longer match what actually gets sent
+--     (see lib/emailTemplates.ts).

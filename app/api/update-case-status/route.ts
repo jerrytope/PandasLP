@@ -79,7 +79,11 @@ export async function POST(req: Request) {
 
   const update: Record<string, unknown> = { status: NEXT_STATUS[action] }
   if (action === 'markServed') {
-    update.deadline_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    // 14 days — the response period Form SCA 1 (Lagos Small Claims Court Practice
+    // Directions) prescribes for a letter of demand, not the 7-day figure that appears
+    // elsewhere in the same practice direction for a *later* stage (defence filing after
+    // a summons is served). See lib/agents.ts's demand letter templates for the same period.
+    update.deadline_at = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
   }
 
   const { error: updateErr } = await supabaseAdmin.from('cases').update(update).eq('id', caseId)

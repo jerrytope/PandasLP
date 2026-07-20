@@ -88,7 +88,7 @@ const FAQ_DATA = {
     { q: 'How do I pay?', a: 'Securely via Paystack. We accept debit cards, credit cards, and bank transfers — all major Nigerian banks supported.' },
   ],
   'Legal Process': [
-    { q: 'What happens after the demand letter is sent?', a: 'The debtor has 7 days to respond. You\'ll receive follow-up email updates at Day 3 and Day 7. If they ignore the letter, we escalate to court filing — no extra action needed from you.' },
+    { q: 'What happens after the demand letter is sent?', a: 'The debtor has 14 days to respond. You\'ll receive follow-up email updates at Day 7 and Day 14. If they ignore the letter, we escalate to court filing — no extra action needed from you.' },
     { q: 'Can you actually take them to court?', a: 'Yes. Pandas LP\'s lawyers can file your claim at the Lagos Small Claims Court (or relevant state court) and represent you. Judgment enforcement is also available if they win but still don\'t pay.' },
     { q: 'What types of debt can you recover?', a: 'Unpaid invoices, personal loans, service fees, contractor payments, salary arrears, rent deposits, and goods paid for but not delivered. If it\'s money owed and documentable, we can help.' },
   ],
@@ -283,8 +283,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 num: '03',
                 icon: <Send size={22} strokeWidth={1.5} />,
                 title: 'A licensed lawyer serves it and follows up',
-                body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor — not an email bot. Escalating follow-up notices go out at Day 3 and Day 7 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
-                detail: 'Day 0 → Day 3 → Day 7 → Court',
+                body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor — not an email bot. Escalating follow-up notices go out at Day 7 and Day 14 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
+                detail: 'Day 0 → Day 7 → Day 14 → Court',
               },
             ].map((step, i) => (
               <Reveal key={step.num} delay={i * 100}>
@@ -695,7 +695,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
 
             {[
               { icon: <Scale size={18} strokeWidth={1.5} />,     title: 'Court-Ready Documents',    body: 'Demand letters on firm letterhead, drafted in minutes. Every document cites the correct Nigerian statute.' },
-              { icon: <Clock size={18} strokeWidth={1.5} />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 3, Day 7 — escalating pressure on the debtor, zero effort from you.' },
+              { icon: <Clock size={18} strokeWidth={1.5} />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 7, Day 14 — escalating pressure on the debtor, zero effort from you.' },
               { icon: <TrendingUp size={18} strokeWidth={1.5} />,title: 'Transparent Pricing',      body: 'Know exactly what you\'ll pay before you start. No retainers, no surprise bills.' },
               { icon: <Users size={18} strokeWidth={1.5} />,     title: 'Real Lawyers',             body: 'AI drafts, humans review. Licensed practitioners file and appear in court on your behalf.' },
             ].map((f, i) => (
@@ -747,7 +747,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   <span className="pricing-row-value">{formatNaira(DEMAND_FEE)}</span>
                 </div>
                 <div className="pricing-row">
-                  <span className="pricing-row-label">Follow-up emails (Day 3 + Day 7)</span>
+                  <span className="pricing-row-label">Follow-up emails (Day 7 + Day 14)</span>
                   <span className="pricing-row-value" style={{ color: 'var(--secondary)' }}>Included</span>
                 </div>
                 <div className="pricing-row">

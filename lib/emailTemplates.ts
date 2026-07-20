@@ -13,7 +13,7 @@ export interface FollowUpEmailData {
   amount: number
   caseId: string
   agentId: string
-  day: 0 | 3 | 7
+  day: 0 | 7 | 14
   siteUrl: string
 }
 
@@ -126,7 +126,7 @@ export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; ht
 
 Your Letter of Demand for ${formatted} has been formally served on ${debtorName}. The clock is now running.
 
-The debtor has 7 days to respond or make payment. We will notify you automatically at Day 3 and Day 7.
+The debtor has 14 days to respond or make payment. We will notify you automatically at Day 7 and Day 14.
 
 View your case: ${dashboardUrl}
 
@@ -144,7 +144,7 @@ pandaslegalpractitioners@gmail.com`,
           <strong style="color:#F3EFE3;">${debtorName}</strong>. The clock is now running.
         </p>
         <p style="margin:0 0 24px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-          The debtor has <strong style="color:#D6BB80;">7 days</strong> to respond or make payment. We will notify you automatically at Day 3 and Day 7.
+          The debtor has <strong style="color:#D6BB80;">14 days</strong> to respond or make payment. We will notify you automatically at Day 7 and Day 14.
         </p>
         <a href="${dashboardUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:600;text-decoration:none;padding:13px 24px;border-radius:12px;">
           View Your Case →
@@ -153,14 +153,14 @@ pandaslegalpractitioners@gmail.com`,
     }
   }
 
-  if (day === 3) {
+  if (day === 7) {
     return {
-      subject: `Deadline reminder: ${debtorName} has 4 days left to respond`,
+      subject: `Deadline reminder: ${debtorName} has 7 days left to respond`,
       text: `Hi ${recipientName},
 
-It has been 3 days since your Letter of Demand was served on ${debtorName} for ${formatted}.
+It has been 7 days since your Letter of Demand was served on ${debtorName} for ${formatted}.
 
-The debtor has 4 days remaining. If they do not respond or pay by the deadline, you can instruct us to escalate the matter to the Small Claims Court.
+The debtor has 7 days remaining. If they do not respond or pay by the deadline, you can instruct us to escalate the matter to the Small Claims Court.
 
 View case status: ${dashboardUrl}
 
@@ -168,18 +168,18 @@ Pandas LP
 pandaslegalpractitioners@gmail.com`,
       html: baseWrapper(`
         <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
-          4 days left on the deadline
+          7 days left on the deadline
         </h2>
         <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
           Hi ${recipientName},
         </p>
         <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-          It has been 3 days since your Letter of Demand was served on
+          It has been 7 days since your Letter of Demand was served on
           <strong style="color:#F3EFE3;">${debtorName}</strong> for
           <strong style="color:#F3EFE3;">${formatted}</strong>.
         </p>
         <p style="margin:0 0 24px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-          The debtor has <strong style="color:#D6BB80;">4 days remaining</strong>. If they do not respond or pay by the deadline,
+          The debtor has <strong style="color:#D6BB80;">7 days remaining</strong>. If they do not respond or pay by the deadline,
           you can instruct us to escalate the matter to the Small Claims Court.
         </p>
         <a href="${dashboardUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:600;text-decoration:none;padding:13px 24px;border-radius:12px;">
@@ -189,12 +189,12 @@ pandaslegalpractitioners@gmail.com`,
     }
   }
 
-  // day === 7
+  // day === 14
   return {
     subject: `Deadline has passed — escalate against ${debtorName}?`,
     text: `Hi ${recipientName},
 
-${debtorName} has not responded to your Letter of Demand for ${formatted} within the 7-day period.
+${debtorName} has not responded to your Letter of Demand for ${formatted} within the 14-day period.
 
 You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf — the conversation you've already had with our agent will be pre-loaded, so there's no need to start over.
 
@@ -204,14 +204,14 @@ Pandas LP
 pandaslegalpractitioners@gmail.com`,
     html: baseWrapper(`
       <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
-        The 7-day deadline has passed
+        The 14-day deadline has passed
       </h2>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
         Hi ${recipientName},
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
         <strong style="color:#F3EFE3;">${debtorName}</strong> has not responded to your Letter of Demand for
-        <strong style="color:#F3EFE3;">${formatted}</strong> within the 7-day period.
+        <strong style="color:#F3EFE3;">${formatted}</strong> within the 14-day period.
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
         You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf —

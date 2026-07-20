@@ -213,9 +213,12 @@ export default function AgentChat({
     ])
 
     if (newDoc) {
+      // Provisional — /api/update-case-status recalculates this from the real "served" date
+      // once staff mark the letter served. 14 days matches the response period stated in the
+      // letter itself (see lib/agents.ts) and Form SCA 1's actual demand-letter requirement.
       const deadline =
         agent.id === 'small-claims'
-          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
           : null
 
       await supabase
