@@ -10,6 +10,10 @@ import {
 } from 'lucide-react'
 import Reveal from './Reveal'
 import HiwFlowLine from './HiwFlowLine'
+import TypewriterHeadline from './TypewriterHeadline'
+import OrbitVisual from './OrbitVisual'
+import TypingBeat from './TypingBeat'
+import { useCountUp } from '../lib/useCountUp'
 
 /* ── Services config ── */
 const TESTING_SERVICES = [
@@ -110,6 +114,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
   const [amount, setAmount]       = useState('')
   const [openFaq, setOpenFaq]     = useState(null)
   const [faqTab, setFaqTab]       = useState('Getting Started')
+  const [demandFeeCount, priceRowRef] = useCountUp(DEMAND_FEE, { duration: 1000, startDelay: 200 })
 
   // Notify me state: { [serviceId]: 'idle' | 'open' | 'submitting' | 'done' }
   const [notifyState, setNotifyState] = useState({})
@@ -152,34 +157,35 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           {/* Left copy */}
           <div className="hero-copy">
             <div className="hero-eyebrow" style={{ animationDelay: '0s' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+              <span className="hero-eyebrow-rule" />
               Nigeria's first AI-native law firm
             </div>
 
-            <h1 className="hero-headline" style={{ animation: 'fade-in-up 0.6s ease 0.1s both' }}>
-              They owe you.<br />
-              We go after it.
+            <h1 className="hero-headline">
+              <TypewriterHeadline lines={['They owe you.', 'We go after it.']} accentFromLine={1} />
             </h1>
 
-            <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 0.2s both' }}>
+            <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 1.4s both' }}>
               AI drafts the demand letter. A licensed lawyer serves it and,
               if needed, takes it to court.
             </p>
 
-            <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 0.3s both' }}>
-              <button
-                type="button"
-                className="btn btn-primary btn-lg"
-                onClick={() => onOpenAgent('small-claims')}
-              >
-                Recover your money →
-              </button>
-              <a href="#how-it-works" className="btn btn-outline btn-lg">
+            <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 1.6s both' }}>
+              <span className="btn-border-glow">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg"
+                  onClick={() => onOpenAgent('small-claims')}
+                >
+                  Recover your money →
+                </button>
+              </span>
+              <a href="#how-it-works" className="hero-link">
                 See how it works
               </a>
             </div>
 
-            <div className="hero-trust" style={{ animation: 'fade-in-up 0.6s ease 0.4s both' }}>
+            <div className="hero-trust" style={{ animation: 'fade-in-up 0.6s ease 1.8s both' }}>
               <span>CAC BN 9646741</span>
               <span className="hero-trust-dot" />
               <span>AI-Powered</span>
@@ -190,8 +196,13 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </div>
           </div>
 
-          {/* Right: Phone mockup */}
-          <div className="phone-mockup-wrap" aria-hidden="true">
+          {/* Right: Orbit visual (swap back to the phone-mockup-wrap block below if you'd
+              rather show the real product screen than this decorative visualization) */}
+          <OrbitVisual />
+
+          {/* Right (alternate): Phone mockup — real chat UI preview, currently unused */}
+          <div className="phone-mockup-wrap" aria-hidden="true" style={{ display: 'none' }}>
+            <div className="phone-backdrop-shape" />
             <div className="phone-mockup">
               <div className="phone-notch-bar"><div className="phone-notch" /></div>
               <div className="phone-header">
@@ -283,7 +294,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   <div className="hiw-icon">{step.icon}</div>
                   <h3 className="hiw-step-title">{step.title}</h3>
                   <p className="hiw-step-body">{step.body}</p>
-                  <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--accent)', letterSpacing: '0.05em' }}>
+                  <span style={{ fontSize: 12, fontFamily: 'var(--font-mono)', color: 'var(--accent)', letterSpacing: '0.05em', position: 'relative', zIndex: 1, display: 'inline-block' }}>
                     {step.detail}
                   </span>
                 </div>
@@ -365,61 +376,78 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               </div>
               <div className="ai-demo-body">
                 <div className="ai-demo-chat">
+                  {/* Opening beat — the AI is "composing" before the first message lands */}
+                  <TypingBeat />
+
                   {/* Turn 1 */}
-                  <div className="ai-demo-msg">
-                    <span className="ai-demo-msg-sender">Pandas AI</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-ai">
-                      Who owes you money, and what was it for?
+                  <Reveal delay={500}>
+                    <div className="ai-demo-msg">
+                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-ai">
+                        Who owes you money, and what was it for?
+                      </div>
                     </div>
-                  </div>
-                  <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
-                    <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-user">
-                      my business partner. we did a construction job together and he took the client payment but never paid my share. about ₦1.2 million
+                  </Reveal>
+                  <Reveal delay={750}>
+                    <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
+                      <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-user">
+                        my business partner. we did a construction job together and he took the client payment but never paid my share. about ₦1.2 million
+                      </div>
                     </div>
-                  </div>
+                  </Reveal>
                   {/* Turn 2 — legal precision */}
-                  <div className="ai-demo-msg">
-                    <span className="ai-demo-msg-sender">Pandas AI</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-ai">
-                      Understood. Do you have a written partnership or profit-sharing agreement, or was this verbal?
+                  <Reveal delay={1000}>
+                    <div className="ai-demo-msg">
+                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-ai">
+                        Understood. Do you have a written partnership or profit-sharing agreement, or was this verbal?
+                      </div>
                     </div>
-                  </div>
-                  <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
-                    <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-user">
-                      verbal. but we have whatsapp messages where he agreed to the 50/50 split
+                  </Reveal>
+                  <Reveal delay={1250}>
+                    <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
+                      <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-user">
+                        verbal. but we have whatsapp messages where he agreed to the 50/50 split
+                      </div>
                     </div>
-                  </div>
+                  </Reveal>
                   {/* Turn 3 — spots the hole + cites Nigerian law */}
-                  <div className="ai-demo-msg">
-                    <span className="ai-demo-msg-sender">Pandas AI</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-ai">
-                      <span className="ai-demo-highlight">WhatsApp messages are admissible evidence under Nigerian law</span> — that helps.
-                      One thing to flag: a verbal partnership with no written terms weakens your position if he disputes the percentage.
-                      Do you have a message where he specifically confirms your share of this particular job?{' '}
-                      <span className="ai-demo-highlight">That single message will be the most important piece of evidence in your case.</span>
+                  <Reveal delay={1500}>
+                    <div className="ai-demo-msg">
+                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-ai">
+                        <span className="ai-demo-highlight">WhatsApp messages are admissible evidence under Nigerian law</span> — that helps.
+                        One thing to flag: a verbal partnership with no written terms weakens your position if he disputes the percentage.
+                        Do you have a message where he specifically confirms your share of this particular job?{' '}
+                        <span className="ai-demo-highlight">That single message will be the most important piece of evidence in your case.</span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
-                    <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-user">
-                      yes I have it. also I think I sent him a notice already but I can't remember if I did it properly
+                  </Reveal>
+                  <Reveal delay={1850}>
+                    <div className="ai-demo-msg" style={{ alignItems: 'flex-end' }}>
+                      <span className="ai-demo-msg-sender" style={{ textAlign: 'right' }}>You</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-user">
+                        yes I have it. also I think I sent him a notice already but I can't remember if I did it properly
+                      </div>
                     </div>
-                  </div>
+                  </Reveal>
                   {/* Turn 4 — catches mistake + reassuring tone */}
-                  <div className="ai-demo-msg">
-                    <span className="ai-demo-msg-sender">Pandas AI</span>
-                    <div className="ai-demo-bubble ai-demo-bubble-ai">
-                      That's important to clarify before we proceed.{' '}
-                      <span className="ai-demo-highlight">If a prior notice wasn't properly served, it could affect our timeline.</span>{' '}
-                      Can you check if you have a copy or a delivery record? I'll wait — getting this right is worth the extra minute.
+                  <Reveal delay={2100}>
+                    <div className="ai-demo-msg">
+                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <div className="ai-demo-bubble ai-demo-bubble-ai">
+                        That's important to clarify before we proceed.{' '}
+                        <span className="ai-demo-highlight">If a prior notice wasn't properly served, it could affect our timeline.</span>{' '}
+                        Can you check if you have a copy or a delivery record? I'll wait — getting this right is worth the extra minute.
+                      </div>
                     </div>
-                  </div>
+                  </Reveal>
                 </div>
 
                 {/* Annotations panel */}
-                <div className="ai-demo-annotations">
+                <div className="ai-demo-annotations" style={{ animation: 'fade-in-up 0.6s ease 2.3s both' }}>
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)', margin: '0 0 8px' }}>
                     What the AI is doing
                   </p>
@@ -721,9 +749,11 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   <span className="pricing-row-value">+₦15,000</span>
                 </div>
                 <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
-                <div className="pricing-row pricing-row-total">
+                <div className="pricing-row pricing-row-total" ref={priceRowRef}>
                   <span className="pricing-row-label">Total to get started</span>
-                  <span className="pricing-row-value">{formatNaira(DEMAND_FEE)}</span>
+                  <span className="pricing-row-value" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    {formatNaira(demandFeeCount)}
+                  </span>
                 </div>
                 <div className="pricing-savings">
                   <ArrowUpRight size={14} />
