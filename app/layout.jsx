@@ -1,4 +1,5 @@
 import { Bricolage_Grotesque, Inter, DM_Mono } from 'next/font/google'
+import { safeJsonLd } from '@/lib/jsonLd'
 import './globals.css'
 
 const display = Bricolage_Grotesque({
@@ -79,7 +80,7 @@ export default function RootLayout({ children }) {
       <body>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(legalServiceJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(legalServiceJsonLd) }}
         />
         {children}
       </body>

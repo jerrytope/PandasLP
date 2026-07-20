@@ -14,6 +14,7 @@ import TypewriterHeadline from './TypewriterHeadline'
 import OrbitVisual from './OrbitVisual'
 import TypingBeat from './TypingBeat'
 import { useCountUp } from '../lib/useCountUp'
+import { formatNaira } from '../lib/formatNaira'
 
 /* ── Services config ── */
 const TESTING_SERVICES = [
@@ -125,21 +126,19 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
     if (!email) return
     setNotifyState(s => ({ ...s, [serviceId]: 'submitting' }))
     try {
-      await fetch('/api/waitlist', {
+      const res = await fetch('/api/waitlist', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ service: serviceName, email }),
       })
-    } catch {}
-    setNotifyState(s => ({ ...s, [serviceId]: 'done' }))
+      setNotifyState(s => ({ ...s, [serviceId]: res.ok ? 'done' : 'error' }))
+    } catch {
+      setNotifyState(s => ({ ...s, [serviceId]: 'error' }))
+    }
   }
 
   const hasAmount = amount.replace(/[^0-9]/g, '').length > 0
   const savings   = LAWYER_EQUIV - DEMAND_FEE
-
-  function formatNaira(v) {
-    return '₦' + v.toLocaleString('en-NG')
-  }
 
   function handleAmountInput(e) {
     const raw = e.target.value.replace(/[^0-9]/g, '')
@@ -608,27 +607,34 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                           <CheckCircle size={14} strokeWidth={2} />
                           We'll let you know when it's live.
                         </div>
-                      ) : ns === 'open' || ns === 'submitting' ? (
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input
-                            type="email"
-                            className="input"
-                            placeholder="your@email.com"
-                            value={email}
-                            autoFocus
-                            onChange={e => setNotifyEmails(s => ({ ...s, [svc.id]: e.target.value }))}
-                            onKeyDown={e => { if (e.key === 'Enter') handleNotifySubmit(svc.id, svc.name) }}
-                            style={{ flex: 1, fontSize: 13, padding: '9px 12px' }}
-                            aria-label={`Email to be notified about ${svc.name}`}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm"
-                            disabled={!email || ns === 'submitting'}
-                            onClick={() => handleNotifySubmit(svc.id, svc.name)}
-                          >
-                            {ns === 'submitting' ? '…' : 'Notify me'}
-                          </button>
+                      ) : ns === 'open' || ns === 'submitting' || ns === 'error' ? (
+                        <div>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <input
+                              type="email"
+                              className="input"
+                              placeholder="your@email.com"
+                              value={email}
+                              autoFocus
+                              onChange={e => setNotifyEmails(s => ({ ...s, [svc.id]: e.target.value }))}
+                              onKeyDown={e => { if (e.key === 'Enter') handleNotifySubmit(svc.id, svc.name) }}
+                              style={{ flex: 1, fontSize: 13, padding: '9px 12px' }}
+                              aria-label={`Email to be notified about ${svc.name}`}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              disabled={!email || ns === 'submitting'}
+                              onClick={() => handleNotifySubmit(svc.id, svc.name)}
+                            >
+                              {ns === 'submitting' ? '…' : ns === 'error' ? 'Retry' : 'Notify me'}
+                            </button>
+                          </div>
+                          {ns === 'error' && (
+                            <p style={{ color: 'var(--danger)', fontSize: 12, margin: '6px 0 0' }}>
+                              Something went wrong — please try again.
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <button
@@ -772,7 +778,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 style={{ marginTop: 24, width: '100%', fontSize: 16, padding: '15px 24px' }}
                 onClick={() => onOpenAgent('small-claims')}
               >
-                Start for ₦{DEMAND_FEE.toLocaleString('en-NG')} →
+                Start for {formatNaira(DEMAND_FEE)} →
               </button>
             </div>
           </Reveal>

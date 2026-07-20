@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { isPaystackStubbed, payWithPaystack, generateReference } from '@/lib/paystackHelper'
 
 export default function PaymentForm({ amount, description, onSuccess, onBack, backLabel = '← Back', busy = false }) {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const stubTimeoutRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (stubTimeoutRef.current) clearTimeout(stubTimeoutRef.current)
+    }
+  }, [])
 
   function handleRealPayment() {
     if (!email) {
@@ -37,7 +44,8 @@ export default function PaymentForm({ amount, description, onSuccess, onBack, ba
     }
     setLoading(true)
     setError('')
-    setTimeout(() => {
+    stubTimeoutRef.current = setTimeout(() => {
+      stubTimeoutRef.current = null
       setLoading(false)
       onSuccess({ reference: generateReference(), status: 'success', stub: true })
     }, 900)

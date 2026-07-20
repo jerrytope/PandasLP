@@ -2,6 +2,10 @@ export const runtime = 'nodejs'
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+
+const RATE_LIMIT = 5
+const RATE_WINDOW_MS = 10 * 60 * 1000
 
 interface CustomClaimBody {
   name?: string
@@ -11,7 +15,26 @@ interface CustomClaimBody {
   amountPaid?: number
 }
 
+// This is user-submitted content going into an HTML email — escape it before interpolating,
+// same as any other HTML injection boundary.
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function POST(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`custom-claim:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
   let body: CustomClaimBody
   try {
     body = await req.json()
@@ -49,8 +72,8 @@ export async function POST(req: Request) {
         subject: `New custom claim — ${name}`,
         text: `${name} (${email}${phone ? `, ${phone}` : ''}) submitted a custom claim and paid the ₦${(amountPaid ?? 0).toLocaleString()} routing fee.\n\nDescription:\n${description}\n\nReply to this email to reach them directly.`,
         html: `
-          <p><strong>${name}</strong> (${email}${phone ? `, ${phone}` : ''}) submitted a custom claim and paid the routing fee of <strong>₦${(amountPaid ?? 0).toLocaleString()}</strong>.</p>
-          <p style="white-space:pre-wrap;">${description}</p>
+          <p><strong>${escapeHtml(name)}</strong> (${escapeHtml(email)}${phone ? `, ${escapeHtml(phone)}` : ''}) submitted a custom claim and paid the routing fee of <strong>₦${(amountPaid ?? 0).toLocaleString()}</strong>.</p>
+          <p style="white-space:pre-wrap;">${escapeHtml(description)}</p>
           <p style="color:#8A9B8F;font-size:13px;">Reply to this email to reach them directly — Ref: custom_claims/${data.id}</p>
         `,
       })

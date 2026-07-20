@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
+import { safeJsonLd } from '@/lib/jsonLd'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -65,7 +66,7 @@ export default async function BlogPostPage({ params }: Props) {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(articleJsonLd) }}
       />
       <header className="navbar">
         <div className="container navbar-inner">

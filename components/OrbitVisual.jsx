@@ -2,6 +2,7 @@
 
 import { Scale, FileText, Shield, Gavel, MessageSquare, Clock } from 'lucide-react'
 import { useCountUp } from '../lib/useCountUp'
+import { formatNaira } from '../lib/formatNaira'
 
 const BADGES = [
   { icon: Scale, ring: 1, angle: 40, color: '#D6BB80' },
@@ -34,7 +35,7 @@ export default function OrbitVisual() {
       </div>
 
       <div className="orbit-center">
-        <div className="orbit-center-value">₦{price.toLocaleString('en-NG')}</div>
+        <div className="orbit-center-value">{formatNaira(price)}</div>
         <div className="orbit-center-label">Starting price</div>
       </div>
     </div>

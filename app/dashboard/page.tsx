@@ -97,6 +97,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [updateError, setUpdateError] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -115,33 +116,39 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
-  async function markServed(caseId: string) {
+  async function updateCaseStatus(caseId: string, action: 'markServed' | 'markFiled' | 'markJudgment') {
     setUpdatingId(caseId)
-    const deadlineAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    await supabase.from('cases').update({ status: 'letter_served', deadline_at: deadlineAt }).eq('id', caseId)
-    // Trigger Day 0 follow-up email
-    await authedFetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ caseId, day: 0 }),
-    }).catch((err) => console.error('Failed to send day-0 follow-up email:', err))
-    await fetchCases()
-    setUpdatingId(null)
+    setUpdateError(null)
+    try {
+      const res = await authedFetch('/api/update-case-status', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, action }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setUpdateError(data.error || 'Could not update this case. Please refresh and try again.')
+        return
+      }
+      if (action === 'markServed') {
+        await authedFetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ caseId, day: 0 }),
+        }).catch((err) => console.error('Failed to send day-0 follow-up email:', err))
+      }
+      await fetchCases()
+    } catch (err) {
+      console.error('Failed to update case status:', err)
+      setUpdateError('Network error. Please check your connection and try again.')
+    } finally {
+      setUpdatingId(null)
+    }
   }
 
-  async function markFiled(caseId: string) {
-    setUpdatingId(caseId)
-    await supabase.from('cases').update({ status: 'filed' }).eq('id', caseId)
-    await fetchCases()
-    setUpdatingId(null)
-  }
-
-  async function markJudgment(caseId: string) {
-    setUpdatingId(caseId)
-    await supabase.from('cases').update({ status: 'judgment_obtained' }).eq('id', caseId)
-    await fetchCases()
-    setUpdatingId(null)
-  }
+  const markServed   = (caseId: string) => updateCaseStatus(caseId, 'markServed')
+  const markFiled    = (caseId: string) => updateCaseStatus(caseId, 'markFiled')
+  const markJudgment = (caseId: string) => updateCaseStatus(caseId, 'markJudgment')
 
   async function signOut() {
     await supabase.auth.signOut()
@@ -177,6 +184,13 @@ export default function DashboardPage() {
           </h1>
           {userEmail && <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: 14 }}>{userEmail}</p>}
         </div>
+
+        {updateError && (
+          <div className="card" style={{ borderColor: 'var(--danger)', marginBottom: 20, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: 'var(--danger)', fontSize: 14 }}>{updateError}</span>
+            <button type="button" className="btn btn-sm" onClick={() => setUpdateError(null)}>Dismiss</button>
+          </div>
+        )}
 
         {loading && <p style={{ color: 'var(--text-muted)' }}>Loading your cases…</p>}
 

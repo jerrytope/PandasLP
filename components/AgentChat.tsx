@@ -5,6 +5,7 @@ import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { extractDocument, extractOptions, extractClientPhone, type DraftDocument } from '@/lib/agentChatParsing'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
 
@@ -83,6 +84,17 @@ export default function AgentChat({
   const messagesRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const caseRefRef = useRef<string>('')
+  // Synchronous case-identity tracking for ensureCase() — see its comment below for why this
+  // can't just read the `caseId` state value.
+  const caseIdRef = useRef<string | null>(initialCaseId ?? null)
+  const caseCreationPromiseRef = useRef<Promise<{ id: string; ref: string } | null> | null>(null)
+  // Guards sendToAgent against re-entrant calls (e.g. the auto-kickoff effect racing a
+  // fast user-typed send on a slow connection).
+  const sendingRef = useRef(false)
+  const modalRef = useRef<HTMLDivElement>(null)
+  // Only trap focus in the floating-modal presentation — fullPage is a real page with its
+  // own Navbar/Footer that Tab should still be able to reach.
+  useFocusTrap(modalRef, !fullPage)
 
   const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'View My Case Dashboard →'
   const effectiveAmount = draftDoc?.price ?? amount
@@ -133,23 +145,39 @@ export default function AgentChat({
 
   // ----- Supabase persistence helpers -----
 
+  // finalizeDocument, saveTurn, and saveClientPhone can all call this within the same
+  // sendToAgent invocation. They're closures over the same render, so the `caseId` *state*
+  // wouldn't update between those calls even if we awaited setCaseId — only a ref updates
+  // synchronously enough to prevent every one of those calls inserting its own case row.
+  // caseCreationPromiseRef additionally makes concurrent callers await the same in-flight
+  // insert instead of each starting their own.
   async function ensureCase(): Promise<{ id: string; ref: string } | null> {
     if (!userId) return null
-    if (caseId) return { id: caseId, ref: caseRefRef.current }
+    if (caseIdRef.current) return { id: caseIdRef.current, ref: caseRefRef.current }
+    if (caseCreationPromiseRef.current) return caseCreationPromiseRef.current
 
-    const { data, error: dbErr } = await supabase
-      .from('cases')
-      .insert({ user_id: userId, agent_id: agent.id, status: 'draft' })
-      .select('id, case_number, created_at')
-      .single()
+    const creation = (async () => {
+      const { data, error: dbErr } = await supabase
+        .from('cases')
+        .insert({ user_id: userId, agent_id: agent.id, status: 'draft' })
+        .select('id, case_number, created_at')
+        .single()
 
-    if (dbErr || !data) return null
-    setCaseId(data.id)
-    if (data.case_number != null) {
-      const year = new Date(data.created_at).getFullYear()
-      caseRefRef.current = `PLP/${year}/${String(data.case_number).padStart(6, '0')}`
-    }
-    return { id: data.id, ref: caseRefRef.current }
+      if (dbErr || !data) {
+        caseCreationPromiseRef.current = null
+        return null
+      }
+      caseIdRef.current = data.id
+      setCaseId(data.id)
+      if (data.case_number != null) {
+        const year = new Date(data.created_at).getFullYear()
+        caseRefRef.current = `PLP/${year}/${String(data.case_number).padStart(6, '0')}`
+      }
+      return { id: data.id, ref: caseRefRef.current }
+    })()
+
+    caseCreationPromiseRef.current = creation
+    return creation
   }
 
   // The document template leaves a literal {{REF_NUMBER}} token for the AI to copy verbatim —
@@ -204,6 +232,7 @@ export default function AgentChat({
   // against). The watermark-free document preview reads `paid` state, so this is also
   // what keeps an unpaid visitor from getting a clean copy of the letter.
   async function handlePaymentDone(response: { reference: string; stub?: boolean }) {
+    if (verifying || paid) return // guards against a payment SDK callback firing more than once
     if (!caseId || !userId) {
       // No case/user to attach a payment to — nothing to verify. Shouldn't happen in
       // practice since sign-in is required before a case exists.
@@ -254,11 +283,13 @@ export default function AgentChat({
   // sent to the agent (typed input, quick-reply options, and auto-kickoff on mount) — keeps
   // the request contract in one place instead of re-implemented per call site.
   async function sendToAgent(nextMessages: Message[], msgToPersist: Message) {
+    if (sendingRef.current) return
+    sendingRef.current = true
     setMessages(nextMessages)
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/api/chat', {
+      const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
@@ -281,6 +312,7 @@ export default function AgentChat({
       setError('Network error. Please check your connection and try again.')
     } finally {
       setLoading(false)
+      sendingRef.current = false
     }
   }
 
@@ -333,7 +365,7 @@ export default function AgentChat({
     setError('')
 
     try {
-      const res = await fetch('/api/extract', {
+      const res = await authedFetch('/api/extract', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ fileBase64: base64, mediaType: file.type, filename: file.name }),
@@ -400,6 +432,7 @@ export default function AgentChat({
         role={fullPage ? undefined : 'dialog'}
         aria-modal={fullPage ? undefined : true}
         aria-label={agent.name}
+        ref={modalRef}
       >
         <div className={styles.header}>
           <span className={styles.headerDot} style={{ background: agent.color }} />
@@ -450,7 +483,7 @@ export default function AgentChat({
           </div>
         ) : (
           <>
-            <div className={styles.messages} ref={messagesRef}>
+            <div className={styles.messages} ref={messagesRef} aria-live="polite" aria-relevant="additions">
               {messages.map((m, i) => {
                 const isLastMsg = i === messages.length - 1
                 const { visible, options } = m.role === 'assistant'

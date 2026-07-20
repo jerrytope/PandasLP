@@ -3,8 +3,22 @@ export const runtime = 'nodejs'
 import { getFollowUpEmail, getPaymentConfirmedEmail, type FollowUpEmailData } from '@/lib/emailTemplates'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+
+// Shared Gmail account has a real daily send cap — this endpoint is the only thing standing
+// between one authenticated user looping it and every user's transactional email breaking.
+const RATE_LIMIT = 10
+const RATE_WINDOW_MS = 10 * 60 * 1000
 
 export async function POST(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`send-email:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
   if (!isMailerConfigured()) {
     return Response.json({ error: 'Email not configured — add GMAIL_APP_PASSWORD to .env.local.' }, { status: 503 })
   }

@@ -42,11 +42,11 @@ describe('checkRateLimit', () => {
 })
 
 describe('getClientIp', () => {
-  it('reads the first address from x-forwarded-for', () => {
+  it('reads the last address from x-forwarded-for (closest hop, hardest for a client to spoof)', () => {
     const req = new Request('https://example.com', {
       headers: { 'x-forwarded-for': '203.0.113.5, 70.41.3.18' },
     })
-    expect(getClientIp(req)).toBe('203.0.113.5')
+    expect(getClientIp(req)).toBe('70.41.3.18')
   })
 
   it('falls back to x-real-ip when x-forwarded-for is absent', () => {

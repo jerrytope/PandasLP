@@ -1,8 +1,12 @@
 import { getAgent } from '@/lib/agents'
 import { capHistory, type ChatMessage } from '@/lib/chatHistory'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-export const runtime = 'edge'
+// Node runtime (not edge) — this route now needs supabaseAdmin for the auth check below,
+// and CLAUDE.md documents that Supabase admin calls require Node's runtime. This route
+// never streamed anyway (single await'd JSON response), so there's no latency tradeoff.
+export const runtime = 'nodejs'
 
 const RATE_LIMIT = 30
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -14,6 +18,16 @@ export async function POST(req: Request) {
       { error: 'Too many requests — please wait a moment before trying again.' },
       { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
     )
+  }
+
+  const authHeader = req.headers.get('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+  if (!token) {
+    return Response.json({ error: 'Missing Authorization header.' }, { status: 401 })
+  }
+  const { data: callerData, error: callerErr } = await supabaseAdmin.auth.getUser(token)
+  if (callerErr || !callerData?.user) {
+    return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
   }
 
   let body: { messages?: ChatMessage[]; agentId?: string }

@@ -1,6 +1,10 @@
 export const runtime = 'nodejs'
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+
+const RATE_LIMIT = 15
+const RATE_WINDOW_MS = 5 * 60 * 1000
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
 const AMOUNT_TOLERANCE_NAIRA = 1 // guard against float/kobo rounding, not a real discount
@@ -9,7 +13,26 @@ function isPaystackConfigured() {
   return Boolean(PAYSTACK_SECRET_KEY) && !PAYSTACK_SECRET_KEY.includes('placeholder')
 }
 
+// Stub mode (no real PAYSTACK_SECRET_KEY) trusts the client-reported amount entirely — fine
+// for local/preview testing, not fine if it's ever live on the real production domain. This
+// is a deliberate, explicit opt-in so an accidentally-unset key fails loudly instead of
+// silently giving away the service for free. Set ALLOW_STUB_PAYMENTS=true only if you
+// genuinely want production running in test mode for a short window.
+function stubPaymentsAllowedHere() {
+  const isRealProduction = process.env.VERCEL_ENV === 'production'
+  if (!isRealProduction) return true
+  return process.env.ALLOW_STUB_PAYMENTS === 'true'
+}
+
 export async function POST(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`verify-payment:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
   const authHeader = req.headers.get('authorization') ?? ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
   if (!token) {
@@ -44,6 +67,11 @@ export async function POST(req: Request) {
   if (caseData.user_id !== callerData.user.id) {
     return Response.json({ error: 'You do not have access to this case.' }, { status: 403 })
   }
+  if (caseData.status === 'paid' || ['letter_served', 'filed', 'judgment_obtained', 'closed'].includes(caseData.status)) {
+    // Already processed — most likely a duplicate SDK callback or a retried request.
+    // Report success without re-verifying or re-emailing.
+    return Response.json({ ok: true, amount: caseData.amount_paid, alreadyPaid: true })
+  }
 
   const expectedAmount: number | null = caseData.expected_amount ?? null
 
@@ -59,6 +87,12 @@ export async function POST(req: Request) {
     // (isPaystackConfigured() becomes true) and every payment is independently verified below.
     if (!stub) {
       return Response.json({ error: 'Payment gateway is not configured.' }, { status: 503 })
+    }
+    if (!stubPaymentsAllowedHere()) {
+      return Response.json(
+        { error: 'Payments are not yet configured on this site. Please try again shortly.' },
+        { status: 503 },
+      )
     }
     verifiedAmount = amount
     verifiedReference = reference

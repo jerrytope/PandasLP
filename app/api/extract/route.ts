@@ -1,4 +1,5 @@
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export const runtime = 'nodejs'
 
@@ -18,6 +19,16 @@ export async function POST(req: Request) {
       { error: 'Too many uploads — please wait a moment before trying again.' },
       { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
     )
+  }
+
+  const authHeader = req.headers.get('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
+  if (!token) {
+    return Response.json({ error: 'Missing Authorization header.' }, { status: 401 })
+  }
+  const { data: callerData, error: callerErr } = await supabaseAdmin.auth.getUser(token)
+  if (callerErr || !callerData?.user) {
+    return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY

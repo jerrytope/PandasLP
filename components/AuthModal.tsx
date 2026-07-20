@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { useFocusTrap } from '@/lib/useFocusTrap'
 import styles from './AuthModal.module.css'
 
 interface AuthModalProps {
@@ -13,6 +14,8 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const modalRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(modalRef, true)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -40,7 +43,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
       className={styles.overlay}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Sign in">
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Sign in" ref={modalRef}>
         <div className={styles.header}>
           <div>
             <div className={styles.title}>Sign in to Pandas LP</div>

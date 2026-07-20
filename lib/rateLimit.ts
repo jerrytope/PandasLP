@@ -49,7 +49,18 @@ export function checkRateLimit(
 }
 
 export function getClientIp(req: Request): string {
+  // x-forwarded-for is a comma-separated hop chain. Taking the FIRST value is a common
+  // mistake: if a client sets this header on their own request, most proxies APPEND the
+  // real IP rather than replace it — so the first value is attacker-controlled, not
+  // trustworthy. The LAST value is the hop closest to our own infrastructure and much
+  // harder for a client to forge. This is a partial mitigation, not a complete fix —
+  // Vercel may expose a more specific trusted-IP header; worth checking their current
+  // docs before assuming this is airtight, and this rate limiter is documented as
+  // best-effort (see the module comment above) regardless.
   const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0].trim()
+  if (forwarded) {
+    const hops = forwarded.split(',').map((ip) => ip.trim()).filter(Boolean)
+    if (hops.length > 0) return hops[hops.length - 1]
+  }
   return req.headers.get('x-real-ip') ?? 'unknown'
 }
