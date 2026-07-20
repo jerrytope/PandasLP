@@ -292,6 +292,22 @@ export default function DashboardPage() {
                     </div>
                   )}
 
+                  {/* No callback number captured — client will see a form to add one on their end,
+                      but flag it here too since a case can sit like this until they come back. */}
+                  {isPaid && c.delivery_option === 'pandas-serves' && !c.client_phone && (
+                    <div style={{
+                      marginTop: 14,
+                      padding: '10px 14px',
+                      borderRadius: 10,
+                      background: 'rgba(239,68,68,0.08)',
+                      border: '1px solid rgba(239,68,68,0.25)',
+                      fontSize: 13,
+                      color: 'var(--danger)',
+                    }}>
+                      ⚠ No callback number on file yet for this pandas-serves case.
+                    </div>
+                  )}
+
                   {/* Timeline (demand-letter cases that have been paid) */}
                   {isDebt && isPaid && <CaseTimeline status={c.status} />}
 

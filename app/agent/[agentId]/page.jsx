@@ -82,7 +82,7 @@ function AgentPageInner() {
           ? { title: caseData.document_title, body: caseData.document_body }
           : null
 
-      setResumeData({ caseId: resumeId, messages: msgs ?? [], draftDoc })
+      setResumeData({ caseId: resumeId, messages: msgs ?? [], draftDoc, clientPhone: caseData.client_phone ?? null })
       if (auto) setAutoMessage(auto)
       else if (fileCourt) setAutoMessage(AUTO_FILE_COURT_MESSAGE)
       setResumeLoading(false)
@@ -142,6 +142,7 @@ function AgentPageInner() {
           initialMessages={resumeData?.messages}
           initialDraftDoc={resumeData?.draftDoc}
           initialAutoMessage={autoMessage}
+          initialClientPhone={resumeData?.clientPhone}
         />
       )}
 

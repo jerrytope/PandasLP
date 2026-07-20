@@ -29,6 +29,9 @@ interface AgentChatProps {
   // Sent automatically as the first user turn on mount — used to hand the agent context
   // (e.g. escalating an existing case) without making the user retype it.
   initialAutoMessage?: string
+  // Whether this resumed case already has a callback number on file — see the post-payment
+  // fallback phone form below for why this matters.
+  initialClientPhone?: string | null
   // Render as a page-filling section (no dark backdrop, no floating card) instead of a modal overlay
   fullPage?: boolean
 }
@@ -63,6 +66,7 @@ export default function AgentChat({
   initialMessages,
   initialDraftDoc,
   initialAutoMessage,
+  initialClientPhone,
   fullPage = false,
 }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>(
@@ -79,6 +83,14 @@ export default function AgentChat({
   const [verifying, setVerifying] = useState(false)
   const [payError, setPayError] = useState('')
   const [previewUrl, setPreviewUrl] = useState('')
+  // Tracks whether a callback number is on file for this case — the AI is supposed to
+  // capture this during intake for the pandas-serves tier, but the chat input disappears
+  // entirely once paid (see the fallback form below), so this can't just be inferred from
+  // "did the AI emit a CLIENT_PHONE block" — a case can reach paid with this still false.
+  const [hasClientPhone, setHasClientPhone] = useState(Boolean(initialClientPhone))
+  const [fallbackPhone, setFallbackPhone] = useState('')
+  const [savingPhone, setSavingPhone] = useState(false)
+  const [phoneSaveError, setPhoneSaveError] = useState('')
   const [caseId, setCaseId] = useState<string | null>(initialCaseId ?? null)
   const [extracting, setExtracting] = useState(false)
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -222,7 +234,29 @@ export default function AgentChat({
   async function saveClientPhone(phone: string) {
     const caseInfo = await ensureCase()
     if (!caseInfo) return
-    await supabase.from('cases').update({ client_phone: phone }).eq('id', caseInfo.id)
+    const { error: dbErr } = await supabase.from('cases').update({ client_phone: phone }).eq('id', caseInfo.id)
+    if (!dbErr) setHasClientPhone(true)
+  }
+
+  // Fallback for when the AI didn't capture a callback number before the chat input
+  // disappears at `paid` — see the fallback form rendered near the bottom of this component.
+  async function submitFallbackPhone() {
+    const trimmed = fallbackPhone.trim()
+    if (!trimmed || !caseId) return
+    setSavingPhone(true)
+    setPhoneSaveError('')
+    try {
+      const { error: dbErr } = await supabase.from('cases').update({ client_phone: trimmed }).eq('id', caseId)
+      if (dbErr) {
+        setPhoneSaveError('Could not save your number. Please try again.')
+        return
+      }
+      setHasClientPhone(true)
+    } catch {
+      setPhoneSaveError('Network error. Please try again.')
+    } finally {
+      setSavingPhone(false)
+    }
   }
 
   // Paystack (or the stub checkout) reports success client-side, but that alone proves
@@ -583,6 +617,46 @@ export default function AgentChat({
                   Analysing document…
                 </div>
               </div>
+            )}
+
+            {paid && agent.id === 'small-claims' && effectiveAmount >= 25000 && !hasClientPhone && (
+              <div style={{ padding: '14px 18px', borderTop: '1px solid var(--border)' }}>
+                <p style={{ fontSize: 13, color: 'var(--text-1)', fontWeight: 600, marginBottom: 4 }}>
+                  One more thing — what number should our team call you on?
+                </p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
+                  You chose to have Pandas LP serve this letter personally. We need a phone number to reach you once service is arranged.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="tel"
+                    className="input"
+                    placeholder="e.g. +234 801 234 5678"
+                    value={fallbackPhone}
+                    onChange={(e) => setFallbackPhone(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') submitFallbackPhone() }}
+                    style={{ flex: 1, fontSize: 13, padding: '9px 12px' }}
+                    aria-label="Phone number for Pandas LP to call you on"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    disabled={!fallbackPhone.trim() || savingPhone}
+                    onClick={submitFallbackPhone}
+                  >
+                    {savingPhone ? '…' : 'Save'}
+                  </button>
+                </div>
+                {phoneSaveError && (
+                  <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{phoneSaveError}</p>
+                )}
+              </div>
+            )}
+
+            {paid && agent.id === 'small-claims' && effectiveAmount >= 25000 && hasClientPhone && (
+              <p style={{ padding: '10px 18px', fontSize: 12, color: 'var(--secondary)', borderTop: '1px solid var(--border)' }}>
+                ✓ We have a callback number on file for you.
+              </p>
             )}
 
             {!paid && (
