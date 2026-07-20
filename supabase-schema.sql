@@ -58,11 +58,22 @@ CREATE TABLE IF NOT EXISTS public.custom_claims (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Waitlist signups — the "notify me when this agent launches" capture on the homepage.
+-- Same access pattern as custom_claims: no owner, service-role-only via app/api/waitlist
+-- and app/api/admin/waitlist.
+CREATE TABLE IF NOT EXISTS public.waitlist_signups (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  service    TEXT        NOT NULL,
+  email      TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Row Level Security
-ALTER TABLE public.cases         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.messages      ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.custom_claims ENABLE ROW LEVEL SECURITY;
--- No policies on custom_claims: RLS with zero policies blocks anon/authenticated roles
+ALTER TABLE public.cases            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_claims    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_signups ENABLE ROW LEVEL SECURITY;
+-- No policies on custom_claims or waitlist_signups: RLS with zero policies blocks anon/authenticated roles
 -- entirely, while the service-role client (used only server-side) always bypasses RLS.
 
 -- Drop existing policies if re-running
@@ -111,3 +122,13 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS expected_amount INTEGER;
 --   ^ Quoted price for this case, checked against the real Paystack amount at payment time
 --     (see app/api/verify-payment/route.ts).
+--
+-- CREATE TABLE IF NOT EXISTS public.waitlist_signups (
+--   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   service    TEXT        NOT NULL,
+--   email      TEXT        NOT NULL,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE public.waitlist_signups ENABLE ROW LEVEL SECURITY;
+--   ^ Persists "notify me" signups so the admin dashboard has something to list — previously
+--     these only existed as a one-off email that vanished if it failed to send.

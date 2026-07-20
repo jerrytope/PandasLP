@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -64,7 +65,7 @@ export async function POST(req: Request) {
   if (caseErr || !caseData) {
     return Response.json({ error: 'Case not found.' }, { status: 404 })
   }
-  if (caseData.user_id !== callerData.user.id) {
+  if (caseData.user_id !== callerData.user.id && !isAdminEmail(callerData.user.email)) {
     return Response.json({ error: 'You do not have access to this case.' }, { status: 403 })
   }
 
