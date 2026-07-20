@@ -117,7 +117,7 @@ export default async function BlogPostPage({ params }: Props) {
               Ready to take action?
             </h3>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 24px', fontSize: 14, lineHeight: 1.65 }}>
-              Our AI agent interviews you, drafts your Letter of Demand on firm letterhead, and files at the Small Claims Court on your behalf — from ₦10,000.
+              We interview you, draft your Letter of Demand on firm letterhead, and file at the Small Claims Court on your behalf — from ₦10,000.
             </p>
             <Link href="/#services" className="btn btn-primary" style={{ display: 'inline-flex', textDecoration: 'none' }}>
               Start Your Claim →

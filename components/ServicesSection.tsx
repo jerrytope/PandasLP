@@ -63,12 +63,12 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
               }}>{main.name}</h3>
 
               <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.7, margin: '0 0 28px', maxWidth: 480 }}>
-                Someone owes you money and won't pay. Our AI agent interviews you, drafts your Letter of Demand on firm letterhead, serves it on the debtor, and files your court claim if they ignore it — end-to-end.
+                Someone owes you money and won't pay. We interview you, draft your Letter of Demand on firm letterhead, serve it on the debtor, and file your court claim if they ignore it — end-to-end.
               </p>
 
               {/* mini steps */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px', marginBottom: 32 }}>
-                {['AI Interview', 'Letter Drafted & Served', '7-Day Deadline Tracked', 'Court Filing if Ignored'].map((step, i) => (
+                {['Quick Interview', 'Letter Drafted & Served', '14-Day Deadline Tracked', 'Court Filing if Ignored'].map((step, i) => (
                   <span key={step} style={{ fontSize: 13, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ color: 'var(--accent)', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: 11 }}>0{i+1}</span>
                     {step}

@@ -198,7 +198,7 @@ export default function DashboardPage() {
           <div className="card" style={{ maxWidth: 480 }}>
             <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)' }}>No cases yet</h3>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 20px', fontSize: 14 }}>
-              Start a conversation with one of our AI agents and your cases will appear here automatically.
+              Start a conversation with one of our agents and your cases will appear here automatically.
             </p>
             <Link href="/" className="btn btn-primary" style={{ display: 'inline-flex' }}>Get Started →</Link>
           </div>

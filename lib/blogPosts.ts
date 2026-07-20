@@ -64,7 +64,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>From filing to judgment: typically 30 to 90 days, depending on whether the defendant contests the claim. Uncontested claims are faster.</p>
 
 <h2>Get Started with Pandas LP</h2>
-<p>Our Small Claims AI Agent walks you through the full process — drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and files the claim on your behalf.</p>
+<p>Our Small Claims Agent walks you through the full process — drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and files the claim on your behalf.</p>
     `,
   },
   {
@@ -161,7 +161,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>If you receive a Letter of Demand and you genuinely dispute the debt — wrong amount, already paid, goods never delivered — you should respond in writing within the deadline, clearly stating your position. Silence is treated as acceptance. A written response creates a record and may avoid court entirely.</p>
 
 <h2>If You Are the Creditor</h2>
-<p>If your Letter of Demand has been ignored, Pandas LP can file the court claim on your behalf. Our Small Claims AI Agent pre-loads all the information from your original case — so you don't need to repeat yourself.</p>
+<p>If your Letter of Demand has been ignored, Pandas LP can file the court claim on your behalf. Our Small Claims Agent pre-loads all the information from your original case — so you don't need to repeat yourself.</p>
     `,
   },
   {
@@ -226,7 +226,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>This is substantially faster than a regular court case, which can take years.</p>
 
 <h2>Start Your Claim with Pandas LP</h2>
-<p>Our Small Claims AI Agent interviews you, drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and — if needed — files the claim and represents you in court. Starting from ₦10,000.</p>
+<p>Our Small Claims Agent interviews you, drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and — if needed — files the claim and represents you in court. Starting from ₦10,000.</p>
     `,
   },
 ]

@@ -22,7 +22,7 @@ const mono = DM_Mono({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 const TITLE = 'Pandas LP — They owe you. We go after it.'
-const DESCRIPTION = 'AI drafts the demand letter. A licensed lawyer serves it and, if needed, takes it to court. Nigeria\'s first AI-native law firm.'
+const DESCRIPTION = 'A licensed Lagos law firm that recovers what you\'re owed — demand letter today, court in 14 days if it\'s ignored.'
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -32,7 +32,7 @@ export const metadata = {
     'debt recovery Nigeria',
     'letter of demand Nigeria',
     'small claims court Lagos',
-    'AI law firm Nigeria',
+    'fast debt recovery Nigeria',
     'recover unpaid invoice Nigeria',
   ],
   icons: { icon: '/favicon.png' },

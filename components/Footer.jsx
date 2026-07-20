@@ -27,7 +27,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="footer-brand-tagline">
-              Nigeria's first AI-native law firm. AI does the work,
+              They owe you. We go after it — demand letter today,
               real lawyers take it to court.
             </p>
             <div style={{ marginTop: 20 }}>
@@ -99,10 +99,10 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="footer-bottom">
           <p className="footer-disclaimer">
-            Pandas LP (CAC BN 9646741) is a CAC-registered business and AI-native law firm. Our AI agents conduct a guided
-            interview and draft court-ready legal documents from Nigerian legal templates. For matters
+            Pandas LP (CAC BN 9646741) is a CAC-registered business and law firm. A guided digital
+            interview prepares court-ready legal documents from Nigerian legal templates. For matters
             requiring a licensed legal practitioner to advise, file, or appear in court, our lawyers are
-            available and handle all filings on your behalf. AI-generated documents are prepared for your
+            available and handle all filings on your behalf. All documents are prepared for your
             use and are reviewed by our legal team before service or filing.
           </p>
           <p className="footer-copyright">

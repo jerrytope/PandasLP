@@ -52,7 +52,7 @@ export default async function Image() {
             We go after it.
           </span>
           <span style={{ fontSize: 26, color: '#ABB1A2', marginTop: 8 }}>
-            AI drafts the demand letter. A licensed lawyer serves it and takes it to court.
+            Demand letter today. Court in 14 days if they ignore it.
           </span>
         </div>
 
@@ -60,7 +60,7 @@ export default async function Image() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 40, height: 3, background: '#D6BB80', display: 'flex' }} />
           <span style={{ fontSize: 20, color: '#ABB1A2', letterSpacing: '0.02em' }}>
-            CAC BN 9646741 · Nigeria&apos;s AI-native law firm
+            CAC BN 9646741 · A registered Lagos law firm
           </span>
         </div>
       </div>

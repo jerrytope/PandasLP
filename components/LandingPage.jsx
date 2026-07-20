@@ -32,7 +32,7 @@ const TESTING_SERVICES = [
     icon: <CalendarCheck size={20} strokeWidth={1.5} />,
     name: 'Lawyer Consultation',
     shortName: 'Speak to a lawyer',
-    description: 'Book a 45-minute session with a licensed Nigerian lawyer. Get real legal advice, not AI-generated answers.',
+    description: 'Book a 45-minute session with a licensed Nigerian lawyer. Get real legal advice, one-on-one.',
     price: '₦15,000 per session',
     color: '#2a7d4f',
   },
@@ -65,7 +65,7 @@ const COMING_SOON_SERVICES = [
 /* ── Trust badges marquee items ── */
 const TRUST_BADGES = [
   { label: 'CAC BN 9646741' },
-  { label: 'AI-Powered Documents' },
+  { label: 'Same-Day Letters' },
   { label: 'Licensed Lawyers' },
   { label: 'Supabase Encrypted' },
   { label: 'Paystack Secure' },
@@ -78,9 +78,9 @@ const FAQ_TABS = ['Getting Started', 'Pricing', 'Legal Process', 'Security']
 
 const FAQ_DATA = {
   'Getting Started': [
-    { q: 'Is Pandas LP a real law firm?', a: 'Yes. Pandas LP is a registered business with the Nigerian Corporate Affairs Commission (CAC BN 9646741). Our AI agents draft your documents; our licensed lawyers review, serve, and file them.' },
-    { q: 'How quickly can I get started?', a: 'Most clients complete the AI interview and receive a draft demand letter in under 10 minutes. From there, you\'ll review, pay, and Pandas LP serves the letter within 24 business hours.' },
-    { q: 'Do I need to know anything about law?', a: 'Not at all. Our AI agent asks you plain-English questions about who owes you, how much, and why. You answer in your own words. The AI handles the legal language.' },
+    { q: 'Is Pandas LP a real law firm?', a: 'Yes. Pandas LP is a registered business with the Nigerian Corporate Affairs Commission (CAC BN 9646741). Our licensed lawyers review, serve, and file every document before it reaches the debtor or a court.' },
+    { q: 'How quickly can I get started?', a: 'Most clients complete a short guided interview and receive a draft demand letter in under 10 minutes. From there, you\'ll review, pay, and Pandas LP serves the letter within 24 business hours.' },
+    { q: 'Do I need to know anything about law?', a: 'Not at all. We ask you plain-English questions about who owes you, how much, and why. You answer in your own words — we handle the legal language.' },
   ],
   'Pricing': [
     { q: 'How much does it cost?', a: 'A demand letter starts from ₦10,000 (self-serve PDF). If you want Pandas LP to serve the letter on the debtor on your behalf, that\'s ₦25,000. Court filing fees are additional and vary by court.' },
@@ -94,7 +94,7 @@ const FAQ_DATA = {
   ],
   'Security': [
     { q: 'Is my information safe?', a: 'Yes. All case data is stored in Supabase with row-level security — meaning only you and your assigned lawyer can access your case. Your documents are never shared with third parties.' },
-    { q: 'Who sees my case details?', a: 'Only you and the Pandas LP legal team assigned to your matter. Your AI conversation is confidential and used only to draft your legal documents.' },
+    { q: 'Who sees my case details?', a: 'Only you and the Pandas LP legal team assigned to your matter. Your case details are confidential and used only to prepare your legal documents.' },
   ],
 }
 
@@ -105,8 +105,8 @@ const LAWYER_EQUIV = 80000
 /* ── Comparison rows ── */
 const COMPARE = [
   { label: 'Time to start',       pandas: '10 minutes',           trad: '2–4 weeks',       diy: 'Weeks of research' },
-  { label: 'Legal expertise',     pandas: '✓ AI + lawyers',       trad: '✓ Lawyers only',  diy: '✗ None' },
-  { label: 'Automated follow-up', pandas: '✓ Day 0, 3, 7',        trad: 'Manual',          diy: 'You chase them' },
+  { label: 'Legal expertise',     pandas: '✓ Licensed lawyers',   trad: '✓ Lawyers only',  diy: '✗ None' },
+  { label: 'Automated follow-up', pandas: '✓ Day 0, 7, 14',       trad: 'Manual',          diy: 'You chase them' },
   { label: 'Court filing',        pandas: '✓ Handled by us',      trad: '✓ Handled',       diy: '✗ Figure it out' },
   { label: 'Available',           pandas: '✓ 24 / 7',             trad: 'Office hours',    diy: 'When you can' },
 ]
@@ -157,7 +157,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           <div className="hero-copy">
             <div className="hero-eyebrow" style={{ animationDelay: '0s' }}>
               <span className="hero-eyebrow-rule" />
-              Nigeria's first AI-native law firm
+              Nigeria's fastest way to recover what you're owed
             </div>
 
             <h1 className="hero-headline">
@@ -165,8 +165,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </h1>
 
             <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 1.4s both' }}>
-              AI drafts the demand letter. A licensed lawyer serves it and,
-              if needed, takes it to court.
+              Demand letter ready today. A licensed lawyer serves it and,
+              if needed, takes it to court in 14 days.
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 1.6s both' }}>
@@ -187,7 +187,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div className="hero-trust" style={{ animation: 'fade-in-up 0.6s ease 1.8s both' }}>
               <span>CAC BN 9646741</span>
               <span className="hero-trust-dot" />
-              <span>AI-Powered</span>
+              <span>Same-Day Letters</span>
               <span className="hero-trust-dot" />
               <span>Real Lawyers</span>
               <span className="hero-trust-dot" />
@@ -206,7 +206,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <div className="phone-notch-bar"><div className="phone-notch" /></div>
               <div className="phone-header">
                 <div className="phone-header-dot" />
-                <span className="phone-header-text">Pandas AI · Small Claims Agent</span>
+                <span className="phone-header-text">Pandas LP · Small Claims Agent</span>
               </div>
               <div className="phone-chat">
                 <div className="phone-bubble phone-bubble-ai">
@@ -222,7 +222,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   Yes, I have an invoice and WhatsApp messages confirming.
                 </div>
                 <div className="phone-bubble phone-bubble-ai">
-                  Perfect — that's strong evidence. Let me draft your Letter of Demand.
+                  Perfect — that's strong evidence. Let's draft your Letter of Demand.
                 </div>
                 <div className="typing-dots" style={{ paddingLeft: 4 }}>
                   <span /><span /><span />
@@ -232,7 +232,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
 
             <div className="phone-status-card">
               <div className="phone-status-title">✓ Demand Letter Sent</div>
-              <div className="phone-status-sub">Served on debtor · Day 0 of 7</div>
+              <div className="phone-status-sub">Served on debtor · Day 0 of 14</div>
             </div>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div className="section-header center">
               <span className="label-mono">Process</span>
               <h2>From dispute to resolution<br />in 3 steps</h2>
-              <p>Our AI handles the paperwork. Our lawyers handle the court. You just answer a few questions.</p>
+              <p>We handle the paperwork. Our lawyers handle the court. You just answer a few questions.</p>
             </div>
           </Reveal>
 
@@ -269,14 +269,14 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 num: '01',
                 icon: <MessageSquare size={22} strokeWidth={1.5} />,
                 title: 'Tell us what happened',
-                body: 'Answer a few questions about who owes you and how much. Upload invoices or contracts — our AI reads them and skips the questions it already knows the answers to.',
+                body: 'Answer a few questions about who owes you and how much. Upload invoices or contracts — we read them and skip the questions we already know the answers to.',
                 detail: 'Average interview: 7 minutes',
               },
               {
                 num: '02',
                 icon: <FileText size={22} strokeWidth={1.5} />,
-                title: 'AI drafts your demand letter',
-                body: 'In under 10 minutes, our AI creates a court-ready Letter of Demand on Pandas LP letterhead — citing the correct Nigerian legal provisions. You preview it before paying.',
+                title: 'Your demand letter, ready fast',
+                body: 'In under 10 minutes, we prepare a court-ready Letter of Demand on Pandas LP letterhead — citing the correct Nigerian legal provisions. You preview it before paying.',
                 detail: 'Free watermarked preview',
               },
               {
@@ -303,15 +303,15 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         </div>
       </section>
 
-      {/* ══ AI INTELLIGENCE ══ */}
-      <section className="section ai-intel-section" id="the-ai" aria-label="How the AI thinks">
+      {/* ══ THE INTERVIEW ══ */}
+      <section className="section ai-intel-section" id="the-ai" aria-label="How the interview works">
         <div className="container">
           <Reveal>
             <div className="section-header">
-              <span className="label-mono">The Intelligence</span>
-              <h2>Not a form. Not a chatbot.<br />A trained legal mind.</h2>
+              <span className="label-mono">The Interview</span>
+              <h2>Not a form.<br />A proper legal interview.</h2>
               <p style={{ maxWidth: 560 }}>
-                The interview is run by an AI trained on Nigerian legal procedure, debt recovery case law,
+                Every case follows Nigerian legal procedure, debt recovery case law,
                 and the exact questions a senior partner asks in a first consultation — minus the billable hours.
               </p>
             </div>
@@ -340,9 +340,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 icon: <Heart size={20} strokeWidth={1.5} />,
                 iconBg: 'rgba(99,102,241,0.12)',
                 iconColor: '#818CF8',
-                tag: 'Tone & Mood Detection',
-                title: 'Reads how you\'re feeling and adjusts',
-                body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The AI detects these signals and adjusts — calmer when you\'re stressed, more direct when you\'re ready to move.',
+                tag: 'Reads the Room',
+                title: 'Meets you where you\'re at',
+                body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The interview adjusts to it — calmer when you\'re stressed, more direct when you\'re ready to move.',
               },
               {
                 icon: <Scale size={20} strokeWidth={1.5} />,
@@ -371,7 +371,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div className="ai-demo-wrap" style={{ marginTop: 56 }}>
               <div className="ai-demo-header">
                 <div className="ai-demo-dot" />
-                <span className="ai-demo-label">Live interview · Small Claims Agent · Debt Recovery</span>
+                <span className="ai-demo-label">Sample interview · Small Claims Agent · Debt Recovery</span>
               </div>
               <div className="ai-demo-body">
                 <div className="ai-demo-chat">
@@ -381,7 +381,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   {/* Turn 1 */}
                   <Reveal delay={500}>
                     <div className="ai-demo-msg">
-                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <span className="ai-demo-msg-sender">Pandas LP</span>
                       <div className="ai-demo-bubble ai-demo-bubble-ai">
                         Who owes you money, and what was it for?
                       </div>
@@ -398,7 +398,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   {/* Turn 2 — legal precision */}
                   <Reveal delay={1000}>
                     <div className="ai-demo-msg">
-                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <span className="ai-demo-msg-sender">Pandas LP</span>
                       <div className="ai-demo-bubble ai-demo-bubble-ai">
                         Understood. Do you have a written partnership or profit-sharing agreement, or was this verbal?
                       </div>
@@ -415,7 +415,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   {/* Turn 3 — spots the hole + cites Nigerian law */}
                   <Reveal delay={1500}>
                     <div className="ai-demo-msg">
-                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <span className="ai-demo-msg-sender">Pandas LP</span>
                       <div className="ai-demo-bubble ai-demo-bubble-ai">
                         <span className="ai-demo-highlight">WhatsApp messages are admissible evidence under Nigerian law</span> — that helps.
                         One thing to flag: a verbal partnership with no written terms weakens your position if he disputes the percentage.
@@ -435,7 +435,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   {/* Turn 4 — catches mistake + reassuring tone */}
                   <Reveal delay={2100}>
                     <div className="ai-demo-msg">
-                      <span className="ai-demo-msg-sender">Pandas AI</span>
+                      <span className="ai-demo-msg-sender">Pandas LP</span>
                       <div className="ai-demo-bubble ai-demo-bubble-ai">
                         That's important to clarify before we proceed.{' '}
                         <span className="ai-demo-highlight">If a prior notice wasn't properly served, it could affect our timeline.</span>{' '}
@@ -448,23 +448,11 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 {/* Annotations panel */}
                 <div className="ai-demo-annotations" style={{ animation: 'fade-in-up 0.6s ease 2.3s both' }}>
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)', margin: '0 0 8px' }}>
-                    What the AI is doing
+                    What this catches
                   </p>
-                  <div className="ai-annotation">
-                    <div className="ai-annotation-tag">Nigerian Law</div>
-                    <div className="ai-annotation-text">Cites Cybercrimes Act 2015 — electronic records including WhatsApp are court-admissible</div>
-                  </div>
                   <div className="ai-annotation">
                     <div className="ai-annotation-tag">Case Analysis</div>
                     <div className="ai-annotation-text">Flags the verbal-only partnership as a structural weak point before drafting begins</div>
-                  </div>
-                  <div className="ai-annotation">
-                    <div className="ai-annotation-tag">Evidence Prioritisation</div>
-                    <div className="ai-annotation-text">Identifies the single most important piece of evidence and explains why</div>
-                  </div>
-                  <div className="ai-annotation">
-                    <div className="ai-annotation-tag">Tone · Reassuring</div>
-                    <div className="ai-annotation-text">Detects uncertainty in "I can't remember if I did it properly" — slows down, reassures before correcting</div>
                   </div>
                   <div className="ai-annotation">
                     <div className="ai-annotation-tag">Mistake Caught</div>
@@ -679,8 +667,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <div className="bento-card bento-card-hero card-gradient" style={{ display: 'flex', gap: 32, alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 240px' }}>
                   <div className="bento-icon"><Sparkles size={20} strokeWidth={1.5} /></div>
-                  <h3 className="bento-title" style={{ fontSize: 22 }}>AI Legal Interview</h3>
-                  <p className="bento-body">No forms. No jargon. Just answer questions in plain English — our AI handles the legal translation. Upload a document and it reads it so you don't have to explain it.</p>
+                  <h3 className="bento-title" style={{ fontSize: 22 }}>Guided Legal Interview</h3>
+                  <p className="bento-body">No forms. No jargon. Just answer questions in plain English — we handle the legal translation. Upload a document and we read it so you don't have to explain it.</p>
                 </div>
                 <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {['WhatsApp messages accepted', 'PDF invoices analysed', 'No legal knowledge needed'].map(t => (
@@ -697,7 +685,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               { icon: <Scale size={18} strokeWidth={1.5} />,     title: 'Court-Ready Documents',    body: 'Demand letters on firm letterhead, drafted in minutes. Every document cites the correct Nigerian statute.' },
               { icon: <Clock size={18} strokeWidth={1.5} />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 7, Day 14 — escalating pressure on the debtor, zero effort from you.' },
               { icon: <TrendingUp size={18} strokeWidth={1.5} />,title: 'Transparent Pricing',      body: 'Know exactly what you\'ll pay before you start. No retainers, no surprise bills.' },
-              { icon: <Users size={18} strokeWidth={1.5} />,     title: 'Real Lawyers',             body: 'AI drafts, humans review. Licensed practitioners file and appear in court on your behalf.' },
+              { icon: <Users size={18} strokeWidth={1.5} />,     title: 'Real Lawyers',             body: 'Every document is reviewed by our team. Licensed practitioners file and appear in court on your behalf.' },
             ].map((f, i) => (
               <Reveal key={f.title} delay={(i + 1) * 60}>
                 <div className="bento-card">
@@ -881,7 +869,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 textAlign: 'left',
               }}>
                 {[
-                  { icon: <Zap size={18} strokeWidth={1.5} />,   title: 'First mover',       body: 'AI-powered debt recovery doesn\'t exist at scale in Nigeria yet. You\'re early.' },
+                  { icon: <Zap size={18} strokeWidth={1.5} />,   title: 'First mover',       body: 'Fast, affordable debt recovery doesn\'t exist at scale in Nigeria yet. You\'re early.' },
                   { icon: <Scale size={18} strokeWidth={1.5} />,  title: 'Real lawyers',       body: 'CAC-registered firm. Every document reviewed. Every filing handled by a licensed practitioner.' },
                   { icon: <Shield size={18} strokeWidth={1.5} />, title: 'Your case, your data', body: 'Encrypted. Private. Only you and your assigned lawyer can see your case.' },
                 ].map(item => (
@@ -989,7 +977,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               Let's get your money back.
             </h2>
             <p style={{ color: 'var(--text-2)', fontSize: 17, lineHeight: 1.7, marginBottom: 36 }}>
-              It takes under 10 minutes. AI does the heavy lifting,<br />real lawyers take it from there.
+              It takes under 10 minutes. We do the heavy lifting,<br />real lawyers take it from there.
             </p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button type="button" className="btn btn-primary btn-lg" onClick={() => onOpenAgent('small-claims')}>
