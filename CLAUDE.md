@@ -36,6 +36,7 @@ PAYSTACK_SECRET_KEY        — Paystack secret key (server-side only — verifie
 NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
 NEXT_PUBLIC_GA_MEASUREMENT_ID — GA4 Measurement ID (G-XXXXXXX). Unset = analytics script doesn't render at all (see app/layout.jsx).
 CRON_SECRET                — Bearer token Vercel Cron sends to app/api/cron/follow-ups. Any random string.
+PLUGIN_API_KEY             — Fixed key checked against the x-plugin-key header on app/api/plugin/intake. Pasted into the OpenAI Action's own auth config once that's set up. Unset = the route 503s.
 ```
 
 ---
@@ -46,6 +47,7 @@ CRON_SECRET                — Bearer token Vercel Cron sends to app/api/cron/fo
 - `lib/agents.ts` — All 6 agents: AgentId type, Agent interface, AGENTS record, system prompts, document templates
 - `app/api/chat/route.ts` — Edge runtime. Receives `{messages, agentId}`, calls Claude, returns response. Injects DOCUMENT CONTEXT RULE into every system prompt.
 - `app/api/extract/route.ts` — Node runtime. Receives `{fileBase64, mediaType, filename}`, sends to Claude for fact extraction from uploaded PDFs/images. Returns `{facts}` string.
+- `app/api/plugin/intake/route.ts` — Node runtime. Public endpoint for the ChatGPT Actions integration (`public/openai-actions-schema.json` is the schema submitted to OpenAI). Receives `{user_query}`, auth'd via `x-plugin-key` header against `PLUGIN_API_KEY` (no user session to check — the caller is ChatGPT, not a signed-in user). Classifies the problem via `lib/legalIntakeClassifier.ts` (same Claude model/fetch pattern as `app/api/chat/route.ts`), looks up the real price via `getAgentPayment()` (never trusts the LLM for a number), and returns a `case_link` into `/agent/<agentId>?ref=chatgpt&auto=<summary>`.
 
 ### Document Flow
 - `components/AgentChat.tsx` — Handles: interview, file upload (📎), document block parsing (`<<<DOCUMENT>>>`), watermarked PDF preview, payment, Supabase persistence. Takes a `fullPage` prop: `false` renders the original floating modal card (`.overlay`/`.modal` in `AgentChat.module.css`); `true` renders as a page-filling section (`.pageOuter`/`.pageModal`) with no dark backdrop, used by the dedicated chat route below.
@@ -54,7 +56,7 @@ CRON_SECRET                — Bearer token Vercel Cron sends to app/api/cron/fo
 
 ### Chat Page vs. Marketing Page
 - `app/page.jsx` — Marketing homepage only (hero, pricing, agents, FAQ via `LandingPage.jsx`) plus the custom-claim intake, payment-gate, and judgment-enforcement judgment-amount intake steps. It no longer renders `AgentChat` directly — every "open an agent" action calls `router.push('/agent/<agentId>')`.
-- `app/agent/[agentId]/page.jsx` — The chat's own route (e.g. `/agent/small-claims`). Client component: resolves `agentId` against `AGENTS`/`getAgentPayment`, redirects to `/` if invalid, shows `AuthModal` inline if signed out (no redirect-then-return — the user finishes sign-in on this same page via cross-tab session detection), and renders `AgentChat` with `fullPage`. Reads `?resume=<caseId>` (loads case + messages from Supabase, same as the old in-page flow), `?fileCourt=1` (injects the standard court-filing escalation auto-message), and `?auto=<urlencoded text>` (arbitrary auto-message — used by the judgment-enforcement handoff from `EnforcementIntake`). On approval, `lawyer-consultation` shows `LawyerConsultBooking` in place; every other agent redirects to `/dashboard`.
+- `app/agent/[agentId]/page.jsx` — The chat's own route (e.g. `/agent/small-claims`). Client component: resolves `agentId` against `AGENTS`/`getAgentPayment`, redirects to `/` if invalid, shows `AuthModal` inline if signed out (no redirect-then-return — the user finishes sign-in on this same page via cross-tab session detection), and renders `AgentChat` with `fullPage`. Calls `captureAttribution()` on mount (a visitor can land directly here, e.g. from the ChatGPT plugin, skipping `app/page.jsx`'s own capture call). Reads `?resume=<caseId>` (loads case + messages from Supabase, same as the old in-page flow), `?fileCourt=1` (injects the standard court-filing escalation auto-message), and `?auto=<urlencoded text>` (arbitrary auto-message — works with or without `?resume=`; without it, a brand-new case is created lazily on first send, which is how the ChatGPT plugin below hands off a fresh visitor). On approval, `lawyer-consultation` shows `LawyerConsultBooking` in place; every other agent redirects to `/dashboard`.
 - Dashboard "Resume" / "Prepare Court Filing" links point at `/agent/<agentId>?resume=<id>[&fileCourt=1]`. "Enforce Judgment" still points at `/?enforceFrom=<id>` — the judgment-amount intake (`EnforcementIntake`) stays on the homepage since the agent isn't known until it creates the case, then it pushes to `/agent/judgment-enforcement?resume=<id>&auto=...`.
 
 ### Auth & Database

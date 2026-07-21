@@ -1,0 +1,70 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Pandas LP Legal Intake",
+    "description": "Route Nigerian legal problems to Pandas LP agents for specialized document drafting and legal representation",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://pandaslp.com.ng" }
+  ],
+  "paths": {
+    "/api/plugin/intake": {
+      "post": {
+        "summary": "Intake a legal problem and return a case start link",
+        "operationId": "intakeLegalProblem",
+        "security": [{ "PluginApiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_query": { "type": "string", "description": "The user's legal problem in their own words" },
+                  "user_id": { "type": "string", "description": "Optional ChatGPT user ID for tracking" }
+                },
+                "required": ["user_query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Legal problem recognized and case link provided, or not recognized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "recognized": { "type": "boolean" },
+                    "message": { "type": "string", "description": "Present when recognized is false" },
+                    "problem_type": { "type": "string" },
+                    "agent": { "type": "string" },
+                    "summary": { "type": "string" },
+                    "explanation": { "type": "string" },
+                    "cta": { "type": "string" },
+                    "case_link": { "type": "string", "format": "uri" },
+                    "price_info": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Missing or invalid x-plugin-key header" },
+          "429": { "description": "Rate limited" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "PluginApiKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-plugin-key",
+        "description": "Fixed key configured in the OpenAI Action's auth settings — must match the PLUGIN_API_KEY environment variable on the Pandas LP server."
+      }
+    }
+  }
+}

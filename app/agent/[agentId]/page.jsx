@@ -10,6 +10,7 @@ import { LawyerConsultBooking } from '@/components/LawyerConsult'
 import { AGENTS } from '@/lib/agents'
 import { getAgentPayment } from '@/lib/agentServiceMap'
 import { supabase } from '@/lib/supabaseClient'
+import { captureAttribution } from '@/lib/attribution'
 
 const AUTO_FILE_COURT_MESSAGE =
   "The debtor did not respond within the 14-day deadline. I'd like to proceed to file this claim at the Small Claims Court now — please prepare the necessary court filing documents using the details we already established, and let me know what else you need from me."
@@ -40,6 +41,13 @@ function AgentPageInner() {
   const agent = AGENTS[agentId]
   const payment = agent ? getAgentPayment(agentId) : null
 
+  // Captured once per browser — a visitor referred straight here (e.g. from the ChatGPT
+  // plugin, ?ref=chatgpt) skips the homepage entirely, so app/page.jsx's own capture call
+  // never runs for them. See lib/attribution.ts.
+  useEffect(() => {
+    captureAttribution()
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
@@ -63,7 +71,15 @@ function AgentPageInner() {
     const resumeId = searchParams.get('resume')
     const fileCourt = searchParams.get('fileCourt')
     const auto = searchParams.get('auto')
-    if (!resumeId) return
+    if (!resumeId && !auto && !fileCourt) return
+
+    if (!resumeId) {
+      // No existing case to resume (e.g. a fresh ChatGPT-plugin referral) — just seed the
+      // auto-message; AgentChat's own ensureCase() lazily creates the case on first send.
+      if (auto) setAutoMessage(auto)
+      else if (fileCourt) setAutoMessage(AUTO_FILE_COURT_MESSAGE)
+      return
+    }
 
     setResumeLoading(true)
 
