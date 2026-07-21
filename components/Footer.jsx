@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { PandasLogoMark } from './PandasLogo'
+import { STATES } from '@/lib/locations'
 
 export default function Footer() {
   const [email, setEmail] = useState('')
@@ -75,6 +76,13 @@ export default function Footer() {
               <a href="#how-it-works">How It Works</a>
               <a href="#pricing">Pricing</a>
               <Link href="/dashboard">My Cases</Link>
+            </nav>
+
+            <p className="footer-col-title" style={{ marginTop: 20 }}>Recover Debt By State</p>
+            <nav className="footer-links" aria-label="Debt recovery by state links">
+              {STATES.map((s) => (
+                <Link key={s.slug} href={`/recover-debt/${s.slug}`}>{s.name}</Link>
+              ))}
             </nav>
           </div>
 

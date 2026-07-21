@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
+import { STATES } from '@/lib/locations'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 
@@ -7,6 +8,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const blogEntries: MetadataRoute.Sitemap = BLOG_POSTS.map((post) => ({
     url: `${SITE_URL}/blog/${post.slug}`,
     lastModified: post.date,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
+
+  // Only states a human has verified — see lib/locations.ts's `verified` field. An unverified
+  // state page is still reachable by URL/footer link and carries a noindex tag, but submitting
+  // it in the sitemap anyway would send Google a mixed signal.
+  const stateEntries: MetadataRoute.Sitemap = STATES.filter((s) => s.verified).map((s) => ({
+    url: `${SITE_URL}/recover-debt/${s.slug}`,
     changeFrequency: 'monthly',
     priority: 0.6,
   }))
@@ -25,5 +35,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     ...blogEntries,
+    ...stateEntries,
   ]
 }

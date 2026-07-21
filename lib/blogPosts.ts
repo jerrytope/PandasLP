@@ -64,7 +64,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>From filing to judgment: typically 30 to 90 days, depending on whether the defendant contests the claim. Uncontested claims are faster.</p>
 
 <h2>Get Started with Pandas LP</h2>
-<p>Our Small Claims Agent walks you through the full process — drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and files the claim on your behalf.</p>
+<p>Our Small Claims Agent walks you through the full process — drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and files the claim on your behalf. See our full <a href="/recover-debt/lagos">guide to recovering a debt in Lagos</a> for claim limits and court locations.</p>
     `,
   },
   {
