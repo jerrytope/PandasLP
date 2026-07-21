@@ -30,6 +30,11 @@ CREATE TABLE IF NOT EXISTS public.cases (
   email_day0_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
   email_day7_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
   email_day14_sent BOOLEAN     NOT NULL DEFAULT FALSE,
+  -- attribution — captured client-side from ?ref=/utm_* params at first visit (see
+  -- lib/attribution.ts), written in when the case is created. source is the coarse channel
+  -- ('space', 'blog', 'ads', 'referral', 'direct'); source_detail is the raw ref/utm string.
+  source           TEXT,
+  source_detail    TEXT,
   -- escalation linkage (enforcement → original demand case)
   parent_case_id   UUID        REFERENCES public.cases(id),
   -- enforcement specifics
@@ -128,6 +133,9 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS expected_amount INTEGER;
 --   ^ Quoted price for this case, checked against the real Paystack amount at payment time
 --     (see app/api/verify-payment/route.ts).
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS source        TEXT;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS source_detail TEXT;
+--   ^ Attribution — see lib/attribution.ts.
 --
 -- CREATE TABLE IF NOT EXISTS public.waitlist_signups (
 --   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -147,3 +155,18 @@ CREATE TRIGGER cases_touch
 --     for the 7-day -> 14-day response period correction — the old column names were left
 --     over from before that fix and no longer match what actually gets sent
 --     (see lib/emailTemplates.ts).
+--
+-- ============================================================
+-- ATTRIBUTION READOUT — run ad hoc in the SQL editor, not part of setup.
+-- Cases by source, by week — rough funnel proxy until Build 3's ops panel
+-- has a real dashboard for this.
+-- ============================================================
+-- SELECT
+--   date_trunc('week', created_at) AS week,
+--   COALESCE(source, 'unknown')    AS source,
+--   COUNT(*)                        AS cases,
+--   COUNT(*) FILTER (WHERE status <> 'draft')              AS reached_document,
+--   COUNT(*) FILTER (WHERE status IN ('paid','letter_served','filed','judgment_obtained','closed')) AS paid
+-- FROM public.cases
+-- GROUP BY 1, 2
+-- ORDER BY 1 DESC, 3 DESC;

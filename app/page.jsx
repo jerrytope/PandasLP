@@ -9,8 +9,10 @@ import PaymentGate from '@/components/PaymentGate'
 import CustomClaim from '@/components/CustomClaim'
 import EnforcementIntake from '@/components/EnforcementIntake'
 import AuthModal from '@/components/AuthModal'
+import WhatsAppFab from '@/components/WhatsAppFab'
 import { CUSTOM_CLAIM_FEE } from '@/lib/services'
 import { supabase } from '@/lib/supabaseClient'
+import { captureAttribution } from '@/lib/attribution'
 
 export default function App() {
   const router = useRouter()
@@ -25,6 +27,12 @@ export default function App() {
   // Judgment enforcement: the original case being escalated, while we collect the
   // judgment amount before starting the new linked case
   const [enforcementSource, setEnforcementSource] = useState(null)
+
+  // Captured once per browser — the magic-link auth round trip drops query params, so this
+  // has to happen before sign-in, not at case-creation time. See lib/attribution.ts.
+  useEffect(() => {
+    captureAttribution()
+  }, [])
 
   // Initialise auth listener once
   useEffect(() => {
@@ -185,6 +193,7 @@ export default function App() {
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
 
       <Footer />
+      <WhatsAppFab />
     </>
   )
 }

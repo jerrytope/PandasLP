@@ -34,6 +34,8 @@ GMAIL_APP_PASSWORD         — Google App Password for pandaslegalpractitioners@
 NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY — Paystack public key (client-side checkout)
 PAYSTACK_SECRET_KEY        — Paystack secret key (server-side only — verifies payments in app/api/verify-payment/route.ts). Placeholder = stub mode, same as the public key.
 NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
+NEXT_PUBLIC_GA_MEASUREMENT_ID — GA4 Measurement ID (G-XXXXXXX). Unset = analytics script doesn't render at all (see app/layout.jsx).
+CRON_SECRET                — Bearer token Vercel Cron sends to app/api/cron/follow-ups. Any random string.
 ```
 
 ---

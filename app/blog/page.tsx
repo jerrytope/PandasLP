@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { BLOG_POSTS } from '@/lib/blogPosts'
+import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
 
 const TITLE = 'Legal Resources'
@@ -83,6 +84,7 @@ export default function BlogIndexPage() {
           </div>
         </div>
       </main>
+      <WhatsAppFab />
     </div>
   )
 }

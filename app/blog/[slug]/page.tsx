@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
 import { safeJsonLd } from '@/lib/jsonLd'
+import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -125,6 +126,7 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </article>
       </main>
+      <WhatsAppFab />
     </div>
   )
 }

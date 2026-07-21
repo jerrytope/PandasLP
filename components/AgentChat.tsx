@@ -6,6 +6,8 @@ import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { extractDocument, extractOptions, extractClientPhone, type DraftDocument } from '@/lib/agentChatParsing'
 import { useFocusTrap } from '@/lib/useFocusTrap'
+import { getAttribution } from '@/lib/attribution'
+import { trackEvent } from '@/lib/analytics'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
 
@@ -169,9 +171,10 @@ export default function AgentChat({
     if (caseCreationPromiseRef.current) return caseCreationPromiseRef.current
 
     const creation = (async () => {
+      const { source, sourceDetail } = getAttribution()
       const { data, error: dbErr } = await supabase
         .from('cases')
-        .insert({ user_id: userId, agent_id: agent.id, status: 'draft' })
+        .insert({ user_id: userId, agent_id: agent.id, status: 'draft', source, source_detail: sourceDetail })
         .select('id, case_number, created_at')
         .single()
 
@@ -231,6 +234,8 @@ export default function AgentChat({
           ...(deadline ? { deadline_at: deadline } : {}),
         })
         .eq('id', id)
+
+      trackEvent('document_ready', { agent_id: agent.id, amount: newDoc.price ?? amount })
     }
   }
 
@@ -299,6 +304,7 @@ export default function AgentChat({
 
       setPaid(true)
       setPayOpen(false)
+      trackEvent('payment_completed', { agent_id: agent.id, amount: effectiveAmount })
 
       // Fire confirmation email — non-blocking
       authedFetch('/api/send-email', {
@@ -322,6 +328,7 @@ export default function AgentChat({
   async function sendToAgent(nextMessages: Message[], msgToPersist: Message) {
     if (sendingRef.current) return
     sendingRef.current = true
+    if (messages.length === 0) trackEvent('interview_started', { agent_id: agent.id })
     setMessages(nextMessages)
     setError('')
     setLoading(true)

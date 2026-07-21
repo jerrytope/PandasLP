@@ -460,6 +460,29 @@ h1, h2, h3, h4, h5, h6 {
 .marquee-item:hover { color: var(--text-1); border-color: var(--border-focus); }
 .marquee-item-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
+/* ── WhatsApp FAB ── */
+.whatsapp-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 90;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--bg-0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 0 0 var(--accent-glow);
+  transition: transform var(--anim-fast), box-shadow var(--anim-fast);
+}
+.whatsapp-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), 0 0 24px var(--accent-glow);
+}
+.whatsapp-fab:active { transform: translateY(0) scale(0.96); }
+
 /* ── Navbar ── */
 .navbar {
   position: fixed;
