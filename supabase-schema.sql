@@ -22,6 +22,11 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- /api/verify-payment so a client can't just declare an arbitrary amount "paid"
   expected_amount  INTEGER,
   amount_paid      INTEGER     NOT NULL DEFAULT 0,
+  -- set once, in /api/verify-payment/route.ts, the moment a payment first verifies — NOT the
+  -- same as created_at (a case can sit unpaid for days) or updated_at (touched by every
+  -- unrelated status change via the touch_updated_at trigger below). This is what the admin
+  -- ops panel's "days since paid" queue and weekly revenue numbers key off of.
+  paid_at          TIMESTAMPTZ,
   deadline_at      TIMESTAMPTZ,
   -- follow-up email tracking — 14-day response period (see lib/agents.ts demand letter
   -- templates), so the checkpoints are Day 0 (served), Day 7 (reminder), Day 14 (deadline
@@ -30,6 +35,10 @@ CREATE TABLE IF NOT EXISTS public.cases (
   email_day0_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
   email_day7_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
   email_day14_sent BOOLEAN     NOT NULL DEFAULT FALSE,
+  -- fires once, when a case first reaches judgment_obtained or closed (see
+  -- app/api/update-case-status/route.ts) — guards against a duplicate send if a case passes
+  -- through both of those stages.
+  resolution_email_sent BOOLEAN NOT NULL DEFAULT FALSE,
   -- attribution — captured client-side from ?ref=/utm_* params at first visit (see
   -- lib/attribution.ts), written in when the case is created. source is the coarse channel
   -- ('space', 'blog', 'ads', 'referral', 'direct'); source_detail is the raw ref/utm string.
@@ -136,6 +145,12 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS source        TEXT;
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS source_detail TEXT;
 --   ^ Attribution — see lib/attribution.ts.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+--   ^ Set once at payment time (see app/api/verify-payment/route.ts) — powers the admin ops
+--     panel's action queue and numbers strip (app/admin/page.tsx).
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS resolution_email_sent BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ Guards the resolution email (judgment_obtained/closed) against firing twice for the
+--     same case. See app/api/update-case-status/route.ts.
 --
 -- CREATE TABLE IF NOT EXISTS public.waitlist_signups (
 --   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),

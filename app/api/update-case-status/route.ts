@@ -3,11 +3,12 @@ export const runtime = 'nodejs'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { isAdminEmail } from '@/lib/adminAuth'
+import { sendCaseEmail } from '@/lib/sendCaseEmail'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
 
-type Action = 'markServed' | 'markFiled' | 'markJudgment'
+type Action = 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed'
 
 // Each action's required prior status — without this, the dashboard's status-changing
 // buttons were only gated by client-side UI, and the actual database write (a raw
@@ -17,13 +18,20 @@ const REQUIRED_PRIOR_STATUS: Record<Action, string> = {
   markServed: 'paid',
   markFiled: 'letter_served',
   markJudgment: 'filed',
+  markClosed: 'judgment_obtained',
 }
 
 const NEXT_STATUS: Record<Action, string> = {
   markServed: 'letter_served',
   markFiled: 'filed',
   markJudgment: 'judgment_obtained',
+  markClosed: 'closed',
 }
+
+// Terminal stages that should trigger the "your case is resolved" email — see
+// lib/emailTemplates.ts's getResolutionEmail. resolution_email_sent guards against firing
+// twice for a case that passes through judgment_obtained and later gets closed.
+const RESOLUTION_STAGES = new Set(['judgment_obtained', 'closed'])
 
 export async function POST(req: Request) {
   const { allowed, retryAfterSeconds } = checkRateLimit(`update-case-status:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
@@ -91,5 +99,13 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Failed to update case status.' }, { status: 500 })
   }
 
-  return Response.json({ ok: true, status: NEXT_STATUS[action] })
+  const nextStatus = NEXT_STATUS[action]
+  if (RESOLUTION_STAGES.has(nextStatus) && !caseData.resolution_email_sent) {
+    // Fire-and-forget — same pattern as the confirmation emails elsewhere in this codebase
+    // (AgentChat.tsx's handlePaymentDone). A failed send shouldn't roll back a status change
+    // that already succeeded.
+    sendCaseEmail(caseId, { type: 'resolution' }).catch((err) => console.error('Failed to send resolution email:', err))
+  }
+
+  return Response.json({ ok: true, status: nextStatus })
 }

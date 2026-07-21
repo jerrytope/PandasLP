@@ -17,6 +17,15 @@ export interface FollowUpEmailData {
   siteUrl: string
 }
 
+export interface ResolutionEmailData {
+  recipientName: string
+  caseTitle: string
+  siteUrl: string
+  // No Google Business Profile exists yet — omit the review ask entirely rather than
+  // fabricate a link. Set GOOGLE_REVIEW_URL once the profile is live (see lib/sendCaseEmail.ts).
+  reviewUrl?: string
+}
+
 function baseWrapper(content: string) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -223,6 +232,48 @@ pandaslegalpractitioners@gmail.com`,
       <a href="${resumeUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:600;text-decoration:none;padding:13px 24px;border-radius:12px;">
         Escalate to Court Filing →
       </a>
+    `),
+  }
+}
+
+export function getResolutionEmail(data: ResolutionEmailData): { subject: string; html: string; text: string } {
+  const { recipientName, caseTitle, siteUrl, reviewUrl } = data
+  const dashboardUrl = `${siteUrl}/dashboard`
+
+  const reviewTextBlock = reviewUrl
+    ? `\n\nIf you have a moment, a review helps other people in the same situation find us: ${reviewUrl}`
+    : ''
+  const reviewHtmlBlock = reviewUrl
+    ? `<a href="${reviewUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;margin-top:8px;">
+        Leave a Review →
+      </a>`
+    : ''
+
+  return {
+    subject: `Your case is resolved — ${caseTitle}`,
+    text: `Hi ${recipientName},
+
+Your case — ${caseTitle} — has been resolved. Thank you for trusting Pandas LP to handle this on your behalf.
+
+View your case: ${dashboardUrl}${reviewTextBlock}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        Your case is resolved
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Hi ${recipientName},
+      </p>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Your case — <strong style="color:#F3EFE3;">${caseTitle}</strong> — has been resolved.
+        Thank you for trusting Pandas LP to handle this on your behalf.
+      </p>
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        ${reviewUrl ? 'If you have a moment, a review helps other people in the same situation find us.' : 'You can view the full history of your case at any time from your dashboard.'}
+      </p>
+      ${reviewHtmlBlock}
     `),
   }
 }

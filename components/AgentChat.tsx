@@ -224,6 +224,12 @@ export default function AgentChat({
           ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
           : null
 
+      // Recorded now, before payment, so /api/verify-payment can trust it instead of
+      // re-deriving from the paid amount — a discount applied later must never be able to
+      // silently reclassify a pandas-serves purchase as self-serve.
+      const deliveryOption =
+        agent.id === 'small-claims' ? ((newDoc.price ?? amount) >= 25000 ? 'pandas-serves' : 'self-serve') : null
+
       await supabase
         .from('cases')
         .update({
@@ -232,6 +238,7 @@ export default function AgentChat({
           status: 'document_ready',
           expected_amount: newDoc.price ?? amount,
           ...(deadline ? { deadline_at: deadline } : {}),
+          ...(deliveryOption ? { delivery_option: deliveryOption } : {}),
         })
         .eq('id', id)
 

@@ -1,8 +1,11 @@
-import { getFollowUpEmail, getPaymentConfirmedEmail, type FollowUpEmailData } from './emailTemplates'
+import { getFollowUpEmail, getPaymentConfirmedEmail, getResolutionEmail, type FollowUpEmailData } from './emailTemplates'
 import { supabaseAdmin } from './supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from './mailer'
 
-export type SendCaseEmailOptions = { type: 'payment_confirmed' } | { type: 'follow_up'; day: 0 | 7 | 14 }
+export type SendCaseEmailOptions =
+  | { type: 'payment_confirmed' }
+  | { type: 'follow_up'; day: 0 | 7 | 14 }
+  | { type: 'resolution' }
 
 export type SendCaseEmailResult = { ok: true } | { ok: false; error: string; status: number }
 
@@ -46,7 +49,7 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       amountPaid: caseData.amount_paid ?? 0,
       siteUrl,
     }))
-  } else {
+  } else if (options.type === 'follow_up') {
     const emailData: FollowUpEmailData = {
       recipientEmail,
       recipientName,
@@ -58,6 +61,15 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       siteUrl,
     }
     ;({ subject, html, text } = getFollowUpEmail(emailData))
+  } else {
+    ;({ subject, html, text } = getResolutionEmail({
+      recipientName,
+      caseTitle: caseData.document_title ?? 'your case',
+      siteUrl,
+      // No Google Business Profile exists yet — GOOGLE_REVIEW_URL is unset, so the email
+      // omits the review ask entirely rather than link to a page that doesn't exist.
+      reviewUrl: process.env.GOOGLE_REVIEW_URL || undefined,
+    }))
   }
 
   try {
@@ -71,6 +83,11 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
     await supabaseAdmin
       .from('cases')
       .update({ [`email_day${options.day}_sent`]: true })
+      .eq('id', caseId)
+  } else if (options.type === 'resolution') {
+    await supabaseAdmin
+      .from('cases')
+      .update({ resolution_email_sent: true })
       .eq('id', caseId)
   }
 

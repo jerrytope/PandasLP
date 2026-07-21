@@ -120,16 +120,22 @@ export async function POST(req: Request) {
     )
   }
 
-  // Delivery option for small-claims is derived from the verified amount, never trusted
-  // from the client — ₦25,000 is the only tier where Pandas LP personally serves the letter.
+  // Delivery option for small-claims is normally already set on the case row (AgentChat.tsx's
+  // saveTurn writes it from the chosen tier at document-finalization time, before payment) —
+  // trust that first. The amount-derivation fallback only exists for cases that predate this
+  // field; deriving fresh from verifiedAmount here would misclassify a discounted pandas-serves
+  // purchase (verifiedAmount < 25000) as self-serve even though that's the tier the client paid for.
   const deliveryOption =
-    caseData.agent_id === 'small-claims' ? (verifiedAmount >= 25000 ? 'pandas-serves' : 'self-serve') : null
+    caseData.agent_id === 'small-claims'
+      ? (caseData.delivery_option ?? (verifiedAmount >= 25000 ? 'pandas-serves' : 'self-serve'))
+      : null
 
   const { error: updateErr } = await supabaseAdmin
     .from('cases')
     .update({
       status: 'paid',
       amount_paid: verifiedAmount,
+      paid_at: new Date().toISOString(),
       ...(deliveryOption ? { delivery_option: deliveryOption } : {}),
     })
     .eq('id', caseId)
