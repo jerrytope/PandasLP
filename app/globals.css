@@ -179,6 +179,7 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   animation: borderAngleSpin 3.5s linear infinite;
+  pointer-events: none;
 }
 .btn-border-glow .btn-primary {
   border-radius: var(--radius-pill);
@@ -1767,8 +1768,9 @@ h1, h2, h3, h4, h5, h6 {
   .section { padding: 72px 0; }
   .hero { padding: 120px 24px 64px; min-height: auto; }
   .hero-grid { grid-template-columns: 1fr; gap: 40px; text-align: center; }
+  .hero-copy { align-items: center; }
   .hero-sub { max-width: 100%; }
-  .hero-actions { justify-content: center; }
+  .hero-actions { justify-content: center; flex-wrap: wrap; }
   .hero-trust { justify-content: center; }
   .phone-mockup-wrap { display: none; }
   .nav-links, .nav-actions { display: none; }
