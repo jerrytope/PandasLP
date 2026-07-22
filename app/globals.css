@@ -1165,6 +1165,7 @@ h1, h2, h3, h4, h5, h6 {
   transition: border-color var(--anim-fast);
 }
 .pricing-amount-input:focus { border-color: var(--border-focus); }
+.pricing-amount-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .pricing-amount-input::placeholder { color: var(--text-3); }
 
 .pricing-breakdown {

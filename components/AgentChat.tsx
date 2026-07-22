@@ -117,12 +117,16 @@ export default function AgentChat({
     : paymentDescription
 
   useEffect(() => {
+    // Only meaningful when this is actually a dialog — in fullPage mode there's no modal to
+    // close, and onClose there navigates away entirely (e.g. back to '/'), so an unguarded
+    // listener would silently discard an in-progress interview on a stray Escape press.
+    if (fullPage) return
     function handleKey(e: globalThis.KeyboardEvent) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  }, [onClose, fullPage])
 
   useEffect(() => {
     if (messagesRef.current) {
@@ -530,7 +534,7 @@ export default function AgentChat({
                 Verifying your payment…
               </p>
             )}
-            {payError && <p className={styles.bubbleError} style={{ marginTop: 10 }}>{payError}</p>}
+            {payError && <p role="alert" className={styles.bubbleError} style={{ marginTop: 10 }}>{payError}</p>}
           </div>
         ) : (
           <>
@@ -665,7 +669,7 @@ export default function AgentChat({
                   </button>
                 </div>
                 {phoneSaveError && (
-                  <p style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{phoneSaveError}</p>
+                  <p role="alert" style={{ color: 'var(--danger)', fontSize: 12, marginTop: 6 }}>{phoneSaveError}</p>
                 )}
               </div>
             )}
@@ -697,6 +701,7 @@ export default function AgentChat({
                 </button>
                 <textarea
                   className={styles.textarea}
+                  aria-label="Type your message"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}

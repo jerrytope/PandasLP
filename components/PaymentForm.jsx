@@ -57,8 +57,9 @@ export default function PaymentForm({ amount, description, onSuccess, onBack, ba
       {isPaystackStubbed && <span className="badge badge-test">Test Mode — No Real Charge</span>}
 
       <div className="form-group" style={{ marginTop: 16 }}>
-        <label>Email Address</label>
+        <label htmlFor="payment-email">Email Address</label>
         <input
+          id="payment-email"
           className="input"
           type="email"
           placeholder="you@example.com"
@@ -72,7 +73,7 @@ export default function PaymentForm({ amount, description, onSuccess, onBack, ba
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 20 }}>₦{amount.toLocaleString()}</span>
       </div>
 
-      {error && <p className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
+      {error && <p role="alert" className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
 
       <div className="row">
         {onBack && (

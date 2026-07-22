@@ -31,10 +31,11 @@ export default function EnforcementIntake({ parentCase, onSubmit, onBack }) {
 
         <form onSubmit={handleSubmit} className="card" style={{ maxWidth: 480 }}>
           <div className="form-group">
-            <label>
+            <label htmlFor="enforcement-amount">
               Judgment Amount Awarded by the Court (₦) <span className="required">*</span>
             </label>
             <input
+              id="enforcement-amount"
               className="input"
               type="number"
               min="1"
@@ -43,7 +44,7 @@ export default function EnforcementIntake({ parentCase, onSubmit, onBack }) {
             />
           </div>
 
-          {error && <p className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
+          {error && <p role="alert" className="error-text" style={{ marginBottom: 12 }}>{error}</p>}
 
           <div className="row">
             <button type="button" className="btn" onClick={onBack}>

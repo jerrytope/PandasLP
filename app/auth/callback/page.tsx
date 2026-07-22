@@ -38,7 +38,7 @@ export default function AuthCallbackPage() {
         fontFamily: 'var(--font-sans)',
       }}
     >
-      <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>{msg}</p>
+      <p role="status" style={{ color: 'var(--text-muted)', fontSize: 15 }}>{msg}</p>
     </div>
   )
 }

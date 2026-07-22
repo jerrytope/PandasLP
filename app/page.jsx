@@ -140,55 +140,57 @@ export default function App() {
         onAuthClick={() => setAuthOpen(true)}
       />
 
-      {step === 'landing' && !enforcementSource && (
-        <LandingPage
-          onOpenAgent={openAgent}
-          onStartLawyerConsult={() => openAgent('lawyer-consultation')}
-          onStartCustomClaim={handleStartCustomClaim}
-        />
-      )}
+      <main>
+        {step === 'landing' && !enforcementSource && (
+          <LandingPage
+            onOpenAgent={openAgent}
+            onStartLawyerConsult={() => openAgent('lawyer-consultation')}
+            onStartCustomClaim={handleStartCustomClaim}
+          />
+        )}
 
-      {step === 'custom-claim' && <CustomClaim onSubmit={handleCustomClaimSubmit} onBack={goToLanding} />}
+        {step === 'custom-claim' && <CustomClaim onSubmit={handleCustomClaimSubmit} onBack={goToLanding} />}
 
-      {enforcementSource && (
-        <EnforcementIntake
-          parentCase={enforcementSource}
-          onSubmit={handleEnforcementSubmit}
-          onBack={() => setEnforcementSource(null)}
-        />
-      )}
+        {enforcementSource && (
+          <EnforcementIntake
+            parentCase={enforcementSource}
+            onSubmit={handleEnforcementSubmit}
+            onBack={() => setEnforcementSource(null)}
+          />
+        )}
 
-      {step === 'payment' && paymentContext && (
-        <PaymentGate
-          amount={paymentContext.amount}
-          description={paymentContext.description}
-          onSuccess={handlePaymentSuccess}
-          onBack={handlePaymentBack}
-        />
-      )}
+        {step === 'payment' && paymentContext && (
+          <PaymentGate
+            amount={paymentContext.amount}
+            description={paymentContext.description}
+            onSuccess={handlePaymentSuccess}
+            onBack={handlePaymentBack}
+          />
+        )}
 
-      {step === 'custom-confirmation' && customClaim && (
-        <div className="step-page">
-          <div className="container">
-            <div className="card" style={{ maxWidth: 480 }}>
-              <span className="badge">Submitted</span>
-              <h2 style={{ marginTop: 12 }}>Thanks, {customClaim.name}!</h2>
-              <p style={{ color: 'var(--text-muted)' }}>
-                Your claim has been routed to our legal team. A lawyer will reach out to{' '}
-                {customClaim.email} within 24 hours to discuss next steps.
-              </p>
-              <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
-                Haven't heard from us in 24 hours? Email{' '}
-                <a href="mailto:pandaslegalpractitioners@gmail.com">pandaslegalpractitioners@gmail.com</a>{' '}
-                directly and reference your name and the date you submitted this.
-              </p>
-              <button type="button" className="btn btn-primary" style={{ marginTop: 16 }} onClick={goToLanding}>
-                Back to Home
-              </button>
+        {step === 'custom-confirmation' && customClaim && (
+          <div className="step-page">
+            <div className="container">
+              <div className="card" style={{ maxWidth: 480 }}>
+                <span className="badge">Submitted</span>
+                <h2 style={{ marginTop: 12 }}>Thanks, {customClaim.name}!</h2>
+                <p style={{ color: 'var(--text-muted)' }}>
+                  Your claim has been routed to our legal team. A lawyer will reach out to{' '}
+                  {customClaim.email} within 24 hours to discuss next steps.
+                </p>
+                <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+                  Haven't heard from us in 24 hours? Email{' '}
+                  <a href="mailto:pandaslegalpractitioners@gmail.com">pandaslegalpractitioners@gmail.com</a>{' '}
+                  directly and reference your name and the date you submitted this.
+                </p>
+                <button type="button" className="btn btn-primary" style={{ marginTop: 16 }} onClick={goToLanding}>
+                  Back to Home
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </main>
 
       {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
 

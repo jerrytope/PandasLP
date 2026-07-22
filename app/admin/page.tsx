@@ -262,11 +262,13 @@ export default function AdminPage() {
           Admin
         </h1>
 
-        <div style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid var(--border)' }}>
+        <div role="tablist" aria-label="Admin sections" style={{ display: 'flex', gap: 8, marginBottom: 24, borderBottom: '1px solid var(--border)' }}>
           {(['queue', 'cases', 'claims', 'waitlist'] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
+              role="tab"
+              aria-selected={tab === t}
               onClick={() => setTab(t)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
@@ -281,11 +283,13 @@ export default function AdminPage() {
         </div>
 
         {loadError && (
-          <div className="card" style={{ borderColor: 'var(--danger)', marginBottom: 20, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div role="alert" className="card" style={{ borderColor: 'var(--danger)', marginBottom: 20, padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
             <span style={{ color: 'var(--danger)', fontSize: 14 }}>{loadError}</span>
             <button type="button" className="btn btn-sm" onClick={() => setLoadError('')}>Dismiss</button>
           </div>
         )}
+
+        <div role="tabpanel">
 
         {tab === 'queue' && (() => {
           const now = Date.now()
@@ -400,17 +404,18 @@ export default function AdminPage() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
               <input
                 className="input"
+                aria-label="Filter by client email"
                 placeholder="Filter by client email…"
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') loadTab('cases') }}
                 style={{ maxWidth: 240, fontSize: 13 }}
               />
-              <select className="input" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ maxWidth: 180, fontSize: 13 }}>
+              <select className="input" aria-label="Filter by status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ maxWidth: 180, fontSize: 13 }}>
                 <option value="">All statuses</option>
                 {Object.entries(STAGE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
-              <select className="input" value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} style={{ maxWidth: 200, fontSize: 13 }}>
+              <select className="input" aria-label="Filter by agent" value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} style={{ maxWidth: 200, fontSize: 13 }}>
                 <option value="">All agents</option>
                 {Object.values(AGENTS).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
@@ -465,6 +470,7 @@ export default function AdminPage() {
             </div>
           </>
         )}
+        </div>
       </main>
     </div>
   )

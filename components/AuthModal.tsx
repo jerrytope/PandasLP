@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useFocusTrap } from '@/lib/useFocusTrap'
 import styles from './AuthModal.module.css'
@@ -16,6 +16,22 @@ export default function AuthModal({ onClose }: AuthModalProps) {
   const [error, setError] = useState('')
   const modalRef = useRef<HTMLDivElement>(null)
   useFocusTrap(modalRef, true)
+
+  // Escape-to-close, and return focus to whatever triggered the modal once it unmounts —
+  // standard dialog behavior, otherwise keyboard/screen-reader users lose their place.
+  const triggerRef = useRef<Element | null>(null)
+  useEffect(() => {
+    triggerRef.current = document.activeElement
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      if (triggerRef.current instanceof HTMLElement) triggerRef.current.focus()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -82,7 +98,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                 autoFocus
               />
             </div>
-            {error && <p className="error-text" style={{ marginTop: -8, marginBottom: 12 }}>{error}</p>}
+            {error && <p role="alert" className="error-text" style={{ marginTop: -8, marginBottom: 12 }}>{error}</p>}
             <button
               type="submit"
               className="btn btn-primary btn-block"

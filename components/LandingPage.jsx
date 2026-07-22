@@ -20,7 +20,7 @@ import { formatNaira } from '../lib/formatNaira'
 const TESTING_SERVICES = [
   {
     id: 'judgment-enforcement',
-    icon: <Gavel size={20} strokeWidth={1.5} />,
+    icon: <Gavel size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'Judgment Enforcement',
     shortName: 'Enforce a judgment',
     description: 'Already won in court but the debtor won\'t pay? We file a Garnishee Order or Writ of Execution to compel payment.',
@@ -29,7 +29,7 @@ const TESTING_SERVICES = [
   },
   {
     id: 'lawyer-consultation',
-    icon: <CalendarCheck size={20} strokeWidth={1.5} />,
+    icon: <CalendarCheck size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'Lawyer Consultation',
     shortName: 'Speak to a lawyer',
     description: 'Book a 45-minute session with a licensed Nigerian lawyer. Get real legal advice, one-on-one.',
@@ -41,21 +41,21 @@ const TESTING_SERVICES = [
 const COMING_SOON_SERVICES = [
   {
     id: 'recovery-of-premises',
-    icon: <Building2 size={20} strokeWidth={1.5} />,
+    icon: <Building2 size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'Recovery of Premises',
     description: 'Tenant won\'t leave after notice? We prepare your eviction letter and file at the Rent Tribunal.',
     color: '#1d6fa4',
   },
   {
     id: 'contracts',
-    icon: <Briefcase size={20} strokeWidth={1.5} />,
+    icon: <Briefcase size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'Contracts & Commercial',
     description: 'Draft or review business agreements, NDAs, service contracts, and partnership deeds.',
     color: '#6b4fc9',
   },
   {
     id: 'cac-registration',
-    icon: <Shield size={20} strokeWidth={1.5} />,
+    icon: <Shield size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'CAC Registration',
     description: 'Register your business with the Corporate Affairs Commission. Business name or full incorporation.',
     color: '#c97a1a',
@@ -267,21 +267,21 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             {[
               {
                 num: '01',
-                icon: <MessageSquare size={22} strokeWidth={1.5} />,
+                icon: <MessageSquare size={22} strokeWidth={1.5} aria-hidden="true" />,
                 title: 'Tell us what happened',
                 body: 'Answer a few questions about who owes you and how much. Upload invoices or contracts — we read them and skip the questions we already know the answers to.',
                 detail: 'Average interview: 7 minutes',
               },
               {
                 num: '02',
-                icon: <FileText size={22} strokeWidth={1.5} />,
+                icon: <FileText size={22} strokeWidth={1.5} aria-hidden="true" />,
                 title: 'Your demand letter, ready fast',
                 body: 'In under 10 minutes, we prepare a court-ready Letter of Demand on Pandas LP letterhead — citing the correct Nigerian legal provisions. You preview it before paying.',
                 detail: 'Free watermarked preview',
               },
               {
                 num: '03',
-                icon: <Send size={22} strokeWidth={1.5} />,
+                icon: <Send size={22} strokeWidth={1.5} aria-hidden="true" />,
                 title: 'A licensed lawyer serves it and follows up',
                 body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor — not an email bot. Escalating follow-up notices go out at Day 7 and Day 14 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
                 detail: 'Day 0 → Day 7 → Day 14 → Court',
@@ -321,7 +321,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           <div className="ai-features-grid">
             {[
               {
-                icon: <Brain size={20} strokeWidth={1.5} />,
+                icon: <Brain size={20} strokeWidth={1.5} aria-hidden="true" />,
                 iconBg: 'rgba(214, 187, 128, 0.12)',
                 iconColor: '#D6BB80',
                 tag: 'Structured Intake',
@@ -329,7 +329,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 body: 'The interview follows the same intake logic a senior litigator uses — debtor identity, relationship to the debt, contract terms, payment history, evidence quality, limitation period. Every time, in the right sequence, nothing skipped.',
               },
               {
-                icon: <Eye size={20} strokeWidth={1.5} />,
+                icon: <Eye size={20} strokeWidth={1.5} aria-hidden="true" />,
                 iconBg: 'rgba(143, 174, 198, 0.12)',
                 iconColor: '#8FAEC6',
                 tag: 'Case Analysis',
@@ -337,7 +337,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 body: 'If your dates don\'t add up, it flags it. If your only evidence is a verbal promise, it tells you that\'s a weak case and explains why. It asks follow-up questions until your case is tight enough to put in front of a court.',
               },
               {
-                icon: <Heart size={20} strokeWidth={1.5} />,
+                icon: <Heart size={20} strokeWidth={1.5} aria-hidden="true" />,
                 iconBg: 'rgba(99,102,241,0.12)',
                 iconColor: '#818CF8',
                 tag: 'Reads the Room',
@@ -345,7 +345,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The interview adjusts to it — calmer when you\'re stressed, more direct when you\'re ready to move.',
               },
               {
-                icon: <Scale size={20} strokeWidth={1.5} />,
+                icon: <Scale size={20} strokeWidth={1.5} aria-hidden="true" />,
                 iconBg: 'rgba(56,189,248,0.12)',
                 iconColor: '#38BDF8',
                 tag: 'Nigerian Law',
@@ -592,7 +592,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       {/* Notify me flow */}
                       {ns === 'done' ? (
                         <div style={{ fontSize: 13, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <CheckCircle size={14} strokeWidth={2} />
+                          <CheckCircle size={14} strokeWidth={2} aria-hidden="true" />
                           We'll let you know when it's live.
                         </div>
                       ) : ns === 'open' || ns === 'submitting' || ns === 'error' ? (
@@ -638,7 +638,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-2)' }}
                           onClick={() => setNotifyState(s => ({ ...s, [svc.id]: 'open' }))}
                         >
-                          <Bell size={13} strokeWidth={1.5} />
+                          <Bell size={13} strokeWidth={1.5} aria-hidden="true" />
                           Notify me when live
                         </button>
                       )}
@@ -666,14 +666,14 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <Reveal delay={0}>
               <div className="bento-card bento-card-hero card-gradient" style={{ display: 'flex', gap: 32, alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 240px' }}>
-                  <div className="bento-icon"><Sparkles size={20} strokeWidth={1.5} /></div>
+                  <div className="bento-icon"><Sparkles size={20} strokeWidth={1.5} aria-hidden="true" /></div>
                   <h3 className="bento-title" style={{ fontSize: 22 }}>Guided Legal Interview</h3>
                   <p className="bento-body">No forms. No jargon. Just answer questions in plain English — we handle the legal translation. Upload a document and we read it so you don't have to explain it.</p>
                 </div>
                 <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {['WhatsApp messages accepted', 'PDF invoices analysed', 'No legal knowledge needed'].map(t => (
                     <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-2)' }}>
-                      <CheckCircle size={14} color="var(--secondary)" strokeWidth={2} />
+                      <CheckCircle size={14} color="var(--secondary)" strokeWidth={2} aria-hidden="true" />
                       {t}
                     </div>
                   ))}
@@ -682,10 +682,10 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </Reveal>
 
             {[
-              { icon: <Scale size={18} strokeWidth={1.5} />,     title: 'Court-Ready Documents',    body: 'Demand letters on firm letterhead, drafted in minutes. Every document cites the correct Nigerian statute.' },
-              { icon: <Clock size={18} strokeWidth={1.5} />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 7, Day 14 — escalating pressure on the debtor, zero effort from you.' },
-              { icon: <TrendingUp size={18} strokeWidth={1.5} />,title: 'Transparent Pricing',      body: 'Know exactly what you\'ll pay before you start. No retainers, no surprise bills.' },
-              { icon: <Users size={18} strokeWidth={1.5} />,     title: 'Real Lawyers',             body: 'Every document is reviewed by our team. Licensed practitioners file and appear in court on your behalf.' },
+              { icon: <Scale size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Court-Ready Documents',    body: 'Demand letters on firm letterhead, drafted in minutes. Every document cites the correct Nigerian statute.' },
+              { icon: <Clock size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 7, Day 14 — escalating pressure on the debtor, zero effort from you.' },
+              { icon: <TrendingUp size={18} strokeWidth={1.5} aria-hidden="true" />,title: 'Transparent Pricing',      body: 'Know exactly what you\'ll pay before you start. No retainers, no surprise bills.' },
+              { icon: <Users size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Real Lawyers',             body: 'Every document is reviewed by our team. Licensed practitioners file and appear in court on your behalf.' },
             ].map((f, i) => (
               <Reveal key={f.title} delay={(i + 1) * 60}>
                 <div className="bento-card">
@@ -750,7 +750,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   </span>
                 </div>
                 <div className="pricing-savings">
-                  <ArrowUpRight size={14} />
+                  <ArrowUpRight size={14} aria-hidden="true" />
                   Save approx. {formatNaira(savings)} vs. a traditional lawyer
                 </div>
               </div>
@@ -869,9 +869,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 textAlign: 'left',
               }}>
                 {[
-                  { icon: <Zap size={18} strokeWidth={1.5} />,   title: 'First mover',       body: 'Fast, affordable debt recovery doesn\'t exist at scale in Nigeria yet. You\'re early.' },
-                  { icon: <Scale size={18} strokeWidth={1.5} />,  title: 'Real lawyers',       body: 'CAC-registered firm. Every document reviewed. Every filing handled by a licensed practitioner.' },
-                  { icon: <Shield size={18} strokeWidth={1.5} />, title: 'Your case, your data', body: 'Encrypted. Private. Only you and your assigned lawyer can see your case.' },
+                  { icon: <Zap size={18} strokeWidth={1.5} aria-hidden="true" />,   title: 'First mover',       body: 'Fast, affordable debt recovery doesn\'t exist at scale in Nigeria yet. You\'re early.' },
+                  { icon: <Scale size={18} strokeWidth={1.5} aria-hidden="true" />,  title: 'Real lawyers',       body: 'CAC-registered firm. Every document reviewed. Every filing handled by a licensed practitioner.' },
+                  { icon: <Shield size={18} strokeWidth={1.5} aria-hidden="true" />, title: 'Your case, your data', body: 'Encrypted. Private. Only you and your assigned lawyer can see your case.' },
                 ].map(item => (
                   <div key={item.title} style={{
                     background: 'var(--bg-2)',

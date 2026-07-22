@@ -69,7 +69,7 @@ export default async function BlogPostPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(articleJsonLd) }}
       />
-      <header className="navbar">
+      <header className="navbar" role="banner">
         <div className="container navbar-inner">
           <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
             Pandas <span className="accent">LP</span>
@@ -114,9 +114,9 @@ export default async function BlogPostPage({ params }: Props) {
             borderColor: 'rgba(214, 187, 128, 0.3)',
             textAlign: 'center',
           }}>
-            <h3 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 22 }}>
+            <h2 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 22 }}>
               Ready to take action?
-            </h3>
+            </h2>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 24px', fontSize: 14, lineHeight: 1.65 }}>
               We interview you, draft your Letter of Demand on firm letterhead, and file at the Small Claims Court on your behalf — from ₦10,000.
             </p>

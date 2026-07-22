@@ -30,7 +30,7 @@ function formatDate(iso: string) {
 export default function BlogIndexPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      <header className="navbar">
+      <header className="navbar" role="banner">
         <div className="container navbar-inner">
           <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
             Pandas <span className="accent">LP</span>

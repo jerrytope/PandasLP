@@ -62,7 +62,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }}
       />
-      <header className="navbar">
+      <header className="navbar" role="banner">
         <div className="container navbar-inner">
           <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
             Pandas <span className="accent">LP</span>
