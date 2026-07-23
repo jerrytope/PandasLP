@@ -229,6 +229,40 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>Our Small Claims Agent interviews you, drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and — if needed — files the claim and represents you in court. Starting from ₦10,000.</p>
     `,
   },
+  {
+    slug: 'mistakes-to-avoid-recovering-a-debt-in-nigeria',
+    title: '3 Mistakes to Avoid When Recovering a Debt in Nigeria',
+    description: 'The most common mistakes people make chasing unpaid debts in Nigeria — and the simple fixes that actually get you paid, according to the law.',
+    date: '2026-07-27',
+    readTime: '5 min read',
+    category: 'Debt Recovery',
+    content: `
+<p>Someone owes you money. They keep promising "next week." Weeks turn into months. If this sounds familiar, you are not alone — and the way most people handle it in Nigeria almost guarantees they never get paid.</p>
+<p>Here are the three mistakes we see constantly, and what to do instead.</p>
+
+<h2>Mistake 1: Everything Stays Verbal</h2>
+<p>Calls. WhatsApp voice notes. "I'll send it next week, I promise." Nothing ever gets written down that states the amount owed, what it was for, and when it was due.</p>
+<p>This feels harmless in the moment — you trust them, or you don't want to make things awkward. But the day you finally decide to act, you have nothing to act on. No court, and no lawyer writing a demand letter, can point to a specific, provable debt if there's no record of one.</p>
+<p><strong>The fix:</strong> put the debt in writing today, even informally. A text message stating the amount and the due date, which they reply to and acknowledge — even with something as simple as "yes, I'll pay by Friday" — changes your legal position completely. It turns a vague understanding into evidence.</p>
+
+<h2>Mistake 2: Waiting Too Long</h2>
+<p>The longer a debt sits unpaid, the harder it becomes to recover. Debtors relocate. Businesses close down or change names. Conversations get deleted or "forgotten." Memories conveniently fade about what was agreed.</p>
+<p>Time also matters in a way most people don't realise: under Nigerian law, debts don't stay enforceable forever. The Limitation Law in most states gives you a fixed window — typically six years for a simple contract debt — after which a court can refuse to hear your claim at all, no matter how clearly you were owed.</p>
+<p><strong>The fix:</strong> if a debt is 60 days or more overdue and the excuses have started repeating themselves, that's your signal to escalate — not wait for a "better time."</p>
+
+<h2>Mistake 3: Going From Zero Straight to a Fight</h2>
+<p>Public callouts on social media. Threatening messages. Showing up unannounced at someone's home or office. It feels justified, and for a day it might even feel good — but it can expose <em>you</em> to legal liability, for defamation, harassment, or worse, while doing nothing to actually secure your money.</p>
+<p>The correct escalation is far less dramatic, and it works: a formal Letter of Demand. It states the amount owed, the basis of the debt, a clear deadline to pay, and what happens if that deadline passes.</p>
+<p><strong>The fix:</strong> skip the confrontation. A demand letter on a law firm's letterhead does two things a WhatsApp message never can — it shows the debtor you are serious enough to involve a lawyer, and it creates the exact paper trail a court will expect to see if the matter ever gets that far. Many disputes never go past this single letter.</p>
+
+<h2>Putting It Together</h2>
+<p>None of this requires you to be aggressive, or to already have a lawyer on retainer. It requires getting the debt in writing, acting before too much time passes, and escalating in the order the law actually respects — demand first, court second, enforcement third.</p>
+
+<h2>Start Your Claim with Pandas LP</h2>
+<p>Our Small Claims Agent interviews you, drafts a proper Letter of Demand on firm letterhead, and — if it's ignored — prepares your court filing. Starting from ₦10,000. See our full <a href="/recover-debt/lagos">guide to recovering a debt in Lagos</a> for claim limits and court locations in your state.</p>
+<p><em>P.S. — We're covering all of this live on X Spaces, Thursday 30 July at 7PM WAT, with a lawyer taking questions. Find us at @PandasLP on X.</em></p>
+    `,
+  },
 ]
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
