@@ -6,12 +6,14 @@ import Link from 'next/link'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
+import { renderFormattedText } from '@/lib/renderFormattedText'
 
 interface CaseRow {
   id: string
   agent_id: string
   status: string
   document_title: string | null
+  document_body: string | null
   amount_paid: number
   created_at: string
   deadline_at: string | null
@@ -98,6 +100,7 @@ export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const [expandedLetterId, setExpandedLetterId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -261,6 +264,16 @@ export default function DashboardPage() {
                         </span>
                       )}
                       <span className="badge">{STAGE_LABEL[c.status] ?? c.status}</span>
+                      {c.document_body && (
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{ fontSize: 12, padding: '7px 14px', borderRadius: 10 }}
+                          onClick={() => setExpandedLetterId((id) => (id === c.id ? null : c.id))}
+                        >
+                          {expandedLetterId === c.id ? 'Hide Letter' : 'View Letter'}
+                        </button>
+                      )}
                       <Link
                         href={`/agent/${c.agent_id}?resume=${c.id}`}
                         className="btn"
@@ -270,6 +283,25 @@ export default function DashboardPage() {
                       </Link>
                     </div>
                   </div>
+
+                  {expandedLetterId === c.id && c.document_body && (
+                    <div
+                      style={{
+                        marginTop: 14,
+                        padding: '16px 18px',
+                        borderRadius: 10,
+                        background: 'var(--bg-1)',
+                        border: '1px solid var(--border)',
+                        fontSize: 13,
+                        lineHeight: 1.7,
+                        whiteSpace: 'pre-wrap',
+                        maxHeight: 420,
+                        overflowY: 'auto',
+                      }}
+                    >
+                      {renderFormattedText(c.document_body)}
+                    </div>
+                  )}
 
                   {/* Callback number — pandas-serves tier, once paid, so a lawyer can call the client */}
                   {isPaid && c.delivery_option === 'pandas-serves' && c.client_phone && (

@@ -7,6 +7,7 @@ import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { formatNaira } from '@/lib/formatNaira'
+import { renderFormattedText } from '@/lib/renderFormattedText'
 
 interface AdminCaseRow {
   id: string
@@ -16,6 +17,7 @@ interface AdminCaseRow {
   agent_id: string
   status: string
   document_title: string | null
+  document_body: string | null
   amount_paid: number
   expected_amount: number | null
   delivery_option: string | null
@@ -85,6 +87,7 @@ function CaseCard({
 }) {
   const agent = AGENTS[c.agent_id as AgentId]
   const next = NEXT_ACTION[c.status]
+  const [showLetter, setShowLetter] = useState(false)
   return (
     <div className="card" style={{ padding: '18px 22px', ...(accentColor ? { borderColor: accentColor } : {}) }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -111,8 +114,8 @@ function CaseCard({
         )}
       </div>
 
-      {next && (
-        <div style={{ marginTop: 14 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+        {next && (
           <button
             type="button"
             className="btn btn-sm"
@@ -121,6 +124,30 @@ function CaseCard({
           >
             {updatingId === c.id ? 'Updating…' : next.label}
           </button>
+        )}
+        {c.document_body && (
+          <button type="button" className="btn btn-sm" onClick={() => setShowLetter((v) => !v)}>
+            {showLetter ? 'Hide Letter' : 'View Letter'}
+          </button>
+        )}
+      </div>
+
+      {showLetter && c.document_body && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: '16px 18px',
+            borderRadius: 10,
+            background: 'var(--bg-1)',
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            lineHeight: 1.7,
+            whiteSpace: 'pre-wrap',
+            maxHeight: 420,
+            overflowY: 'auto',
+          }}
+        >
+          {renderFormattedText(c.document_body)}
         </div>
       )}
     </div>
