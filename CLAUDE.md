@@ -37,6 +37,10 @@ NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
 NEXT_PUBLIC_GA_MEASUREMENT_ID — GA4 Measurement ID (G-XXXXXXX). Unset = analytics script doesn't render at all (see app/layout.jsx).
 CRON_SECRET                — Bearer token Vercel Cron sends to app/api/cron/follow-ups. Any random string.
 PLUGIN_API_KEY             — Fixed key checked against the x-plugin-key header on app/api/plugin/intake. Pasted into the OpenAI Action's own auth config once that's set up. Unset = the route 503s.
+ADMIN_EMAILS               — Comma-separated staff allowlist checked by lib/adminAuth.ts (isAdminEmail/requireAdmin). Singular ADMIN_EMAIL is also accepted as a fallback — the Vercel env var was originally set up under that name. Change requires a redeploy to take effect.
+GOOGLE_REVIEW_URL          — Link included in the resolution email (lib/sendCaseEmail.ts) once a case closes. Omitted gracefully if unset — no fabricated URL.
+ALLOW_STUB_PAYMENTS        — Set to "true" to allow stub (unverified) payments in real production (VERCEL_ENV === 'production'). Dangerous if left on — it means /api/verify-payment trusts the client-reported amount instead of checking with Paystack. Should not be set in normal operation; see app/api/verify-payment/route.ts.
+NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-consultation flow (components/LawyerConsult.jsx).
 ```
 
 ---

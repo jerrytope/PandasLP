@@ -100,6 +100,16 @@ export async function POST(req: Request) {
   }
 
   const nextStatus = NEXT_STATUS[action]
+
+  // Audit trail — fire-and-forget, same reasoning as the resolution email below: a failed
+  // log write must never fail or roll back a status change that already succeeded.
+  supabaseAdmin
+    .from('case_status_history')
+    .insert({ case_id: caseId, from_status: caseData.status, to_status: nextStatus, changed_by: callerData.user.email })
+    .then(({ error }) => {
+      if (error) console.error('Failed to write case_status_history:', error)
+    })
+
   if (RESOLUTION_STAGES.has(nextStatus) && !caseData.resolution_email_sent) {
     // Fire-and-forget — same pattern as the confirmation emails elsewhere in this codebase
     // (AgentChat.tsx's handlePaymentDone). A failed send shouldn't roll back a status change

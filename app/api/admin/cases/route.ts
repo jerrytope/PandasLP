@@ -33,17 +33,16 @@ export async function GET(req: Request) {
     return Response.json({ error: 'Failed to load cases.' }, { status: 500 })
   }
 
-  // cases.user_id is an auth.users id, not an email — resolve emails in one batched call
-  // rather than N+1 lookups. listUsers() is paginated; 1000/page comfortably covers this
-  // project's expected scale. If that ever stops being true, switch to per-id
-  // getUserById() lookups for just the user_ids actually present in `cases`.
-  const { data: usersPage, error: usersErr } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-  if (usersErr) {
-    return Response.json({ error: 'Failed to resolve client emails.' }, { status: 500 })
-  }
+  // cases.user_id is an auth.users id, not an email — resolve emails for just the users
+  // actually present in this page of cases, in parallel, rather than either N+1 sequential
+  // lookups or a listUsers() scan (which silently truncates past 1000 total auth users).
+  const uniqueUserIds = [...new Set((cases ?? []).map((c) => c.user_id))]
   const emailById = new Map<string, string>()
-  for (const u of usersPage.users) {
-    emailById.set(u.id, u.email ?? '')
+  const userLookups = await Promise.all(
+    uniqueUserIds.map((id) => supabaseAdmin.auth.admin.getUserById(id)),
+  )
+  for (const { data } of userLookups) {
+    if (data?.user) emailById.set(data.user.id, data.user.email ?? '')
   }
 
   let enriched = (cases ?? []).map((c) => ({ ...c, userEmail: emailById.get(c.user_id) ?? '' }))

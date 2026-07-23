@@ -47,6 +47,9 @@ export async function POST(req: Request) {
   if (!fileBase64 || !mediaType || !filename) {
     return Response.json({ error: 'Missing file data.' }, { status: 400 })
   }
+  if (typeof filename !== 'string' || filename.length > 255) {
+    return Response.json({ error: 'Invalid filename.' }, { status: 400 })
+  }
 
   // Base64 inflates size by ~4/3 — this is only an estimate, but it's enough to reject the
   // pathological "send something huge directly to the API" case the client-side check
@@ -116,7 +119,8 @@ Document filename: ${filename}`
 
     const data = await res.json()
     if (!res.ok) {
-      return Response.json({ error: data.error?.message || 'Extraction failed.' }, { status: 502 })
+      console.error('Anthropic extraction API error:', res.status, data.error?.message)
+      return Response.json({ error: 'Extraction failed. Please try again.' }, { status: 502 })
     }
 
     const facts: string = data.content?.[0]?.text ?? 'No facts extracted.'

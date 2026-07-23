@@ -51,6 +51,18 @@ export async function POST(req: Request) {
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: 'Missing messages.' }, { status: 400 })
   }
+  // Generous cap — real messages are never anywhere near this; only rejects
+  // pathological/abuse payloads, not legitimate use.
+  const MAX_MESSAGE_LENGTH = 8000
+  const hasInvalidMessage = messages.some(
+    (m) =>
+      typeof m.content !== 'string' ||
+      m.content.length > MAX_MESSAGE_LENGTH ||
+      (m.role !== 'user' && m.role !== 'assistant'),
+  )
+  if (hasInvalidMessage) {
+    return Response.json({ error: 'Invalid message in conversation.' }, { status: 400 })
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey || apiKey.includes('your_anthropic_api_key_here')) {

@@ -46,6 +46,16 @@ export async function POST(req: Request) {
   if (!name || !email || !description) {
     return Response.json({ error: 'Missing name, email, or description.' }, { status: 400 })
   }
+  // Generous caps — real submissions are never close to these; only rejects
+  // pathological/abuse payloads.
+  if (
+    typeof name !== 'string' || name.length > 200 ||
+    typeof email !== 'string' || email.length > 200 ||
+    (phone !== undefined && (typeof phone !== 'string' || phone.length > 30)) ||
+    typeof description !== 'string' || description.length > 5000
+  ) {
+    return Response.json({ error: 'Invalid or oversized field.' }, { status: 400 })
+  }
 
   const { data, error: dbErr } = await supabaseAdmin
     .from('custom_claims')

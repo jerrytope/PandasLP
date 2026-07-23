@@ -60,7 +60,8 @@ export async function POST(req: Request) {
   )
 
   if (result.ok === false) {
-    return Response.json({ error: result.error }, { status: result.status })
+    console.error('sendCaseEmail failed:', result.error)
+    return Response.json({ error: 'Could not send the email. Please try again.' }, { status: result.status })
   }
 
   return Response.json({ ok: true })

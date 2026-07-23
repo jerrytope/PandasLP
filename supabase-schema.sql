@@ -85,13 +85,35 @@ CREATE TABLE IF NOT EXISTS public.waitlist_signups (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Audit trail for status changes on cases — who changed what, when. Written non-blocking
+-- from app/api/update-case-status/route.ts; a failed insert here must never fail or roll
+-- back the status change itself.
+CREATE TABLE IF NOT EXISTS public.case_status_history (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id     UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  from_status TEXT        NOT NULL,
+  to_status   TEXT        NOT NULL,
+  changed_by  TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes — every one of these columns is filtered/ordered on in app/api/admin/cases and
+-- app/api/cron/follow-ups; without them those queries are full sequential scans of `cases`.
+CREATE INDEX IF NOT EXISTS idx_cases_status     ON public.cases(status);
+CREATE INDEX IF NOT EXISTS idx_cases_agent_id   ON public.cases(agent_id);
+CREATE INDEX IF NOT EXISTS idx_cases_created_at ON public.cases(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cases_follow_up  ON public.cases(status, email_day7_sent, email_day14_sent)
+  WHERE status = 'letter_served';
+
 -- Row Level Security
-ALTER TABLE public.cases            ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.messages         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.custom_claims    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.waitlist_signups ENABLE ROW LEVEL SECURITY;
--- No policies on custom_claims or waitlist_signups: RLS with zero policies blocks anon/authenticated roles
--- entirely, while the service-role client (used only server-side) always bypasses RLS.
+ALTER TABLE public.cases               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_claims       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_signups    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.case_status_history ENABLE ROW LEVEL SECURITY;
+-- No policies on custom_claims, waitlist_signups, or case_status_history: RLS with zero
+-- policies blocks anon/authenticated roles entirely, while the service-role client (used
+-- only server-side) always bypasses RLS.
 
 -- Drop existing policies if re-running
 DROP POLICY IF EXISTS "owner_cases"    ON public.cases;
@@ -185,3 +207,21 @@ CREATE TRIGGER cases_touch
 -- FROM public.cases
 -- GROUP BY 1, 2
 -- ORDER BY 1 DESC, 3 DESC;
+--
+-- CREATE TABLE IF NOT EXISTS public.case_status_history (
+--   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   case_id     UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+--   from_status TEXT        NOT NULL,
+--   to_status   TEXT        NOT NULL,
+--   changed_by  TEXT        NOT NULL,
+--   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE public.case_status_history ENABLE ROW LEVEL SECURITY;
+--   ^ Audit trail for case status changes — see app/api/update-case-status/route.ts.
+--
+-- CREATE INDEX IF NOT EXISTS idx_cases_status     ON public.cases(status);
+-- CREATE INDEX IF NOT EXISTS idx_cases_agent_id   ON public.cases(agent_id);
+-- CREATE INDEX IF NOT EXISTS idx_cases_created_at ON public.cases(created_at DESC);
+-- CREATE INDEX IF NOT EXISTS idx_cases_follow_up  ON public.cases(status, email_day7_sent, email_day14_sent)
+--   WHERE status = 'letter_served';
+--   ^ Safe to run on an existing database — CREATE INDEX IF NOT EXISTS is a no-op if already present.

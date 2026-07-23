@@ -36,6 +36,9 @@ export async function POST(req: Request) {
   if (!email || !service) {
     return Response.json({ error: 'Missing fields.' }, { status: 400 })
   }
+  if (typeof email !== 'string' || email.length > 200 || typeof service !== 'string' || service.length > 100) {
+    return Response.json({ error: 'Invalid or oversized field.' }, { status: 400 })
+  }
 
   // Persist first — this is the record of truth the admin dashboard reads. A failed
   // notification email shouldn't lose the signup, so this happens before (and

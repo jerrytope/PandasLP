@@ -16,6 +16,20 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=604800, stale-while-revalidate=86400' },
         ],
       },
+      {
+        // Site-wide hardening headers. Deliberately NOT including a Content-Security-Policy
+        // here — this app has inline <script> tags (JSON-LD in app/layout.jsx and the blog/
+        // recover-debt pages, the GA4 snippet) plus the Paystack inline checkout script, and a
+        // CSP needs to be built and tested against every one of those individually or it'll
+        // silently break them. These four are safe on their own with no such risk.
+        source: '/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
     ]
   },
 }
