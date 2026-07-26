@@ -10,6 +10,8 @@ interface AuthModalProps {
   onClose: () => void
 }
 
+const GENERIC_ERROR = "Something went wrong sending your sign-in link. Please try again in a moment."
+
 export default function AuthModal({ onClose }: AuthModalProps) {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -52,12 +54,15 @@ export default function AuthModal({ onClose }: AuthModalProps) {
       })
 
       if (authError) {
-        setError(authError.message)
+        // authError.message is sometimes empty or a bare "{}" (Supabase wrapping a raw,
+        // non-JSON, or CORS-blocked response) — never show that literally, fall back to
+        // something a user can actually act on.
+        setError(authError.message && authError.message.trim() !== '{}' ? authError.message : GENERIC_ERROR)
       } else {
         setSent(true)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setError(err instanceof Error && err.message ? err.message : GENERIC_ERROR)
     } finally {
       setLoading(false)
     }
