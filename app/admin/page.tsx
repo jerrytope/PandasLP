@@ -9,7 +9,7 @@ import type { AgentId } from '@/lib/agents'
 import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { downloadTextDocument } from '@/lib/pdfGenerator'
-import { Phone, AlertTriangle, Scale, Check } from 'lucide-react'
+import { Phone, AlertTriangle, Scale, Check, Clock } from 'lucide-react'
 
 interface AdminCaseRow {
   id: string
@@ -150,9 +150,11 @@ function CaseCard({
             {updatingId === c.id ? 'Updating…' : next.label}
           </button>
         )}
-        {/* Available once reviewed, while the case is still "paid" (not yet served) — download
-            for your own copy/stamping, and send is a deliberate separate click, not automatic. */}
-        {c.status === 'paid' && c.reviewed_at && c.document_body && (
+        {/* Staff can always download any drafted letter, paid or not — useful for following
+            up on abandoned/unpaid leads on a sales call, not just reviewed-and-paid cases.
+            This is admin-only (this whole page requires isAdminEmail), so it doesn't touch the
+            client-facing "no download before review" rule enforced in AgentChat.tsx. */}
+        {c.document_body && (
           <button
             type="button"
             className="btn btn-sm"
@@ -471,8 +473,9 @@ function AdminPageInner() {
                     })}
                   </div>
 
-                  <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
-                    ⏰ Deadline passed {deadlinePassed.length > 0 && `(${deadlinePassed.length})`}
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+                    <Clock size={16} strokeWidth={1.5} aria-hidden="true" />
+                    Deadline passed {deadlinePassed.length > 0 && `(${deadlinePassed.length})`}
                   </h2>
                   {deadlinePassed.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases past their response deadline.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
