@@ -76,6 +76,8 @@ export default function Footer() {
               <a href="#how-it-works">How It Works</a>
               <a href="#pricing">Pricing</a>
               <Link href="/dashboard">My Cases</Link>
+              <Link href="/privacy">Privacy Policy</Link>
+              <Link href="/refund-policy">Refund Policy</Link>
             </nav>
 
             <p className="footer-col-title" style={{ marginTop: 20 }}>Recover Debt By State</p>

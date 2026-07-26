@@ -5,8 +5,14 @@ export interface BlogPost {
   date: string
   readTime: string
   category: string
+  author: string
   content: string // HTML string
 }
+
+// Every post is reviewed by a licensed member of the Pandas LP team before publishing — see
+// app/blog/[slug]/page.tsx for where this renders. Keep this the single source of truth so a
+// future change of reviewer only needs updating here, not in every post.
+export const DEFAULT_AUTHOR = 'Adebayo Sobayo & Adeyemo Adedeji, Legal Practitioner'
 
 export const BLOG_POSTS: BlogPost[] = [
   {
@@ -16,6 +22,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: '2026-06-01',
     readTime: '7 min read',
     category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
     content: `
 <p>If someone owes you money in Lagos and refuses to pay, you don't necessarily need a lawyer or an expensive court battle. The Lagos Small Claims Court was set up specifically to help individuals and small businesses recover debts quickly and affordably.</p>
 
@@ -74,6 +81,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: '2026-06-08',
     readTime: '5 min read',
     category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
     content: `
 <p>A Letter of Demand is a formal written notice from a creditor to a debtor, demanding payment of an outstanding debt within a specified period. In Nigeria, it is one of the most important steps before taking legal action — and in many cases, it is enough to get you paid without ever going to court.</p>
 
@@ -127,6 +135,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: '2026-06-15',
     readTime: '4 min read',
     category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
     content: `
 <p>If you have received a Letter of Demand in Nigeria and are wondering whether you can simply ignore it — the short answer is: you can, but it will cost you significantly more in the end.</p>
 <p>This article explains what happens next from the creditor's perspective — so whether you are the one owed money or the one receiving the letter, you understand the legal process.</p>
@@ -171,6 +180,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: '2026-06-22',
     readTime: '5 min read',
     category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
     content: `
 <p>A common misconception in Nigeria is that going to court is only worth it for large amounts — that suing over ₦50,000 or even ₦500,000 is too expensive or complicated to bother with. This is no longer true.</p>
 <p>The Small Claims Court was designed specifically to make it practical to recover smaller debts, without needing a lawyer and without spending more on legal fees than the amount you are owed.</p>
@@ -236,6 +246,7 @@ export const BLOG_POSTS: BlogPost[] = [
     date: '2026-07-27',
     readTime: '5 min read',
     category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
     content: `
 <p>Someone owes you money. They keep promising "next week." Weeks turn into months. If this sounds familiar, you are not alone — and the way most people handle it in Nigeria almost guarantees they never get paid.</p>
 <p>Here are the three mistakes we see constantly, and what to do instead.</p>
@@ -261,6 +272,59 @@ export const BLOG_POSTS: BlogPost[] = [
 <h2>Start Your Claim with Pandas LP</h2>
 <p>Our Small Claims Agent interviews you, drafts a proper Letter of Demand on firm letterhead, and — if it's ignored — prepares your court filing. Starting from ₦10,000. See our full <a href="/recover-debt/lagos">guide to recovering a debt in Lagos</a> for claim limits and court locations in your state.</p>
 <p><em>P.S. — We're covering all of this live on X Spaces, Thursday 30 July at 7PM WAT, with a lawyer taking questions. Find us at @PandasLP on X.</em></p>
+    `,
+  },
+  {
+    slug: 'how-to-register-a-business-in-nigeria-cac',
+    title: 'How to Register a Business in Nigeria (CAC Registration Explained)',
+    description: 'Business Name or Limited Company? Here is exactly what CAC registration involves in Nigeria, what each option costs, and how to choose between them.',
+    date: '2026-08-03',
+    readTime: '6 min read',
+    category: 'Business Registration',
+    author: DEFAULT_AUTHOR,
+    content: `
+<p>Every legitimate business in Nigeria has to be registered with the Corporate Affairs Commission (CAC) — it's what turns "a thing you do to make money" into a recognised legal entity that can open a business bank account, sign contracts, and be taken seriously by clients and partners. Here's what that actually involves.</p>
+
+<h2>Business Name vs. Limited Company — Which Do You Need?</h2>
+<p>This is the first decision, and it matters more than most people realise.</p>
+<ul>
+  <li><strong>Business Name (BN)</strong> — the simpler, cheaper option. You (or you and a partner) register a trading name. There's no separation between you and the business legally — you're personally liable for its debts and obligations. Fastest to set up, fine for freelancers, small traders, and sole proprietors.</li>
+  <li><strong>Limited Company (Ltd/RC)</strong> — creates a separate legal entity from its owners. Shareholders' liability is limited to what they've invested. Needed if you want to raise investment, bring in shareholders, or simply want the legal separation between you and the business. More paperwork, higher cost, but the standard choice once a business is past its earliest stage.</li>
+</ul>
+<p>Neither is "better" — they suit different situations. A one-person consulting practice rarely needs the complexity of a Limited Company. A startup planning to raise money from investors needs one from day one, because investors generally can't take equity in a Business Name.</p>
+
+<h2>What You Need Before You Start</h2>
+<ul>
+  <li>Two proposed names, in order of preference (CAC checks availability and can reject names too similar to an existing one)</li>
+  <li>A valid means of identification (National ID, international passport, or driver's license) for every proprietor/director</li>
+  <li>A passport photograph for each proprietor/director</li>
+  <li>A registered business address</li>
+  <li>For a Limited Company: at least one director and one shareholder (can be the same person), and details of share allocation</li>
+</ul>
+
+<h2>The Registration Process</h2>
+<ol>
+  <li><strong>Name reservation</strong> — submit your proposed name(s) via the CAC portal (post.cac.gov.ng) for availability check and reservation, valid for 60 days.</li>
+  <li><strong>Complete the registration form</strong> — Form CAC-BN1 for a Business Name, or the incorporation forms (including CAC-IT1) for a Limited Company.</li>
+  <li><strong>Upload documents</strong> — ID, passport photograph, and (for a Limited Company) your Memorandum and Articles of Association.</li>
+  <li><strong>Pay the CAC fee</strong> — varies by structure and, for a Limited Company, by share capital.</li>
+  <li><strong>Receive your certificate</strong> — a Business Name typically takes a few days; a Limited Company can take longer depending on CAC's processing volume.</li>
+</ol>
+
+<h2>What You Get at the End</h2>
+<p>A Business Name registration gives you a BN number and a status report you can print — this is what most banks accept to open a business account. A Limited Company registration gives you an RC number, a Certificate of Incorporation, and your Memorandum & Articles — the fuller legal identity a growing business needs.</p>
+<p><strong>A note from experience:</strong> Pandas LP itself is registered as a Business Name (BN 9646741), not a Limited Company — for a firm at our stage, that was the right call, and it's worth genuinely thinking through which structure fits your business rather than defaulting to whichever sounds more official.</p>
+
+<h2>Common Mistakes</h2>
+<ul>
+  <li>Choosing a name too similar to an existing registered business — wastes the reservation and delays everything</li>
+  <li>Registering a Business Name when you actually need investor-ready structure, then having to convert later</li>
+  <li>Using a residential address that later causes issues opening a business bank account</li>
+  <li>Missing the 60-day name reservation window and having to start over</li>
+</ul>
+
+<h2>Register with Pandas LP</h2>
+<p>Our CAC Registration Agent walks you through the choice between a Business Name and a Limited Company, prepares your CAC forms, and guides you through submission — from ₦15,000.</p>
     `,
   },
 ]

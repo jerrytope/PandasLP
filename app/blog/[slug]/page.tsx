@@ -54,7 +54,10 @@ export default async function BlogPostPage({ params }: Props) {
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
-    author: { '@type': 'Organization', name: 'Pandas LP' },
+    author: [
+      { '@type': 'Person', name: 'Adebayo Sobayo' },
+      { '@type': 'Person', name: 'Adeyemo Adedeji', jobTitle: 'Legal Practitioner' },
+    ],
     publisher: {
       '@type': 'Organization',
       name: 'Pandas LP',
@@ -100,6 +103,9 @@ export default async function BlogPostPage({ params }: Props) {
           }}>
             {post.title}
           </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: -20, marginBottom: 32 }}>
+            Reviewed by <strong style={{ color: 'var(--text-2)' }}>{post.author}</strong>
+          </p>
 
           {/* Content */}
           <div

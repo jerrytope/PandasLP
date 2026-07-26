@@ -34,6 +34,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.7,
     },
+    {
+      url: `${SITE_URL}/privacy`,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/refund-policy`,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
     ...blogEntries,
     ...stateEntries,
   ]

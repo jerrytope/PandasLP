@@ -1,7 +1,7 @@
 # Pandas LP — Project Context for Claude
 
 ## What This Is
-Pandas LP is an AI-native law firm in Nigeria. It is a registered business with the CAC (Business Name, BN 9646741 — not a limited liability company registration) and will notify the NBA shortly. The product is a Next.js web app where AI agents conduct a guided legal interview, draft court-ready documents, and Pandas LP's team serves and files them on behalf of clients.
+Pandas LP is an AI-native law firm in Nigeria. It is a registered business with the CAC (Business Name, BN 9646741 — not a limited liability company registration) and has notified the NBA (Nigerian Bar Association). The product is a Next.js web app where AI agents conduct a guided legal interview, draft court-ready documents, and Pandas LP's team serves and files them on behalf of clients.
 
 This is NOT a document template tool. Pandas LP is a law firm that can represent clients in court.
 
