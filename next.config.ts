@@ -1,6 +1,19 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        // www.pandaslp.com.ng and the apex were both serving identical content (a real
+        // duplicate-content SEO issue) — this makes www a hard redirect to the canonical apex
+        // domain instead. permanent: true emits a 308.
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.pandaslp.com.ng' }],
+        destination: 'https://pandaslp.com.ng/:path*',
+        permanent: true,
+      },
+    ]
+  },
   async headers() {
     return [
       {

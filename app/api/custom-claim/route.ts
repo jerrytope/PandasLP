@@ -74,6 +74,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Could not save your claim. Please try again.' }, { status: 500 })
   }
 
+  let notified = false
   if (isMailerConfigured()) {
     try {
       await sendMail({
@@ -87,13 +88,19 @@ export async function POST(req: Request) {
           <p style="color:#8A9B8F;font-size:13px;">Reply to this email to reach them directly — Ref: custom_claims/${data.id}</p>
         `,
       })
+      notified = true
     } catch (err) {
       // The claim is already saved — a failed notification email shouldn't fail the request,
-      // but it must not vanish silently either.
+      // but it must not vanish silently either. `notified` stays false so the admin view
+      // surfaces this as needing attention instead of relying entirely on the email arriving.
       console.error('Custom claim saved but notification email failed:', err)
     }
   } else {
     console.error('Custom claim saved but mailer is not configured — no notification sent for', data.id)
+  }
+
+  if (notified) {
+    await supabaseAdmin.from('custom_claims').update({ notified: true }).eq('id', data.id)
   }
 
   return Response.json({ ok: true, id: data.id })

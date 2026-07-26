@@ -26,6 +26,23 @@ export interface ResolutionEmailData {
   reviewUrl?: string
 }
 
+export interface ReviewedDocumentEmailData {
+  recipientName: string
+  caseTitle: string
+  reviewedBy: string
+  deliveryOption: string | null
+  siteUrl: string
+}
+
+export interface NewOrderAlertEmailData {
+  caseTitle: string
+  clientEmail: string
+  amountPaid: number
+  agentId: string
+  caseId: string
+  siteUrl: string
+}
+
 function baseWrapper(content: string) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -45,7 +62,7 @@ function baseWrapper(content: string) {
             Pandas <span style="color:#D6BB80;">LP</span>
           </span>
           <span style="display:block;font-size:11px;color:#ABB1A2;margin-top:4px;letter-spacing:0.06em;text-transform:uppercase;">
-            Professional Legal Services, Powered by AI
+            Licensed Legal Practitioners, Lagos, Nigeria
           </span>
         </td>
       </tr>
@@ -59,7 +76,7 @@ function baseWrapper(content: string) {
       <tr>
         <td style="background:#1F3446;border:1px solid rgba(243, 239, 227,0.1);border-top:1px solid rgba(243, 239, 227,0.06);border-radius:0 0 16px 16px;padding:20px 32px;">
           <p style="margin:0;font-size:11px;color:#ABB1A2;line-height:1.6;">
-            Pandas LP — Professional Legal Services, Powered by AI<br/>
+            Pandas LP — Licensed Legal Practitioners, Lagos, Nigeria<br/>
             pandaslegalpractitioners@gmail.com · +234 811 808 0189<br/>
             <a href="https://pandaslp.com.ng" style="color:#ABB1A2;">pandaslp.com.ng</a>
           </p>
@@ -274,6 +291,90 @@ pandaslegalpractitioners@gmail.com`,
         ${reviewUrl ? 'If you have a moment, a review helps other people in the same situation find us.' : 'You can view the full history of your case at any time from your dashboard.'}
       </p>
       ${reviewHtmlBlock}
+    `),
+  }
+}
+
+export function getReviewedDocumentEmail(data: ReviewedDocumentEmailData): { subject: string; html: string; text: string } {
+  const { recipientName, caseTitle, reviewedBy, deliveryOption, siteUrl } = data
+  const dashboardUrl = `${siteUrl}/dashboard`
+
+  // pandas-serves cases: staff still deliver it, this email is the client's own record copy.
+  // self-serve cases: this email IS the delivery — the client prints/sends it themselves,
+  // since there's no in-app download anymore (see components/AgentChat.tsx).
+  const nextStepText =
+    deliveryOption === 'pandas-serves'
+      ? "Our team will serve this on your behalf — we'll update your dashboard once that's done. This email is your copy for your own records."
+      : "This is now yours to print and serve on the other party — attached as a PDF, ready to send. Important: the moment you've delivered it, come back to your dashboard and click \"Mark Letter as Served.\" That's what starts the 14-day response clock — if we don't hear from you, we can't track when the other party's deadline passes or follow up on your behalf."
+
+  return {
+    subject: `Your reviewed document — ${caseTitle}`,
+    text: `Hi ${recipientName},
+
+${caseTitle} has been reviewed by ${reviewedBy} and is attached to this email as a PDF.
+
+${nextStepText}
+
+View your case: ${dashboardUrl}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        Your document has been reviewed
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Hi ${recipientName},
+      </p>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        <strong style="color:#F3EFE3;">${caseTitle}</strong> has been reviewed by
+        <strong style="color:#F3EFE3;">${reviewedBy}</strong> and is attached to this email as a PDF.
+      </p>
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        ${nextStepText}
+      </p>
+      <a href="${dashboardUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">
+        View Your Case →
+      </a>
+    `),
+  }
+}
+
+// Goes to GMAIL_USER (staff), not the client — built and sent directly from
+// app/api/verify-payment/route.ts rather than through sendCaseEmail, which resolves its
+// recipient from the case owner. This is the "click here to review" alert a payment triggers.
+export function getNewOrderAlertEmail(data: NewOrderAlertEmailData): { subject: string; html: string; text: string } {
+  const { caseTitle, clientEmail, amountPaid, agentId, caseId, siteUrl } = data
+  const reviewUrl = `${siteUrl}/admin?caseId=${caseId}`
+  const amountStr = `₦${amountPaid.toLocaleString()}`
+
+  return {
+    subject: `New paid order — ${caseTitle}`,
+    text: `We've received a payment on a new order.
+
+Client: ${clientEmail}
+Service: ${agentId}
+Amount: ${amountStr}
+Document: ${caseTitle}
+
+Click here to review the document: ${reviewUrl}
+
+Pandas LP`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        New paid order
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        We've received a payment on a new order — <strong style="color:#F3EFE3;">${caseTitle}</strong>.
+      </p>
+      <table style="width:100%;margin:0 0 20px;font-size:14px;color:#ABB1A2;">
+        <tr><td style="padding:4px 0;">Client</td><td style="padding:4px 0;color:#F3EFE3;">${clientEmail}</td></tr>
+        <tr><td style="padding:4px 0;">Service</td><td style="padding:4px 0;color:#F3EFE3;">${agentId}</td></tr>
+        <tr><td style="padding:4px 0;">Amount</td><td style="padding:4px 0;color:#F3EFE3;">${amountStr}</td></tr>
+      </table>
+      <a href="${reviewUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">
+        Click to Review Document →
+      </a>
     `),
   }
 }

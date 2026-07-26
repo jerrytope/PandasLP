@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type ReactNode } from 'react'
 import type { Agent, AgentId } from '@/lib/agents'
-import { textDocumentBlobUrl, downloadTextDocument } from '@/lib/pdfGenerator'
+import { textDocumentBlobUrl } from '@/lib/pdfGenerator'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { extractDocument, extractOptions, extractClientPhone, type DraftDocument } from '@/lib/agentChatParsing'
 import { useFocusTrap } from '@/lib/useFocusTrap'
@@ -156,10 +156,16 @@ export default function AgentChat({
       setPreviewUrl('')
       return
     }
-    const url = String(textDocumentBlobUrl(draftDoc.title, draftDoc.body, { watermark: !paid }))
+    // Always watermarked, paid or not — this is a preview so the client can confirm the
+    // facts are correct, never the final deliverable. The clean copy only ever reaches them
+    // by email, after a licensed reviewer has actually looked at it (see markReviewed in
+    // app/api/update-case-status/route.ts). Without this, the in-browser preview itself would
+    // be a clean-copy leak the moment payment succeeded, regardless of whether a "Download"
+    // button exists.
+    const url = String(textDocumentBlobUrl(draftDoc.title, draftDoc.body, { watermark: true }))
     setPreviewUrl(url)
     return () => URL.revokeObjectURL(url)
-  }, [draftDoc, paid])
+  }, [draftDoc])
 
   // ----- Supabase persistence helpers -----
 
@@ -599,7 +605,7 @@ export default function AgentChat({
               <div className={styles.documentPanel}>
                 <div className={styles.documentHeader}>
                   <span className={styles.documentTitle}>{draftDoc.title}</span>
-                  {paid ? <span className="badge">Paid — Clean Copy</span> : <span className="badge badge-test">Free Preview</span>}
+                  {paid ? <span className="badge">Paid — Sent For Review</span> : <span className="badge badge-test">Preview</span>}
                 </div>
 
                 {draftDoc.priceLabel && !paid && (
@@ -610,14 +616,15 @@ export default function AgentChat({
 
                 {previewUrl && <iframe title="Document preview" src={previewUrl} className={styles.docFrame} />}
 
+                {paid && (
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '10px 0 0' }}>
+                    Thank you — please confirm the facts above are correct. Your letter has been sent to our legal
+                    team for review. You'll receive your reviewed copy by email once that's done — there's no
+                    download here, since nothing is final until a licensed reviewer has checked it.
+                  </p>
+                )}
+
                 <div className={styles.documentActions}>
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => downloadTextDocument(draftDoc.title, draftDoc.body, { watermark: !paid })}
-                  >
-                    {paid ? 'Download PDF' : 'Download Sample'}
-                  </button>
                   {!paid ? (
                     <button type="button" className="btn btn-primary" onClick={() => setPayOpen(true)}>
                       Approve & Pay ₦{effectiveAmount.toLocaleString()} →

@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- app/api/update-case-status/route.ts) — guards against a duplicate send if a case passes
   -- through both of those stages.
   resolution_email_sent BOOLEAN NOT NULL DEFAULT FALSE,
+  -- set once a licensed member of the team has reviewed the drafted document — no client ever
+  -- gets the clean/final document before this happens (see app/api/update-case-status/route.ts's
+  -- markReviewed action). reviewed_at gates sending the client their emailed copy.
+  reviewed_at      TIMESTAMPTZ,
+  reviewed_by      TEXT,
+  -- set only once staff explicitly click "Send to Customer" for a reviewed case — sending is a
+  -- deliberate act, not automatic on review, so staff can download and stamp the PDF first if
+  -- they want to. See the sendReviewedDocument action.
+  reviewed_document_sent_at TIMESTAMPTZ,
   -- attribution — captured client-side from ?ref=/utm_* params at first visit (see
   -- lib/attribution.ts), written in when the case is created. source is the coarse channel
   -- ('space', 'blog', 'ads', 'referral', 'direct'); source_detail is the raw ref/utm string.
@@ -72,6 +81,10 @@ CREATE TABLE IF NOT EXISTS public.custom_claims (
   description  TEXT        NOT NULL,
   amount_paid  INTEGER     NOT NULL DEFAULT 0,
   status       TEXT        NOT NULL DEFAULT 'new',
+  -- true only once the staff notification email actually sent successfully — false (not just
+  -- "unread") means nobody was ever notified, so the admin view can surface it as needing
+  -- attention instead of relying entirely on one inbox. See app/api/custom-claim/route.ts.
+  notified     BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -183,6 +196,17 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.waitlist_signups ENABLE ROW LEVEL SECURITY;
 --   ^ Persists "notify me" signups so the admin dashboard has something to list — previously
 --     these only existed as a one-off email that vanished if it failed to send.
+--
+-- ALTER TABLE public.custom_claims ADD COLUMN IF NOT EXISTS notified BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ See app/api/custom-claim/route.ts — true only once the staff notification email actually
+--     sent. Lets the admin custom-claims view flag submissions nobody was ever notified about.
+--
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_by TEXT;
+--   ^ Mandatory-review gate — see app/api/update-case-status/route.ts's markReviewed action.
+--     No client gets the clean/final document until this is set.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_document_sent_at TIMESTAMPTZ;
+--   ^ Set only when staff explicitly send the reviewed copy — sendReviewedDocument action.
 --
 -- ALTER TABLE public.cases RENAME COLUMN email_day7_sent TO email_day14_sent;
 -- ALTER TABLE public.cases RENAME COLUMN email_day3_sent TO email_day7_sent;

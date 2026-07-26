@@ -1,11 +1,13 @@
-import { getFollowUpEmail, getPaymentConfirmedEmail, getResolutionEmail, type FollowUpEmailData } from './emailTemplates'
+import { getFollowUpEmail, getPaymentConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, type FollowUpEmailData } from './emailTemplates'
 import { supabaseAdmin } from './supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from './mailer'
+import { buildTextDocumentBuffer } from './pdfGenerator.js'
 
 export type SendCaseEmailOptions =
   | { type: 'payment_confirmed' }
   | { type: 'follow_up'; day: 0 | 7 | 14 }
   | { type: 'resolution' }
+  | { type: 'reviewed_document' }
 
 export type SendCaseEmailResult = { ok: true } | { ok: false; error: string; status: number }
 
@@ -40,8 +42,27 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
   let subject: string
   let html: string
   let text: string
+  let attachments: { filename: string; content: Buffer; contentType?: string }[] | undefined
 
-  if (options.type === 'payment_confirmed') {
+  if (options.type === 'reviewed_document') {
+    if (!caseData.document_title || !caseData.document_body) {
+      return { ok: false, error: 'This case has no document to send yet.', status: 400 }
+    }
+    if (!caseData.reviewed_by) {
+      // Guards against calling this before markReviewed has actually run — the whole point
+      // of this email is that a named person has reviewed the document first.
+      return { ok: false, error: 'This case has not been marked reviewed yet.', status: 409 }
+    }
+    ;({ subject, html, text } = getReviewedDocumentEmail({
+      recipientName,
+      caseTitle: caseData.document_title,
+      reviewedBy: caseData.reviewed_by,
+      deliveryOption: caseData.delivery_option,
+      siteUrl,
+    }))
+    const pdfBuffer = buildTextDocumentBuffer(caseData.document_title, caseData.document_body, { watermark: false })
+    attachments = [{ filename: 'demand-letter.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
+  } else if (options.type === 'payment_confirmed') {
     ;({ subject, html, text } = getPaymentConfirmedEmail({
       recipientEmail,
       recipientName,
@@ -73,7 +94,7 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
   }
 
   try {
-    await sendMail({ to: recipientEmail, replyTo: GMAIL_USER, subject, text, html })
+    await sendMail({ to: recipientEmail, replyTo: GMAIL_USER, subject, text, html, attachments })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     return { ok: false, error: message, status: 502 }

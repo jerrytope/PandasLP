@@ -731,16 +731,12 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
 
               <div className="pricing-breakdown">
                 <div className="pricing-row">
-                  <span className="pricing-row-label">Demand letter (self-serve PDF)</span>
+                  <span className="pricing-row-label">Demand letter, drafted & reviewed</span>
                   <span className="pricing-row-value">{formatNaira(DEMAND_FEE)}</span>
                 </div>
                 <div className="pricing-row">
                   <span className="pricing-row-label">Follow-up emails (Day 7 + Day 14)</span>
                   <span className="pricing-row-value" style={{ color: 'var(--secondary)' }}>Included</span>
-                </div>
-                <div className="pricing-row">
-                  <span className="pricing-row-label">Pandas LP serves the letter</span>
-                  <span className="pricing-row-value">+₦15,000</span>
                 </div>
                 <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
                 <div className="pricing-row pricing-row-total" ref={priceRowRef}>
@@ -752,6 +748,10 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 <div className="pricing-savings">
                   <ArrowUpRight size={14} aria-hidden="true" />
                   Save approx. {formatNaira(savings)} vs. a traditional lawyer
+                </div>
+                <div className="pricing-row" style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--border-subtle)' }}>
+                  <span className="pricing-row-label" style={{ color: 'var(--text-muted)' }}>Optional — Pandas LP delivers it for you</span>
+                  <span className="pricing-row-value" style={{ color: 'var(--text-muted)' }}>+₦15,000</span>
                 </div>
               </div>
 

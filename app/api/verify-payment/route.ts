@@ -2,6 +2,8 @@ export const runtime = 'nodejs'
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
+import { getNewOrderAlertEmail } from '@/lib/emailTemplates'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -142,6 +144,23 @@ export async function POST(req: Request) {
 
   if (updateErr) {
     return Response.json({ error: 'Payment verified but failed to update the case.' }, { status: 500 })
+  }
+
+  // Fire-and-forget, staff-facing — the "click here to review" alert that starts the
+  // mandatory-review flow (see app/api/update-case-status/route.ts's markReviewed action). A
+  // failed send here shouldn't fail a payment that already succeeded; the admin panel's Queue
+  // tab is the fallback if this email doesn't land.
+  if (isMailerConfigured()) {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+    const { subject, html, text } = getNewOrderAlertEmail({
+      caseTitle: caseData.document_title ?? 'Untitled case',
+      clientEmail: callerData.user.email ?? 'unknown',
+      amountPaid: verifiedAmount,
+      agentId: caseData.agent_id,
+      caseId,
+      siteUrl,
+    })
+    sendMail({ to: GMAIL_USER, subject, html, text }).catch((err) => console.error('Failed to send new-order alert email:', err))
   }
 
   return Response.json({ ok: true, amount: verifiedAmount, reference: verifiedReference })

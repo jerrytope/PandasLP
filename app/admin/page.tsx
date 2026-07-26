@@ -1,13 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
+import { downloadTextDocument } from '@/lib/pdfGenerator'
 
 interface AdminCaseRow {
   id: string
@@ -25,6 +26,9 @@ interface AdminCaseRow {
   created_at: string
   paid_at: string | null
   deadline_at: string | null
+  reviewed_at: string | null
+  reviewed_by: string | null
+  reviewed_document_sent_at: string | null
   source: string | null
 }
 
@@ -36,6 +40,7 @@ interface CustomClaimRow {
   description: string
   amount_paid: number
   status: string
+  notified: boolean
   created_at: string
 }
 
@@ -56,11 +61,24 @@ const STAGE_LABEL: Record<string, string> = {
   closed: 'Closed',
 }
 
-const NEXT_ACTION: Record<string, { action: 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed'; label: string } | undefined> = {
-  paid: { action: 'markServed', label: 'Mark Served' },
+type CaseAction = 'markReviewed' | 'sendReviewedDocument' | 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed'
+
+const NEXT_ACTION: Record<string, { action: CaseAction; label: string } | undefined> = {
   letter_served: { action: 'markFiled', label: 'Mark Filed' },
   filed: { action: 'markJudgment', label: 'Mark Judgment Won' },
   judgment_obtained: { action: 'markClosed', label: 'Close Case' },
+}
+
+// 'paid' is the one status with two possible next steps depending on whether a lawyer has
+// reviewed the document yet — a plain status->action lookup can't express that, so it's
+// handled separately from the NEXT_ACTION map above.
+function nextActionFor(c: AdminCaseRow): { action: CaseAction; label: string } | undefined {
+  if (c.status === 'paid') {
+    return c.reviewed_at
+      ? { action: 'markServed', label: 'Mark Served' }
+      : { action: 'markReviewed', label: 'Mark Reviewed' }
+  }
+  return NEXT_ACTION[c.status]
 }
 
 type Tab = 'queue' | 'cases' | 'claims' | 'waitlist'
@@ -79,17 +97,19 @@ function CaseCard({
   updatingId,
   onAction,
   accentColor,
+  domId,
 }: {
   c: AdminCaseRow
   updatingId: string | null
-  onAction: (caseId: string, action: 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed') => void
+  onAction: (caseId: string, action: CaseAction) => void
   accentColor?: string
+  domId?: string
 }) {
   const agent = AGENTS[c.agent_id as AgentId]
-  const next = NEXT_ACTION[c.status]
+  const next = nextActionFor(c)
   const [showLetter, setShowLetter] = useState(false)
   return (
-    <div className="card" style={{ padding: '18px 22px', ...(accentColor ? { borderColor: accentColor } : {}) }}>
+    <div id={domId} className="card" style={{ padding: '18px 22px', ...(accentColor ? { borderColor: accentColor } : {}) }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600 }}>
@@ -125,6 +145,32 @@ function CaseCard({
             {updatingId === c.id ? 'Updating…' : next.label}
           </button>
         )}
+        {/* Available once reviewed, while the case is still "paid" (not yet served) — download
+            for your own copy/stamping, and send is a deliberate separate click, not automatic. */}
+        {c.status === 'paid' && c.reviewed_at && c.document_body && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => downloadTextDocument(c.document_title ?? 'Document', c.document_body!, { watermark: false })}
+          >
+            Download PDF
+          </button>
+        )}
+        {c.status === 'paid' && c.reviewed_at && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={updatingId === c.id}
+            onClick={() => onAction(c.id, 'sendReviewedDocument')}
+          >
+            {updatingId === c.id ? 'Sending…' : c.reviewed_document_sent_at ? 'Resend to Customer' : 'Send to Customer'}
+          </button>
+        )}
+        {c.reviewed_document_sent_at && (
+          <span className="badge" style={{ fontSize: 11 }}>
+            ✓ Sent {formatDate(c.reviewed_document_sent_at)}
+          </span>
+        )}
         {c.document_body && (
           <button type="button" className="btn btn-sm" onClick={() => setShowLetter((v) => !v)}>
             {showLetter ? 'Hide Letter' : 'View Letter'}
@@ -155,10 +201,23 @@ function CaseCard({
 }
 
 export default function AdminPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminPageInner />
+    </Suspense>
+  )
+}
+
+function AdminPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // Deep link from the new-order alert email ("Click to Review Document →") — jump straight
+  // to the Cases tab instead of the Queue, since that's the one with an unfiltered flat list
+  // to scroll a specific case into view within.
+  const deepLinkCaseId = searchParams.get('caseId')
   const [checkedAuth, setCheckedAuth] = useState(false)
   const [accessDenied, setAccessDenied] = useState(false)
-  const [tab, setTab] = useState<Tab>('queue')
+  const [tab, setTab] = useState<Tab>(deepLinkCaseId ? 'cases' : 'queue')
 
   const [cases, setCases] = useState<AdminCaseRow[]>([])
   const [claims, setClaims] = useState<CustomClaimRow[]>([])
@@ -186,6 +245,11 @@ export default function AdminPage() {
     loadTab(tab)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkedAuth, tab])
+
+  useEffect(() => {
+    if (!deepLinkCaseId || cases.length === 0) return
+    document.getElementById(`case-${deepLinkCaseId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [deepLinkCaseId, cases])
 
   async function loadTab(which: Tab) {
     setLoading(true)
@@ -229,7 +293,7 @@ export default function AdminPage() {
     }
   }
 
-  async function handleStatusAction(caseId: string, action: 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed') {
+  async function handleStatusAction(caseId: string, action: CaseAction) {
     setUpdatingId(caseId)
     try {
       const res = await authedFetch('/api/update-case-status', {
@@ -383,9 +447,9 @@ export default function AdminPage() {
               {!loading && (
                 <>
                   <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
-                    ⚠ Unserved {unserved.length > 0 && `(${unserved.length})`}
+                    ⚠ Awaiting review or serving {unserved.length > 0 && `(${unserved.length})`}
                   </h2>
-                  {unserved.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>Nothing waiting to be served.</p>}
+                  {unserved.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>Nothing waiting on review or serving.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
                     {unserved.map((c) => {
                       const daysSincePaid = Math.floor((now - new Date(c.paid_at ?? c.created_at).getTime()) / DAY_MS)
@@ -454,7 +518,14 @@ export default function AdminPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {cases.map((c) => (
-                <CaseCard key={c.id} c={c} updatingId={updatingId} onAction={handleStatusAction} />
+                <CaseCard
+                  key={c.id}
+                  c={c}
+                  updatingId={updatingId}
+                  onAction={handleStatusAction}
+                  domId={`case-${c.id}`}
+                  accentColor={c.id === deepLinkCaseId ? 'var(--accent)' : undefined}
+                />
               ))}
             </div>
           </>
@@ -466,7 +537,11 @@ export default function AdminPage() {
             {!loading && claims.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No custom claims yet.</p>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {claims.map((claim) => (
-                <div key={claim.id} className="card" style={{ padding: '18px 22px' }}>
+                <div
+                  key={claim.id}
+                  className="card"
+                  style={{ padding: '18px 22px', ...(claim.notified ? {} : { borderColor: 'var(--danger)' }) }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                     <div>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600 }}>{claim.name}</div>
@@ -474,7 +549,14 @@ export default function AdminPage() {
                         {claim.email}{claim.phone ? ` · ${claim.phone}` : ''} · {formatDate(claim.created_at)}
                       </div>
                     </div>
-                    <span className="badge">{formatNaira(claim.amount_paid)}</span>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {!claim.notified && (
+                        <span className="badge" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+                          ⚠ Needs response — notification never sent
+                        </span>
+                      )}
+                      <span className="badge">{formatNaira(claim.amount_paid)}</span>
+                    </div>
                   </div>
                   <p style={{ fontSize: 14, color: 'var(--text-1)', marginTop: 10, whiteSpace: 'pre-wrap' }}>{claim.description}</p>
                 </div>

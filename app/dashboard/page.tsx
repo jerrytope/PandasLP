@@ -19,6 +19,7 @@ interface CaseRow {
   deadline_at: string | null
   delivery_option: string | null
   client_phone: string | null
+  reviewed_at: string | null
 }
 
 const STAGE_ORDER = ['draft', 'document_ready', 'paid', 'letter_served', 'filed', 'judgment_obtained', 'closed']
@@ -343,10 +344,23 @@ export default function DashboardPage() {
                   {/* Timeline (demand-letter cases that have been paid) */}
                   {isDebt && isPaid && <CaseTimeline status={c.status} />}
 
+                  {/* Under review — shown after payment, before a lawyer has reviewed the
+                      document. No download exists anywhere in this state on purpose; the
+                      reviewed copy only ever arrives by email. */}
+                  {c.status === 'paid' && !c.reviewed_at && (
+                    <div style={{
+                      marginTop: 14, padding: '10px 14px', borderRadius: 10,
+                      background: 'rgba(214,187,128,0.06)', border: '1px solid rgba(214,187,128,0.2)',
+                      fontSize: 13, color: 'var(--text-2)',
+                    }}>
+                      Your letter is with our legal team for review. You'll receive your reviewed copy by email once that's done.
+                    </div>
+                  )}
+
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
-                    {/* Mark as Served — shown after payment, before served */}
-                    {isPaid && c.status === 'paid' && (
+                    {/* Mark as Served — shown after payment AND after a lawyer has reviewed it */}
+                    {isPaid && c.status === 'paid' && c.reviewed_at && (
                       <button
                         type="button"
                         className="btn"

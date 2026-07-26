@@ -25,6 +25,7 @@ interface SendMailOptions {
   subject: string
   text: string
   html: string
+  attachments?: { filename: string; content: Buffer; contentType?: string }[]
 }
 
 export async function sendMail(options: SendMailOptions) {
