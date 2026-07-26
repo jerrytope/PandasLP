@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useFocusTrap } from '@/lib/useFocusTrap'
+import { X, Mail } from 'lucide-react'
 import styles from './AuthModal.module.css'
 
 interface AuthModalProps {
@@ -63,15 +64,19 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         <div className={styles.header}>
           <div>
             <div className={styles.title}>Sign in to Pandas LP</div>
-            <div className={styles.sub}>No password needed — we'll email you a secure link.</div>
+            <div className={styles.sub}>No password needed, we'll email you a secure link.</div>
           </div>
-          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Close">
+            <X size={18} strokeWidth={1.5} aria-hidden="true" />
+          </button>
         </div>
 
         {sent ? (
           <div className={styles.body}>
             <div className={styles.sentBox}>
-              <div className={styles.sentIcon}>✉</div>
+              <div className={styles.sentIcon}>
+                <Mail size={40} strokeWidth={1.5} aria-hidden="true" />
+              </div>
               <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)' }}>Check your email</h3>
               <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: 14, lineHeight: 1.6 }}>
                 We sent a sign-in link to{' '}

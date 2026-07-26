@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { PandasLogoMark } from './PandasLogo'
 import { STATES } from '@/lib/locations'
+import { Check } from 'lucide-react'
 
 export default function Footer() {
   const [email, setEmail] = useState('')
@@ -28,13 +29,16 @@ export default function Footer() {
               </span>
             </div>
             <p className="footer-brand-tagline">
-              They owe you. We go after it — demand letter today,
+              They owe you. We go after it: demand letter today,
               real lawyers take it to court.
             </p>
             <div style={{ marginTop: 20 }}>
               <p className="field-label" style={{ marginBottom: 8 }}>Legal tips for Nigerian businesses</p>
               {sent ? (
-                <p style={{ fontSize: 13, color: 'var(--secondary)', marginTop: 4 }}>✓ You're subscribed</p>
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--secondary)', marginTop: 4 }}>
+                  <Check size={14} strokeWidth={2} aria-hidden="true" />
+                  You're subscribed
+                </p>
               ) : (
                 <form className="footer-newsletter" onSubmit={handleSubscribe} noValidate>
                   <input

@@ -45,11 +45,11 @@ export default function PrivacyPolicyPage() {
             <h2>1. What We Collect</h2>
             <p>When you use our site or start a case, we collect:</p>
             <ul>
-              <li><strong>Account information</strong> — your email address (used for magic-link sign-in, no password stored)</li>
-              <li><strong>Case details</strong> — whatever you tell our AI agent during the guided interview: names, amounts owed, dates, descriptions of the dispute, and any documents you upload (invoices, contracts, screenshots)</li>
-              <li><strong>Contact information</strong> — a callback phone number, if you provide one for a lawyer to reach you</li>
-              <li><strong>Payment information</strong> — processed directly by Paystack; we receive confirmation of payment and the amount, never your card or bank details</li>
-              <li><strong>Usage data</strong> — basic analytics (pages visited, which channel brought you to the site) via Google Analytics</li>
+              <li><strong>Account information</strong>: your email address (used for magic-link sign-in, no password stored)</li>
+              <li><strong>Case details</strong>: whatever you tell our AI agent during the guided interview: names, amounts owed, dates, descriptions of the dispute, and any documents you upload (invoices, contracts, screenshots)</li>
+              <li><strong>Contact information</strong>: a callback phone number, if you provide one for a lawyer to reach you</li>
+              <li><strong>Payment information</strong>: processed directly by Paystack; we receive confirmation of payment and the amount, never your card or bank details</li>
+              <li><strong>Usage data</strong>: basic analytics (pages visited, which channel brought you to the site) via Google Analytics</li>
             </ul>
 
             <h2>2. Why We Collect It</h2>
@@ -67,15 +67,15 @@ export default function PrivacyPolicyPage() {
             <h2>3. Who We Share It With</h2>
             <p>We share data only where necessary to provide the service:</p>
             <ul>
-              <li><strong>Anthropic</strong> (our AI provider) — receives the facts of your case to draft your document. Anthropic does not retain this to train its models.</li>
-              <li><strong>Paystack</strong> — processes your payment. We never see or store your card details.</li>
-              <li><strong>Supabase</strong> — our database and authentication provider, hosting your case data securely.</li>
-              <li>The person you're pursuing a claim against — only to the extent your document itself is served on them, which is the whole point of the service.</li>
+              <li><strong>Anthropic</strong> (our AI provider): receives the facts of your case to draft your document. Anthropic does not retain this to train its models.</li>
+              <li><strong>Paystack</strong>: processes your payment. We never see or store your card details.</li>
+              <li><strong>Supabase</strong>: our database and authentication provider, hosting your case data securely.</li>
+              <li>The person you're pursuing a claim against, only to the extent your document itself is served on them, which is the whole point of the service.</li>
             </ul>
             <p>We do not share your data with any other third party, and we do not sell it.</p>
 
             <h2>4. How Long We Keep It</h2>
-            <p>We retain your case data for as long as your matter could reasonably still be relevant — including any period during which a debt or judgment remains legally enforceable — and in any event no longer than necessary to comply with our own professional and regulatory obligations as a law firm. You can request deletion earlier; see Section 6.</p>
+            <p>We retain your case data for as long as your matter could reasonably still be relevant, including any period during which a debt or judgment remains legally enforceable, and in any event no longer than necessary to comply with our own professional and regulatory obligations as a law firm. You can request deletion earlier; see Section 6.</p>
 
             <h2>5. Security</h2>
             <p>Your data is encrypted in transit (HTTPS) and at rest by our database provider. Access to case data is restricted to you, and to Pandas LP staff who need it to work on your matter. Payment is never handled directly by us.</p>

@@ -63,7 +63,7 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
               }}>{main.name}</h3>
 
               <p style={{ color: 'var(--text-muted)', fontSize: 15, lineHeight: 1.7, margin: '0 0 28px', maxWidth: 480 }}>
-                Someone owes you money and won't pay. We interview you, draft your Letter of Demand on firm letterhead, serve it on the debtor, and file your court claim if they ignore it — end-to-end.
+                Someone owes you money and won't pay. We interview you, draft your Letter of Demand on firm letterhead, serve it on the debtor, and file your court claim if they ignore it: end-to-end.
               </p>
 
               {/* mini steps */}
@@ -120,7 +120,7 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
             }}>AVAILABLE FOR TESTING</span>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>
-            These agents are live and functional — try them out and let us know how they work.
+            These agents are live and functional. Try them out and let us know how they work.
           </p>
         </div>
 
@@ -173,7 +173,7 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
             }}>COMING SOON</span>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, margin: 0 }}>
-            Expanding our practice areas — these will go live shortly.
+            Expanding our practice areas, these will go live shortly.
           </p>
         </div>
 

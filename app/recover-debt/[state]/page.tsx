@@ -17,8 +17,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { state: slug } = await params
   const state = getStateBySlug(slug)
   if (!state) return {}
-  const title = `How to Recover a Debt in ${state.name} — Small Claims Guide 2026`
-  const description = `A step-by-step guide to recovering money owed to you through the ${state.name} Small Claims Court — claim limits, the filing process, and what to expect.`
+  const title = `How to Recover a Debt in ${state.name}: Small Claims Guide 2026`
+  const description = `A step-by-step guide to recovering money owed to you through the ${state.name} Small Claims Court: claim limits, the filing process, and what to expect.`
   return {
     title,
     description,
@@ -29,13 +29,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: { index: state.verified, follow: true },
     openGraph: {
       type: 'article',
-      title: `${title} — Pandas LP`,
+      title: `${title} | Pandas LP`,
       description,
       url: `/recover-debt/${state.slug}`,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${title} — Pandas LP`,
+      title: `${title} | Pandas LP`,
       description,
     },
   }
@@ -86,7 +86,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
 
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'var(--text-2)', marginBottom: 32 }}>
             If someone in {state.name} owes you money and refuses to pay, the Small Claims Court gives you a
-            faster, cheaper route than a full civil suit — designed so you can represent yourself, without a lawyer
+            faster, cheaper route than a full civil suit, designed so you can represent yourself, without a lawyer
             in the hearing itself.
           </p>
 
@@ -121,7 +121,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
           <ol style={{ fontSize: 15, lineHeight: 1.8, color: 'var(--text-2)', paddingLeft: 20, marginBottom: 40 }}>
             <li>Send a written Letter of Demand to the person who owes you, stating the amount and a deadline to pay.</li>
             <li>If they don't pay within the response period, file a claim at the Small Claims Court covering their address, workplace, or place of business.</li>
-            <li>The court hears the matter with simplified procedure — no formal pleadings, plain English, no lawyers required.</li>
+            <li>The court hears the matter with simplified procedure: no formal pleadings, plain English, no lawyers required.</li>
             <li>If you win, the court issues a judgment. If it's still not paid, you can apply to enforce it.</li>
           </ol>
 
@@ -146,7 +146,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
             </h3>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 24px', fontSize: 14, lineHeight: 1.65 }}>
               We interview you, draft your Letter of Demand on firm letterhead, and file at the Small Claims Court
-              on your behalf — from ₦10,000.
+              on your behalf, from ₦10,000.
             </p>
             <Link href="/agent/small-claims" className="btn btn-primary" style={{ display: 'inline-flex', textDecoration: 'none' }}>
               Start Your Claim →

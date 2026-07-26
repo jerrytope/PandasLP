@@ -22,17 +22,17 @@ const GENERIC_FAQS = (name: string): StateData['faqs'] => [
   {
     question: `Do I need a lawyer to use the Small Claims Court in ${name}?`,
     answer:
-      'No. Nigeria\'s Small Claims Courts are specifically designed for self-representation — lawyers are generally not permitted to appear for either party in the hearing itself. Where Pandas LP helps is earlier: preparing your Letter of Demand and, if you choose, serving it and filing the claim on your behalf.',
+      'No. Nigeria\'s Small Claims Courts are specifically designed for self-representation: lawyers are generally not permitted to appear for either party in the hearing itself. Where Pandas LP helps is earlier: preparing your Letter of Demand and, if you choose, serving it and filing the claim on your behalf.',
   },
   {
     question: 'What happens before I can file a claim?',
     answer:
-      'You must first send the person who owes you a Letter of Demand and give them a chance to pay before you can file at the Small Claims Court. This is a mandatory step, not optional — the court will expect proof you sent one.',
+      'You must first send the person who owes you a Letter of Demand and give them a chance to pay before you can file at the Small Claims Court. This is a mandatory step, not optional: the court will expect proof you sent one.',
   },
   {
     question: 'What kind of claims does this court handle?',
     answer:
-      'Simple, liquidated money claims only — a specific, undisputed sum owed to you. It does not handle land disputes, criminal matters, or claims where the amount is genuinely contested on complex legal grounds.',
+      'Simple, liquidated money claims only: a specific, undisputed sum owed to you. It does not handle land disputes, criminal matters, or claims where the amount is genuinely contested on complex legal grounds.',
   },
 ]
 
@@ -52,7 +52,7 @@ export const STATES: StateData[] = [
     name: 'Abuja (FCT)',
     claimLimit: 7_000_000,
     claimLimitNote:
-      'Sourced from the FCT Small Claims Court handbook, but the underlying text may describe this figure specifically for counterclaims rather than the primary claim limit — confirm before this page is indexed.',
+      'Sourced from the FCT Small Claims Court handbook, but the underlying text may describe this figure specifically for counterclaims rather than the primary claim limit. Confirm before this page is indexed.',
     courtInfo: 'The FCT Small Claims Court registry sits at Plot 426, Tigris Crescent, Aguiyi Ironsi Street, Abuja.',
     responsePeriodDays: null,
     verified: false,

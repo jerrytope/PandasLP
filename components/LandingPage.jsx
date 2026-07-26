@@ -80,20 +80,20 @@ const FAQ_DATA = {
   'Getting Started': [
     { q: 'Is Pandas LP a real law firm?', a: 'Yes. Pandas LP is a registered business with the Nigerian Corporate Affairs Commission (CAC BN 9646741). Our licensed lawyers review, serve, and file every document before it reaches the debtor or a court.' },
     { q: 'How quickly can I get started?', a: 'Most clients complete a short guided interview and receive a draft demand letter in under 10 minutes. From there, you\'ll review, pay, and Pandas LP serves the letter within 24 business hours.' },
-    { q: 'Do I need to know anything about law?', a: 'Not at all. We ask you plain-English questions about who owes you, how much, and why. You answer in your own words — we handle the legal language.' },
+    { q: 'Do I need to know anything about law?', a: 'Not at all. We ask you plain-English questions about who owes you, how much, and why. You answer in your own words, and we handle the legal language.' },
   ],
   'Pricing': [
     { q: 'How much does it cost?', a: 'A demand letter starts from ₦10,000 (self-serve PDF). If you want Pandas LP to serve the letter on the debtor on your behalf, that\'s ₦25,000. Court filing fees are additional and vary by court.' },
-    { q: 'Are there any hidden fees?', a: 'No. You see the full breakdown before you pay — nothing changes after. Court filing fees are set by the government and we quote them exactly.' },
-    { q: 'How do I pay?', a: 'Securely via Paystack. We accept debit cards, credit cards, and bank transfers — all major Nigerian banks supported.' },
+    { q: 'Are there any hidden fees?', a: 'No. You see the full breakdown before you pay, and nothing changes after. Court filing fees are set by the government and we quote them exactly.' },
+    { q: 'How do I pay?', a: 'Securely via Paystack. We accept debit cards, credit cards, and bank transfers, all major Nigerian banks supported.' },
   ],
   'Legal Process': [
-    { q: 'What happens after the demand letter is sent?', a: 'The debtor has 14 days to respond. You\'ll receive follow-up email updates at Day 7 and Day 14. If they ignore the letter, we escalate to court filing — no extra action needed from you.' },
+    { q: 'What happens after the demand letter is sent?', a: 'The debtor has 14 days to respond. You\'ll receive follow-up email updates at Day 7 and Day 14. If they ignore the letter, we escalate to court filing, no extra action needed from you.' },
     { q: 'Can you actually take them to court?', a: 'Yes. Pandas LP\'s lawyers can file your claim at the Lagos Small Claims Court (or relevant state court) and represent you. Judgment enforcement is also available if they win but still don\'t pay.' },
     { q: 'What types of debt can you recover?', a: 'Unpaid invoices, personal loans, service fees, contractor payments, salary arrears, rent deposits, and goods paid for but not delivered. If it\'s money owed and documentable, we can help.' },
   ],
   'Security': [
-    { q: 'Is my information safe?', a: 'Yes. All case data is stored in Supabase with row-level security — meaning only you and your assigned lawyer can access your case. Your documents are never shared with third parties.' },
+    { q: 'Is my information safe?', a: 'Yes. All case data is stored in Supabase with row-level security, meaning only you and your assigned lawyer can access your case. Your documents are never shared with third parties.' },
     { q: 'Who sees my case details?', a: 'Only you and the Pandas LP legal team assigned to your matter. Your case details are confidential and used only to prepare your legal documents.' },
   ],
 }
@@ -222,7 +222,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   Yes, I have an invoice and WhatsApp messages confirming.
                 </div>
                 <div className="phone-bubble phone-bubble-ai">
-                  Perfect — that's strong evidence. Let's draft your Letter of Demand.
+                  Perfect, that's strong evidence. Let's draft your Letter of Demand.
                 </div>
                 <div className="typing-dots" style={{ paddingLeft: 4 }}>
                   <span /><span /><span />
@@ -269,21 +269,21 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 num: '01',
                 icon: <MessageSquare size={22} strokeWidth={1.5} aria-hidden="true" />,
                 title: 'Tell us what happened',
-                body: 'Answer a few questions about who owes you and how much. Upload invoices or contracts — we read them and skip the questions we already know the answers to.',
+                body: 'Answer a few questions about who owes you and how much. Upload invoices or contracts, we read them and skip the questions we already know the answers to.',
                 detail: 'Average interview: 7 minutes',
               },
               {
                 num: '02',
                 icon: <FileText size={22} strokeWidth={1.5} aria-hidden="true" />,
                 title: 'Your demand letter, ready fast',
-                body: 'In under 10 minutes, we prepare a court-ready Letter of Demand on Pandas LP letterhead — citing the correct Nigerian legal provisions. You preview it before paying.',
+                body: 'In under 10 minutes, we prepare a court-ready Letter of Demand on Pandas LP letterhead, citing the correct Nigerian legal provisions. You preview it before paying.',
                 detail: 'Free watermarked preview',
               },
               {
                 num: '03',
                 icon: <Send size={22} strokeWidth={1.5} aria-hidden="true" />,
                 title: 'A licensed lawyer serves it and follows up',
-                body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor — not an email bot. Escalating follow-up notices go out at Day 7 and Day 14 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
+                body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor, not an email bot. Escalating follow-up notices go out at Day 7 and Day 14 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
                 detail: 'Day 0 → Day 7 → Day 14 → Court',
               },
             ].map((step, i) => (
@@ -312,7 +312,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <h2>Not a form.<br />A proper legal interview.</h2>
               <p style={{ maxWidth: 560 }}>
                 Every case follows Nigerian legal procedure, debt recovery case law,
-                and the exact questions a senior partner asks in a first consultation — minus the billable hours.
+                and the exact questions a senior partner asks in a first consultation, minus the billable hours.
               </p>
             </div>
           </Reveal>
@@ -326,7 +326,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 iconColor: '#D6BB80',
                 tag: 'Structured Intake',
                 title: 'Asks the right questions in the right order',
-                body: 'The interview follows the same intake logic a senior litigator uses — debtor identity, relationship to the debt, contract terms, payment history, evidence quality, limitation period. Every time, in the right sequence, nothing skipped.',
+                body: 'The interview follows the same intake logic a senior litigator uses: debtor identity, relationship to the debt, contract terms, payment history, evidence quality, limitation period. Every time, in the right sequence, nothing skipped.',
               },
               {
                 icon: <Eye size={20} strokeWidth={1.5} aria-hidden="true" />,
@@ -342,7 +342,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 iconColor: '#818CF8',
                 tag: 'Reads the Room',
                 title: 'Meets you where you\'re at',
-                body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The interview adjusts to it — calmer when you\'re stressed, more direct when you\'re ready to move.',
+                body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The interview adjusts to it: calmer when you\'re stressed, more direct when you\'re ready to move.',
               },
               {
                 icon: <Scale size={20} strokeWidth={1.5} aria-hidden="true" />,
@@ -350,7 +350,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 iconColor: '#38BDF8',
                 tag: 'Nigerian Law',
                 title: 'Grounded in real Nigerian legal framework',
-                body: 'The system is built on the Limitation Law of Lagos State, CAMA 2020, the Small Claims Court Civil Procedure Rules, and Nigerian digital evidence standards — not generic templates. It knows which court to file in, what threshold requires what evidence, and what the debtor\'s defences are likely to be.',
+                body: 'The system is built on the Limitation Law of Lagos State, CAMA 2020, the Small Claims Court Civil Procedure Rules, and Nigerian digital evidence standards, not generic templates. It knows which court to file in, what threshold requires what evidence, and what the debtor\'s defences are likely to be.',
               },
             ].map((f, i) => (
               <Reveal key={i} delay={i * 60}>
@@ -417,7 +417,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                     <div className="ai-demo-msg">
                       <span className="ai-demo-msg-sender">Pandas LP</span>
                       <div className="ai-demo-bubble ai-demo-bubble-ai">
-                        <span className="ai-demo-highlight">WhatsApp messages are admissible evidence under Nigerian law</span> — that helps.
+                        <span className="ai-demo-highlight">WhatsApp messages are admissible evidence under Nigerian law</span>, that helps.
                         One thing to flag: a verbal partnership with no written terms weakens your position if he disputes the percentage.
                         Do you have a message where he specifically confirms your share of this particular job?{' '}
                         <span className="ai-demo-highlight">That single message will be the most important piece of evidence in your case.</span>
@@ -439,7 +439,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       <div className="ai-demo-bubble ai-demo-bubble-ai">
                         That's important to clarify before we proceed.{' '}
                         <span className="ai-demo-highlight">If a prior notice wasn't properly served, it could affect our timeline.</span>{' '}
-                        Can you check if you have a copy or a delivery record? I'll wait — getting this right is worth the extra minute.
+                        Can you check if you have a copy or a delivery record? I'll wait, getting this right is worth the extra minute.
                       </div>
                     </div>
                   </Reveal>
@@ -472,7 +472,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div className="section-header">
               <span className="label-mono">All Services</span>
               <h2>More ways we can help</h2>
-              <p>Debt recovery is our flagship — here's what else is live and what's coming.</p>
+              <p>Debt recovery is our flagship. Here's what else is live and what's coming.</p>
             </div>
           </Reveal>
 
@@ -620,7 +620,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                           </div>
                           {ns === 'error' && (
                             <p style={{ color: 'var(--danger)', fontSize: 12, margin: '6px 0 0' }}>
-                              Something went wrong — please try again.
+                              Something went wrong. Please try again.
                             </p>
                           )}
                         </div>
@@ -668,7 +668,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 <div style={{ flex: '1 1 240px' }}>
                   <div className="bento-icon"><Sparkles size={20} strokeWidth={1.5} aria-hidden="true" /></div>
                   <h3 className="bento-title" style={{ fontSize: 22 }}>Guided Legal Interview</h3>
-                  <p className="bento-body">No forms. No jargon. Just answer questions in plain English — we handle the legal translation. Upload a document and we read it so you don't have to explain it.</p>
+                  <p className="bento-body">No forms. No jargon. Just answer questions in plain English, we handle the legal translation. Upload a document and we read it so you don't have to explain it.</p>
                 </div>
                 <div style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {['WhatsApp messages accepted', 'PDF invoices analysed', 'No legal knowledge needed'].map(t => (
@@ -683,7 +683,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
 
             {[
               { icon: <Scale size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Court-Ready Documents',    body: 'Demand letters on firm letterhead, drafted in minutes. Every document cites the correct Nigerian statute.' },
-              { icon: <Clock size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 7, Day 14 — escalating pressure on the debtor, zero effort from you.' },
+              { icon: <Clock size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Automated Follow-Up',      body: 'Day 0, Day 7, Day 14: escalating pressure on the debtor, zero effort from you.' },
               { icon: <TrendingUp size={18} strokeWidth={1.5} aria-hidden="true" />,title: 'Transparent Pricing',      body: 'Know exactly what you\'ll pay before you start. No retainers, no surprise bills.' },
               { icon: <Users size={18} strokeWidth={1.5} aria-hidden="true" />,     title: 'Real Lawyers',             body: 'Every document is reviewed by our team. Licensed practitioners file and appear in court on your behalf.' },
             ].map((f, i) => (
@@ -706,7 +706,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div className="section-header center">
               <span className="label-mono">Pricing</span>
               <h2>Know the cost before you start</h2>
-              <p>Enter the amount you're owed and see an instant breakdown — no surprises.</p>
+              <p>Enter the amount you're owed and see an instant breakdown, no surprises.</p>
             </div>
           </Reveal>
 
@@ -750,14 +750,14 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   Save approx. {formatNaira(savings)} vs. a traditional lawyer
                 </div>
                 <div className="pricing-row" style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--border-subtle)' }}>
-                  <span className="pricing-row-label" style={{ color: 'var(--text-muted)' }}>Optional — Pandas LP delivers it for you</span>
+                  <span className="pricing-row-label" style={{ color: 'var(--text-muted)' }}>Optional: Pandas LP delivers it for you</span>
                   <span className="pricing-row-value" style={{ color: 'var(--text-muted)' }}>+₦15,000</span>
                 </div>
               </div>
 
               <p className="pricing-disclaimer">
                 Court filing fees apply only if your case escalates beyond the demand letter stage.
-                The exact amount is quoted inside your dashboard before you pay — based on your claim amount and court jurisdiction.
+                The exact amount is quoted inside your dashboard before you pay, based on your claim amount and court jurisdiction.
               </p>
 
               <button
@@ -856,7 +856,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 color: 'var(--text-2)', fontSize: 17, lineHeight: 1.75,
                 maxWidth: 560, margin: '0 auto 40px',
               }}>
-                Pandas LP is new — and that's the point. For too long, recovering money
+                Pandas LP is new, and that's the point. For too long, recovering money
                 in Nigeria meant weeks of waiting, ₦50,000 in lawyer fees, and no guarantee.
                 We're building the alternative. You get to use it first.
               </p>

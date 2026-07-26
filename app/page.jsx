@@ -96,7 +96,7 @@ export default function App() {
       return
     }
 
-    const autoMessage = `This is a follow-up to an earlier case${enforcementSource.document_title ? ` ("${enforcementSource.document_title}")` : ''} — the original amount owed was ₦${(enforcementSource.amount_paid ?? 0).toLocaleString()}. The court has now entered judgment in my favour for ₦${judgmentAmount.toLocaleString()}, but the debtor still hasn't paid. I need help enforcing this judgment.`
+    const autoMessage = `This is a follow-up to an earlier case${enforcementSource.document_title ? ` ("${enforcementSource.document_title}")` : ''}. The original amount owed was ₦${(enforcementSource.amount_paid ?? 0).toLocaleString()}. The court has now entered judgment in my favour for ₦${judgmentAmount.toLocaleString()}, but the debtor still hasn't paid. I need help enforcing this judgment.`
 
     setEnforcementSource(null)
     router.push(`/agent/judgment-enforcement?resume=${data.id}&auto=${encodeURIComponent(autoMessage)}`)

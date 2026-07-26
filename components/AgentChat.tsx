@@ -8,6 +8,7 @@ import { extractDocument, extractOptions, extractClientPhone, type DraftDocument
 import { useFocusTrap } from '@/lib/useFocusTrap'
 import { getAttribution } from '@/lib/attribution'
 import { trackEvent } from '@/lib/analytics'
+import { X, Paperclip, Check } from 'lucide-react'
 import PaymentForm from './PaymentForm'
 import styles from './AgentChat.module.css'
 
@@ -113,7 +114,7 @@ export default function AgentChat({
   const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'View My Case Dashboard →'
   const effectiveAmount = draftDoc?.price ?? amount
   const effectiveDescription = draftDoc?.priceLabel
-    ? `${draftDoc.priceLabel} — ${paymentDescription}`
+    ? `${draftDoc.priceLabel} (${paymentDescription})`
     : paymentDescription
 
   useEffect(() => {
@@ -419,7 +420,7 @@ export default function AgentChat({
     // Show attachment bubble
     const attachMsg: Message = {
       role: 'user',
-      content: `📎 Attached: ${file.name}`,
+      content: `Attached: ${file.name}`,
     }
     setMessages((prev) => [...prev, attachMsg])
     setExtracting(true)
@@ -441,7 +442,7 @@ export default function AgentChat({
       // Inject extracted facts as a user context message, then get AI to acknowledge and continue
       const factsMsg: Message = {
         role: 'user',
-        content: `DOCUMENT CONTEXT — Facts extracted from ${file.name}:\n${data.facts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
+        content: `DOCUMENT CONTEXT: Facts extracted from ${file.name}:\n${data.facts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
       }
       await sendToAgent([...messages, attachMsg, factsMsg], factsMsg)
     } catch (err) {
@@ -519,12 +520,12 @@ export default function AgentChat({
               ↺
             </button>
             <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close chat" title="Close">
-              ✕
+              <X size={16} strokeWidth={1.5} aria-hidden="true" />
             </button>
           </div>
         </div>
 
-        <div className={styles.disclaimer}>This agent prepares legal documents — not legal advice.</div>
+        <div className={styles.disclaimer}>This agent prepares legal documents, not legal advice.</div>
 
         {payOpen && !paid ? (
           <div className={styles.payWrap}>
@@ -605,7 +606,7 @@ export default function AgentChat({
               <div className={styles.documentPanel}>
                 <div className={styles.documentHeader}>
                   <span className={styles.documentTitle}>{draftDoc.title}</span>
-                  {paid ? <span className="badge">Paid — Sent For Review</span> : <span className="badge badge-test">Preview</span>}
+                  {paid ? <span className="badge">Paid: Sent For Review</span> : <span className="badge badge-test">Preview</span>}
                 </div>
 
                 {draftDoc.priceLabel && !paid && (
@@ -618,8 +619,8 @@ export default function AgentChat({
 
                 {paid && (
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '10px 0 0' }}>
-                    Thank you — please confirm the facts above are correct. Your letter has been sent to our legal
-                    team for review. You'll receive your reviewed copy by email once that's done — there's no
+                    Thank you. Please confirm the facts above are correct. Your letter has been sent to our legal
+                    team for review, and you'll receive your reviewed copy by email once that's done. There's no
                     download here, since nothing is final until a licensed reviewer has checked it.
                   </p>
                 )}
@@ -650,7 +651,7 @@ export default function AgentChat({
             {paid && agent.id === 'small-claims' && effectiveAmount >= 25000 && !hasClientPhone && (
               <div style={{ padding: '14px 18px', borderTop: '1px solid var(--border)' }}>
                 <p style={{ fontSize: 13, color: 'var(--text-1)', fontWeight: 600, marginBottom: 4 }}>
-                  One more thing — what number should our team call you on?
+                  One more thing: what number should our team call you on?
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>
                   You chose to have Pandas LP serve this letter personally. We need a phone number to reach you once service is arranged.
@@ -682,8 +683,9 @@ export default function AgentChat({
             )}
 
             {paid && agent.id === 'small-claims' && effectiveAmount >= 25000 && hasClientPhone && (
-              <p style={{ padding: '10px 18px', fontSize: 12, color: 'var(--secondary)', borderTop: '1px solid var(--border)' }}>
-                ✓ We have a callback number on file for you.
+              <p style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 18px', fontSize: 12, color: 'var(--secondary)', borderTop: '1px solid var(--border)' }}>
+                <Check size={14} strokeWidth={2} aria-hidden="true" />
+                We have a callback number on file for you.
               </p>
             )}
 
@@ -704,7 +706,7 @@ export default function AgentChat({
                   title="Attach a document or invoice"
                   aria-label="Attach file"
                 >
-                  📎
+                  <Paperclip size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
                 <textarea
                   className={styles.textarea}

@@ -7,6 +7,7 @@ import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { renderFormattedText } from '@/lib/renderFormattedText'
+import { Phone, AlertTriangle } from 'lucide-react'
 
 interface CaseRow {
   id: string
@@ -318,7 +319,10 @@ export default function DashboardPage() {
                       gap: 8,
                       flexWrap: 'wrap',
                     }}>
-                      <span>📞 Client requested a callback —</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <Phone size={14} strokeWidth={1.5} aria-hidden="true" />
+                        Client requested a callback:
+                      </span>
                       <a href={`tel:${c.client_phone}`} style={{ color: 'var(--text-1)', fontWeight: 600 }}>
                         {c.client_phone}
                       </a>
@@ -337,7 +341,10 @@ export default function DashboardPage() {
                       fontSize: 13,
                       color: 'var(--danger)',
                     }}>
-                      ⚠ No callback number on file yet for this pandas-serves case.
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        <AlertTriangle size={14} strokeWidth={1.5} aria-hidden="true" />
+                        No callback number on file yet for this pandas-serves case.
+                      </span>
                     </div>
                   )}
 
@@ -385,7 +392,7 @@ export default function DashboardPage() {
                           lineHeight: 1.6,
                         }}>
                           <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Court filing fee applies. </span>
-                          The Small Claims Court charges a filing fee based on your claim amount — typically
+                          The Small Claims Court charges a filing fee based on your claim amount, typically
                           between <span style={{ color: 'var(--text-1)', fontWeight: 500 }}>₦5,000 and ₦15,000</span>.
                           You will see the exact breakdown before paying.
                         </div>

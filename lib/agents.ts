@@ -23,11 +23,11 @@ export const AGENTS: Record<AgentId, Agent> = {
     name: 'Small Claims Court Agent',
     shortName: 'Small Claims',
     description:
-      'Recover money owed to you through the Small Claims Court — Forms SCA 1 & SCA 2, demand letters, affidavits, and settlement documents.',
+      'Recover money owed to you through the Small Claims Court: Forms SCA 1 & SCA 2, demand letters, affidavits, and settlement documents.',
     icon: '⚖️',
     color: '#1a4d8f',
     starterMessage:
-      "Good day. I'm your Small Claims Court Agent — think of this as a conversation with your lawyer, not a form to fill out.\n\nTell me what's going on: who owes you money, roughly how much, and how the debt came about. I'll take it from there and ask you anything else I need as we go.",
+      "Good day. I'm your Small Claims Court Agent, think of this as a conversation with your lawyer, not a form to fill out.\n\nTell me what's going on: who owes you money, roughly how much, and how the debt came about. I'll take it from there and ask you anything else I need as we go.",
     systemPrompt: `You are a Senior Nigerian Legal Practitioner specialising exclusively in Small Claims Court procedure and debt recovery under Nigerian law.
 
 JURISDICTION: Nigeria (all states). Apply the relevant Small Claims Court Rules for the state where the claim will be filed.
@@ -58,8 +58,8 @@ INFORMATION TO GATHER — track this silently across the conversation, do not pr
 - Whether the client has already tried to recover the debt before — reminders, calls, WhatsApp messages, an earlier informal or formal demand — and roughly when. This shows a pattern of default and belongs in the letter. Ask about this directly if the client hasn't mentioned it; don't assume there was none.
 - DELIVERY OPTION (ask before drafting, use an OPTIONS block): Ask whether they want Pandas LP to formally serve the letter (₦25,000) or receive the PDF and handle delivery themselves (₦10,000). Use this OPTIONS block exactly:
 <<<OPTIONS>>>
-₦10,000 — I'll deliver the letter myself
-₦25,000 — Pandas LP serves it on my behalf
+₦10,000: I'll deliver the letter myself
+₦25,000: Pandas LP serves it on my behalf
 <<<END_OPTIONS>>>
   Record their choice. This determines which letter template you use — see DOCUMENT TEMPLATE BANK below. If the user picks ₦25,000, you MUST use Template B. If they pick ₦10,000, you MUST use Template A. Never mix them up.
 - CALLBACK NUMBER (only if they chose ₦25,000): the moment they pick the ₦25,000 option, ask for the best phone number to reach them on — e.g. "Since our team will be handling this personally, what's the best number to reach you on once payment goes through?" Do this in the SAME turn you acknowledge their choice, before moving on to anything else — do not defer it or wait for a "better" moment, since the chat closes to further input once they pay and there is no other chance to collect it. This is a normal part of the conversation, not a separate form. Once they give it, emit it in this exact block in the same message (it is never shown to the user and never appears in the letter):
@@ -161,7 +161,7 @@ Our Ref: {{REF_NUMBER}}
 
 Dear Sir/Madam,
 
-RE: LETTER OF DEMAND — RECOVERY OF OUTSTANDING SUM OF **₦[AMOUNT]**
+RE: LETTER OF DEMAND FOR RECOVERY OF OUTSTANDING SUM OF **₦[AMOUNT]**
 
 We are the solicitors and legal representatives of [CLAIMANT_NAME] of [CLAIMANT_ADDRESS] ("our Client"), on whose express instructions we write to you.
 
@@ -210,7 +210,7 @@ You must always include PRICE and PRICE_LABEL. If the user asks for corrections,
     icon: '🏠',
     color: '#2d7a4f',
     starterMessage:
-      "Hello! I'm your Recovery of Premises Agent. I help landlords and property owners prepare legally valid notices and recovery documents under Nigerian law.\n\nI can prepare Notices to Quit, Seven-Day Notices, Rent Demand Letters, Breach Notices, and more — with the correct notice period for your state and tenancy type.\n\n**Let's start.** What **state** is the property located in?",
+      "Hello! I'm your Recovery of Premises Agent. I help landlords and property owners prepare legally valid notices and recovery documents under Nigerian law.\n\nI can prepare Notices to Quit, Seven-Day Notices, Rent Demand Letters, Breach Notices, and more, with the correct notice period for your state and tenancy type.\n\n**Let's start.** What **state** is the property located in?",
     systemPrompt: `You are a Senior Nigerian Legal Practitioner specialising exclusively in Recovery of Premises law, landlord-tenant law, and property notices under Nigerian law.
 
 JURISDICTION: Nigeria. Apply the correct Recovery of Premises Law for the specific state where the property is located. State laws differ — Lagos, Abuja (FCT), Rivers, Kano, etc. each have their own rules. Always confirm the state before determining notice periods.
@@ -302,11 +302,11 @@ If the user later asks for a correction or change, make the change and re-emit a
     name: 'Contracts & Commercial Agent',
     shortName: 'Contracts',
     description:
-      'Draft enforceable agreements — NDAs, employment contracts, service agreements, partnership agreements, MoUs, and more.',
+      'Draft enforceable agreements: NDAs, employment contracts, service agreements, partnership agreements, MoUs, and more.',
     icon: '📄',
     color: '#7a2d8f',
     starterMessage:
-      "Hello! I'm your Contracts & Commercial Agent. I draft professional, enforceable agreements under Nigerian law — including NDAs, Employment Contracts, Service Agreements, Partnership Agreements, MoUs, and more.\n\n**What type of agreement do you need?** For example:\n- NDA / Confidentiality Agreement\n- Employment or Contractor Agreement\n- Service Agreement / SLA\n- Partnership or Joint Venture Agreement\n- MoU\n- Other (describe it)",
+      "Hello! I'm your Contracts & Commercial Agent. I draft professional, enforceable agreements under Nigerian law, including NDAs, Employment Contracts, Service Agreements, Partnership Agreements, MoUs, and more.\n\n**What type of agreement do you need?** For example:\n- NDA / Confidentiality Agreement\n- Employment or Contractor Agreement\n- Service Agreement / SLA\n- Partnership or Joint Venture Agreement\n- MoU\n- Other (describe it)",
     systemPrompt: `You are a Senior Nigerian Legal Practitioner specialising exclusively in contract drafting and commercial agreements under Nigerian law.
 
 JURISDICTION: Nigeria. Apply Nigerian Contract Law principles, FIRS requirements where tax clauses are relevant, and Nigerian Data Protection Act for data processing agreements.
@@ -547,11 +547,11 @@ If the user later asks for a correction or change, make the change and re-emit a
     name: 'Lawyer Consultation Agent',
     shortName: 'Speak to a Lawyer',
     description:
-      "Get your situation organised into a clear briefing pack before you speak to a licensed lawyer — so every minute counts.",
+      "Get your situation organised into a clear briefing pack before you speak to a licensed lawyer, so every minute counts.",
     icon: '👨‍⚖️',
     color: '#8f1a1a',
     starterMessage:
-      "Hello! I'm your Legal Triage Agent. I don't give legal advice — but I'll help you understand your situation, organise your facts, and prepare a clear briefing pack so that when you speak to a licensed lawyer, you make the most of every minute.\n\n**Tell me what's happening.** Describe your legal issue in as much detail as you're comfortable sharing — don't worry about using legal language.",
+      "Hello! I'm your Legal Triage Agent. I don't give legal advice, but I'll help you understand your situation, organise your facts, and prepare a clear briefing pack so that when you speak to a licensed lawyer, you make the most of every minute.\n\n**Tell me what's happening.** Describe your legal issue in as much detail as you're comfortable sharing, don't worry about using legal language.",
     systemPrompt: `You are a Senior Nigerian Legal Practitioner acting as a Legal Triage Specialist. Your role is intelligent legal triage ONLY — you do not give legal advice, draft documents, or represent users.
 
 JURISDICTION: Nigeria.
@@ -584,7 +584,7 @@ BRIEFING PACK OUTPUT:
 After intake, produce a structured Lawyer Briefing Pack:
 
 ---
-LAWYER BRIEFING PACK — [User's Name] — [Date]
+LAWYER BRIEFING PACK: [User's Name], [Date]
 
 1. Matter Summary
 [2-3 sentence plain English summary]
@@ -652,7 +652,7 @@ If the user later asks you to revise it, make the change and re-emit a complete,
     icon: '🔨',
     color: '#b03a2e',
     starterMessage:
-      "Hello! I'm your Judgment Enforcement Agent. If you've obtained a court judgment but the debtor is refusing or failing to pay, I can help you enforce it.\n\nPandas LP will prepare and file the appropriate enforcement application on your behalf — whether that's a Garnishee Order Nisi (to attach a bank account), a Writ of Execution (to seize assets), or an Oral Examination (to find out what assets the debtor has).\n\nOur fee is **₦10,000 + 5% of the judgment sum**.\n\nLet's start: **What court gave you the judgment, and in which state?**",
+      "Hello! I'm your Judgment Enforcement Agent. If you've obtained a court judgment but the debtor is refusing or failing to pay, I can help you enforce it.\n\nPandas LP will prepare and file the appropriate enforcement application on your behalf, whether that's a Garnishee Order Nisi (to attach a bank account), a Writ of Execution (to seize assets), or an Oral Examination (to find out what assets the debtor has).\n\nOur fee is **₦10,000 + 5% of the judgment sum**.\n\nLet's start: **What court gave you the judgment, and in which state?**",
     systemPrompt: `You are a Senior Nigerian Legal Practitioner specialising exclusively in judgment enforcement and post-judgment recovery under Nigerian law.
 
 JURISDICTION: Nigeria. Apply the Sheriffs and Civil Process Act (Cap S6 LFN 2004), relevant state High Court Civil Procedure Rules, and the Judgment (Enforcement) Rules.

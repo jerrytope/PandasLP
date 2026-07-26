@@ -9,6 +9,7 @@ import type { AgentId } from '@/lib/agents'
 import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { downloadTextDocument } from '@/lib/pdfGenerator'
+import { Phone, AlertTriangle, Scale, Check } from 'lucide-react'
 
 interface AdminCaseRow {
   id: string
@@ -127,10 +128,14 @@ function CaseCard({
         {c.expected_amount != null && <span>Quoted: {formatNaira(c.expected_amount)}</span>}
         {c.delivery_option && <span>Delivery: {c.delivery_option}</span>}
         {c.client_phone && (
-          <a href={`tel:${c.client_phone}`} style={{ color: 'var(--accent)', fontWeight: 600 }}>📞 {c.client_phone}</a>
+          <a href={`tel:${c.client_phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--accent)', fontWeight: 600 }}>
+            <Phone size={13} strokeWidth={1.5} aria-hidden="true" /> {c.client_phone}
+          </a>
         )}
         {c.delivery_option === 'pandas-serves' && !c.client_phone && (
-          <span style={{ color: 'var(--danger)' }}>⚠ No callback number</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--danger)' }}>
+            <AlertTriangle size={13} strokeWidth={1.5} aria-hidden="true" /> No callback number
+          </span>
         )}
       </div>
 
@@ -167,8 +172,8 @@ function CaseCard({
           </button>
         )}
         {c.reviewed_document_sent_at && (
-          <span className="badge" style={{ fontSize: 11 }}>
-            ✓ Sent {formatDate(c.reviewed_document_sent_at)}
+          <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
+            <Check size={12} strokeWidth={2} aria-hidden="true" /> Sent {formatDate(c.reviewed_document_sent_at)}
           </span>
         )}
         {c.document_body && (
@@ -446,8 +451,9 @@ function AdminPageInner() {
 
               {!loading && (
                 <>
-                  <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
-                    ⚠ Awaiting review or serving {unserved.length > 0 && `(${unserved.length})`}
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+                    <AlertTriangle size={16} strokeWidth={1.5} aria-hidden="true" />
+                    Awaiting review or serving {unserved.length > 0 && `(${unserved.length})`}
                   </h2>
                   {unserved.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>Nothing waiting on review or serving.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
@@ -475,8 +481,9 @@ function AdminPageInner() {
                     ))}
                   </div>
 
-                  <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
-                    ⚖ Filed, awaiting judgment {awaitingJudgment.length > 0 && `(${awaitingJudgment.length})`}
+                  <h2 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 16, fontWeight: 700, marginBottom: 12 }}>
+                    <Scale size={16} strokeWidth={1.5} aria-hidden="true" />
+                    Filed, awaiting judgment {awaitingJudgment.length > 0 && `(${awaitingJudgment.length})`}
                   </h2>
                   {awaitingJudgment.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases waiting on a judgment.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -551,8 +558,8 @@ function AdminPageInner() {
                     </div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       {!claim.notified && (
-                        <span className="badge" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
-                          ⚠ Needs response — notification never sent
+                        <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+                          <AlertTriangle size={12} strokeWidth={1.5} aria-hidden="true" /> Needs response: notification never sent
                         </span>
                       )}
                       <span className="badge">{formatNaira(claim.amount_paid)}</span>

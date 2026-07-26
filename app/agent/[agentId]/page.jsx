@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { captureAttribution } from '@/lib/attribution'
 
 const AUTO_FILE_COURT_MESSAGE =
-  "The debtor did not respond within the 14-day deadline. I'd like to proceed to file this claim at the Small Claims Court now — please prepare the necessary court filing documents using the details we already established, and let me know what else you need from me."
+  "The debtor did not respond within the 14-day deadline. I'd like to proceed to file this claim at the Small Claims Court now. Please prepare the necessary court filing documents using the details we already established, and let me know what else you need from me."
 
 export default function AgentPage() {
   return (

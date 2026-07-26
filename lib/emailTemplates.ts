@@ -76,7 +76,7 @@ function baseWrapper(content: string) {
       <tr>
         <td style="background:#1F3446;border:1px solid rgba(243, 239, 227,0.1);border-top:1px solid rgba(243, 239, 227,0.06);border-radius:0 0 16px 16px;padding:20px 32px;">
           <p style="margin:0;font-size:11px;color:#ABB1A2;line-height:1.6;">
-            Pandas LP — Licensed Legal Practitioners, Lagos, Nigeria<br/>
+            Pandas LP · Licensed Legal Practitioners, Lagos, Nigeria<br/>
             pandaslegalpractitioners@gmail.com · +234 811 808 0189<br/>
             <a href="https://pandaslp.com.ng" style="color:#ABB1A2;">pandaslp.com.ng</a>
           </p>
@@ -96,7 +96,7 @@ export function getPaymentConfirmedEmail(data: PaymentConfirmedEmailData): { sub
 
   const text = `Hi ${recipientName},
 
-We have received your payment of ${formatted} and your case — ${caseTitle} — is now with the Pandas LP legal team.
+We have received your payment of ${formatted} and your case, ${caseTitle}, is now with the Pandas LP legal team.
 
 We are working towards getting this resolved on your behalf. A member of our team will reach out to you shortly to ensure they have full context on your matter before we proceed.
 
@@ -108,7 +108,7 @@ Pandas LP
 pandaslegalpractitioners@gmail.com`
 
   return {
-    subject: `We've received your case — Pandas LP`,
+    subject: `We've received your case | Pandas LP`,
     text,
     html: baseWrapper(`
       <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
@@ -118,8 +118,8 @@ pandaslegalpractitioners@gmail.com`
         Hi ${recipientName},
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-        We have received your payment of <strong style="color:#D6BB80;">${formatted}</strong> and your case —
-        <strong style="color:#F3EFE3;">${caseTitle}</strong> — is now with the Pandas LP legal team.
+        We have received your payment of <strong style="color:#D6BB80;">${formatted}</strong> and your case,
+        <strong style="color:#F3EFE3;">${caseTitle}</strong>, is now with the Pandas LP legal team.
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
         We are working towards getting this resolved on your behalf.
@@ -147,7 +147,7 @@ export function getFollowUpEmail(data: FollowUpEmailData): { subject: string; ht
 
   if (day === 0) {
     return {
-      subject: `Your Letter of Demand has been served — ${debtorName}`,
+      subject: `Your Letter of Demand has been served | ${debtorName}`,
       text: `Hi ${recipientName},
 
 Your Letter of Demand for ${formatted} has been formally served on ${debtorName}. The clock is now running.
@@ -217,12 +217,12 @@ pandaslegalpractitioners@gmail.com`,
 
   // day === 14
   return {
-    subject: `Deadline has passed — escalate against ${debtorName}?`,
+    subject: `Deadline has passed: escalate against ${debtorName}?`,
     text: `Hi ${recipientName},
 
 ${debtorName} has not responded to your Letter of Demand for ${formatted} within the 14-day period.
 
-You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf — the conversation you've already had with our agent will be pre-loaded, so there's no need to start over.
+You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf: the conversation you've already had with our agent will be pre-loaded, so there's no need to start over.
 
 Resume your case and instruct us to file: ${resumeUrl}
 
@@ -240,7 +240,7 @@ pandaslegalpractitioners@gmail.com`,
         <strong style="color:#F3EFE3;">${formatted}</strong> within the 14-day period.
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-        You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf —
+        You may now escalate to the Small Claims Court. Pandas LP can file the claim on your behalf:
         the conversation you've already had with our agent will be pre-loaded, so there's no need to start over.
       </p>
       <p style="margin:0 0 28px;font-size:15px;color:#ABB1A2;line-height:1.6;">
@@ -267,10 +267,10 @@ export function getResolutionEmail(data: ResolutionEmailData): { subject: string
     : ''
 
   return {
-    subject: `Your case is resolved — ${caseTitle}`,
+    subject: `Your case is resolved | ${caseTitle}`,
     text: `Hi ${recipientName},
 
-Your case — ${caseTitle} — has been resolved. Thank you for trusting Pandas LP to handle this on your behalf.
+Your case, ${caseTitle}, has been resolved. Thank you for trusting Pandas LP to handle this on your behalf.
 
 View your case: ${dashboardUrl}${reviewTextBlock}
 
@@ -284,7 +284,7 @@ pandaslegalpractitioners@gmail.com`,
         Hi ${recipientName},
       </p>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-        Your case — <strong style="color:#F3EFE3;">${caseTitle}</strong> — has been resolved.
+        Your case, <strong style="color:#F3EFE3;">${caseTitle}</strong>, has been resolved.
         Thank you for trusting Pandas LP to handle this on your behalf.
       </p>
       <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
@@ -304,11 +304,11 @@ export function getReviewedDocumentEmail(data: ReviewedDocumentEmailData): { sub
   // since there's no in-app download anymore (see components/AgentChat.tsx).
   const nextStepText =
     deliveryOption === 'pandas-serves'
-      ? "Our team will serve this on your behalf — we'll update your dashboard once that's done. This email is your copy for your own records."
-      : "This is now yours to print and serve on the other party — attached as a PDF, ready to send. Important: the moment you've delivered it, come back to your dashboard and click \"Mark Letter as Served.\" That's what starts the 14-day response clock — if we don't hear from you, we can't track when the other party's deadline passes or follow up on your behalf."
+      ? "Our team will serve this on your behalf, and we'll update your dashboard once that's done. This email is your copy for your own records."
+      : "This is now yours to print and serve on the other party, attached as a PDF, ready to send. Important: the moment you've delivered it, come back to your dashboard and click \"Mark Letter as Served.\" That's what starts the 14-day response clock. If we don't hear from you, we can't track when the other party's deadline passes or follow up on your behalf."
 
   return {
-    subject: `Your reviewed document — ${caseTitle}`,
+    subject: `Your reviewed document | ${caseTitle}`,
     text: `Hi ${recipientName},
 
 ${caseTitle} has been reviewed by ${reviewedBy} and is attached to this email as a PDF.
@@ -349,7 +349,7 @@ export function getNewOrderAlertEmail(data: NewOrderAlertEmailData): { subject: 
   const amountStr = `₦${amountPaid.toLocaleString()}`
 
   return {
-    subject: `New paid order — ${caseTitle}`,
+    subject: `New paid order | ${caseTitle}`,
     text: `We've received a payment on a new order.
 
 Client: ${clientEmail}
@@ -365,7 +365,7 @@ Pandas LP`,
         New paid order
       </h2>
       <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
-        We've received a payment on a new order — <strong style="color:#F3EFE3;">${caseTitle}</strong>.
+        We've received a payment on a new order, <strong style="color:#F3EFE3;">${caseTitle}</strong>.
       </p>
       <table style="width:100%;margin:0 0 20px;font-size:14px;color:#ABB1A2;">
         <tr><td style="padding:4px 0;">Client</td><td style="padding:4px 0;color:#F3EFE3;">${clientEmail}</td></tr>

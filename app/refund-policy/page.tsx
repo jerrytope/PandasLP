@@ -40,10 +40,10 @@ export default function RefundPolicyPage() {
           </p>
 
           <div className="blog-content">
-            <p>Pandas LP charges a fee to draft your legal document, and — where you've chosen it — to serve or file it on your behalf. This page explains when a refund applies.</p>
+            <p>Pandas LP charges a fee to draft your legal document, and, where you've chosen it, to serve or file it on your behalf. This page explains when a refund applies.</p>
 
             <h2>1. Document Drafting Fee</h2>
-            <p>Once your document has been drafted and made available to you, the drafting fee is <strong>non-refundable</strong>. This reflects the work already completed — your case has been reviewed, the document written, and a member of our legal team has checked it before release to you.</p>
+            <p>Once your document has been drafted and made available to you, the drafting fee is <strong>non-refundable</strong>. This reflects the work already completed: your case has been reviewed, the document written, and a member of our legal team has checked it before release to you.</p>
             <p>This is the same principle any law firm operates on: you're paying for the work of preparing your document, not for a particular outcome once it's served or filed.</p>
 
             <h2>2. When a Refund Does Apply</h2>
@@ -57,8 +57,8 @@ export default function RefundPolicyPage() {
 
             <h2>3. What's Never Refundable</h2>
             <ul>
-              <li>The drafting fee, once your document has been delivered to you — regardless of what happens after (the debtor doesn't respond, the case doesn't proceed, you decide not to pursue it further)</li>
-              <li>Court filing fees paid directly to the court registry — these are set and collected by the court, not by us, and are non-refundable by the court itself once filed</li>
+              <li>The drafting fee, once your document has been delivered to you, regardless of what happens after (the debtor doesn't respond, the case doesn't proceed, you decide not to pursue it further)</li>
+              <li>Court filing fees paid directly to the court registry: these are set and collected by the court, not by us, and are non-refundable by the court itself once filed</li>
             </ul>
 
             <h2>4. How to Request a Refund</h2>
