@@ -271,15 +271,23 @@ function AdminPageInner() {
         if (!res.ok) { setLoadError(data.error || 'Failed to load cases.'); return }
         setCases(data.cases ?? [])
       } else if (which === 'cases') {
+        // "has_document" isn't a real case status — a case keeps its document_body forever
+        // once drafted, but its `status` keeps moving (paid, letter_served, filed…), so
+        // filtering by an exact status like "document_ready" only ever shows cases still
+        // sitting at that one stage, hiding every drafted letter that went on to get paid,
+        // served, etc. This option is handled client-side instead: fetch everything (no
+        // status param) and keep only rows that actually have a letter.
+        const hasDocumentOnly = filterStatus === 'has_document'
         const params = new URLSearchParams()
         if (filterEmail) params.set('email', filterEmail)
-        if (filterStatus) params.set('status', filterStatus)
+        if (filterStatus && !hasDocumentOnly) params.set('status', filterStatus)
         if (filterAgent) params.set('agentId', filterAgent)
         const res = await authedFetch(`/api/admin/cases?${params.toString()}`)
         if (res.status === 403) { setAccessDenied(true); return }
         const data = await res.json()
         if (!res.ok) { setLoadError(data.error || 'Failed to load cases.'); return }
-        setCases(data.cases ?? [])
+        const loaded: AdminCaseRow[] = data.cases ?? []
+        setCases(hasDocumentOnly ? loaded.filter((c) => c.document_body) : loaded)
       } else if (which === 'claims') {
         const res = await authedFetch('/api/admin/custom-claims')
         if (res.status === 403) { setAccessDenied(true); return }
@@ -514,6 +522,7 @@ function AdminPageInner() {
               />
               <select className="input" aria-label="Filter by status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ maxWidth: 180, fontSize: 13 }}>
                 <option value="">All statuses</option>
+                <option value="has_document">Has Letter (any stage)</option>
                 {Object.entries(STAGE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
               <select className="input" aria-label="Filter by agent" value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} style={{ maxWidth: 200, fontSize: 13 }}>
