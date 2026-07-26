@@ -41,16 +41,24 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     setLoading(true)
     setError('')
 
-    const { error: authError } = await supabase.auth.signInWithOtp({
-      email: trimmed,
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-    })
+    // Without this try/catch, any thrown error (a network failure, a misconfigured
+    // Supabase client, a CORS block) skipped both branches below and left the button
+    // stuck on its loading spinner forever with no feedback — see the "button does
+    // nothing" report that led here. finally guarantees loading always clears.
+    try {
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+      })
 
-    if (authError) {
-      setError(authError.message)
-      setLoading(false)
-    } else {
-      setSent(true)
+      if (authError) {
+        setError(authError.message)
+      } else {
+        setSent(true)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
       setLoading(false)
     }
   }
