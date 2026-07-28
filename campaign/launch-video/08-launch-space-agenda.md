@@ -16,6 +16,60 @@ That graphic is your pinned tweet for this Space; the "something new" is the sma
 
 ---
 
+## Vision & Mission — read this before anything else
+
+The host doesn't need to memorize the script below word-for-word. He needs to know *why* Pandas LP
+exists well enough that every unscripted answer during Q&A still lands on-message.
+
+**Vision:** A Nigeria where being owed money, or being shut out of a fair legal process, isn't
+something people just absorb and move on from — because real legal help stopped being a luxury
+reserved for those who can afford ₦50,000 and three weeks of waiting.
+
+**Mission:** Pandas LP pairs AI-driven intake with licensed Nigerian lawyers so that starting a real
+legal case — a demand letter, a court filing, a judgment enforced — takes minutes and costs from
+₦10,000, not weeks and half a million naira. Every document is drafted by AI and reviewed, signed, and
+stood behind by a real, licensed lawyer before it ever leaves the building.
+
+**What this means for hosting tonight:**
+- Every answer should trace back to one idea: the *wait* is the enemy — not the debtor, not the
+  courts, the wait, and everything that grows in the space it leaves.
+- When Q&A pushes on "is this really a law firm," the answer is always the mission, not defensiveness:
+  we exist specifically so licensed legal help stops being rationed by cost and time.
+- Keep the AI in its place in every sentence — it drafts, it doesn't decide, sign, or replace the
+  lawyer's review. That's not a legal disclaimer, it's the actual design of the mission — say it like
+  you mean it, because it's true.
+- The host's job tonight isn't to sell a product. It's to demonstrate the mission working, live, in
+  front of witnesses.
+
+---
+
+## Founder Profile — for the host's own introduction
+
+*(Placeholder [Founder Name] below — swap in the name you want read aloud and in the doc.)*
+
+**About [Founder Name]**
+
+[Founder Name] built his career in tech infrastructure before starting Pandas LP — including time at
+**Dojah**, building identity-verification systems used across African fintech, and at **Norebase**,
+working on the infrastructure businesses use to register and stay compliant. Watching how much
+friction used to sit between ordinary people and basic legal certainty — a verified identity, a
+registered business — and how quickly that friction had been compressed to minutes, is what led him
+to ask why legal recourse itself hadn't changed: why getting a lawyer to write one letter still cost
+₦50,000 and took three weeks.
+
+> "I don't think most people who get stiffed on a debt, or ignored on a contract, are asking for
+> anything complicated — they're asking for the process to actually be available to them. When law is
+> only accessible to people who can already afford ₦50,000 and three weeks of waiting, most people
+> just absorb the loss. And that absorbed loss is what actually creates chaos — the next unpaid debt,
+> the informal 'enforcement,' the distrust that makes everyone's next deal harder. Making law
+> accessible isn't charity. It's how you get an economy where people can trust each other's word
+> again." — [Founder Name]
+
+Use this as the real answer to "why does this exist" for the 0:03–0:08 Intro segment, in place of the
+placeholder line in the script below.
+
+---
+
 ## Roles
 
 | Role | Who | Job |
