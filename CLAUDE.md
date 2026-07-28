@@ -152,6 +152,14 @@ npm run dev
 
 ---
 
+## Claude Code Tooling Notes
+
+- **HIGGSFIELD MCP connector** — used for the launch campaign brand film (`campaign/launch-video/`): character stills via Higgsfield Soul (character sheet in `01-concept-and-visual-direction.md`), then image-to-video motion generation from the scene-by-scene prompts in `03-higgsfield-storyboard-prompts.md`. Needed again for any future campaign/video work, not for the app itself.
+- **No separate design/dataviz skill or tool was used for `campaign/x-thread-graphics/generate-small-claims-journey.mjs`** — it's a plain Node script using Next.js's `next/og` `ImageResponse` (Satori), reusing the same rendering path as `app/opengraph-image.tsx` so the brand look stays consistent. Don't reach for an external image-gen tool here; extend this script instead.
+- The core app (Next.js/TypeScript, Supabase, Paystack, jsPDF, Nodemailer, Radix UI) was built with standard Claude Code engineering — no other skills, plugins, or MCP connectors were involved.
+
+---
+
 ## Contact Details (Production)
 - Email: pandaslegalpractitioners@gmail.com
 - Phone: +234 811 808 0189
