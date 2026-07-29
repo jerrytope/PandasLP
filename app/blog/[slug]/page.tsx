@@ -23,14 +23,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: `/blog/${post.slug}` },
     openGraph: {
       type: 'article',
-      title: `${post.title} — Pandas LP`,
+      title: `${post.title} | Pandas LP`,
       description: post.description,
       url: `/blog/${post.slug}`,
       publishedTime: post.date,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${post.title} — Pandas LP`,
+      title: `${post.title} | Pandas LP`,
       description: post.description,
     },
   }
@@ -124,7 +124,7 @@ export default async function BlogPostPage({ params }: Props) {
               Ready to take action?
             </h2>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 24px', fontSize: 14, lineHeight: 1.65 }}>
-              We interview you, draft your Letter of Demand on firm letterhead, and file at the Small Claims Court on your behalf — from ₦10,000.
+              We interview you, draft your Letter of Demand on firm letterhead, and file at the Small Claims Court on your behalf, from ₦10,000.
             </p>
             <Link href="/#services" className="btn btn-primary" style={{ display: 'inline-flex', textDecoration: 'none' }}>
               Start Your Claim →

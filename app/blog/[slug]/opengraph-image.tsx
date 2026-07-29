@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
 import { PANDAS_LOGO_LIGHT_DATA_URI } from '@/lib/logoDataLight'
 
-export const alt = 'Pandas LP — Legal Resources'
+export const alt = 'Pandas LP: Legal Resources'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 

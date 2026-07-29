@@ -12,13 +12,13 @@ export const metadata: Metadata = {
   alternates: { canonical: '/blog' },
   openGraph: {
     type: 'website',
-    title: `${TITLE} — Pandas LP`,
+    title: `${TITLE} | Pandas LP`,
     description: DESCRIPTION,
     url: '/blog',
   },
   twitter: {
     card: 'summary_large_image',
-    title: `${TITLE} — Pandas LP`,
+    title: `${TITLE} | Pandas LP`,
     description: DESCRIPTION,
   },
 }
@@ -52,7 +52,7 @@ export default function BlogIndexPage() {
             <span style={{ color: 'var(--accent)' }}>Get what you're owed.</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 17, marginBottom: 56, lineHeight: 1.6 }}>
-            Plain-English guides on Nigerian law — written by our legal team so you can understand your options before spending a naira.
+            Plain-English guides on Nigerian law, written by our legal team so you can understand your options before spending a naira.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>

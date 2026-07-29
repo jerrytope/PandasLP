@@ -24,7 +24,7 @@ export default function EnforcementIntake({ parentCase, onSubmit, onBack }) {
           <span className="label-mono">Judgment Enforcement</span>
           <h2>Let's enforce your judgment</h2>
           <p>
-            This continues your case{parentCase?.document_title ? ` for "${parentCase.document_title}"` : ''} —
+            This continues your case{parentCase?.document_title ? ` for "${parentCase.document_title}"` : ''}:
             we'll link it to the original matter so our team has the full history.
           </p>
         </div>

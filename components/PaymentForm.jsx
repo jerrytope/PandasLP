@@ -54,7 +54,7 @@ export default function PaymentForm({ amount, description, onSuccess, onBack, ba
   return (
     <div className="card" style={{ maxWidth: 480 }}>
       {description && <p style={{ color: 'var(--text-muted)', marginBottom: 12 }}>{description}</p>}
-      {isPaystackStubbed && <span className="badge badge-test">Test Mode — No Real Charge</span>}
+      {isPaystackStubbed && <span className="badge badge-test">Test Mode: No Real Charge</span>}
 
       <div className="form-group" style={{ marginTop: 16 }}>
         <label htmlFor="payment-email">Email Address</label>

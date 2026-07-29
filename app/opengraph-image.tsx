@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { PANDAS_LOGO_LIGHT_DATA_URI } from '@/lib/logoDataLight'
 
-export const alt = 'Pandas LP — They owe you. We go after it.'
+export const alt = 'Pandas LP: They owe you. We go after it.'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 

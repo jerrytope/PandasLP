@@ -24,12 +24,12 @@ const mono = DM_Mono({
 })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
-const TITLE = 'Pandas LP — They owe you. We go after it.'
-const DESCRIPTION = 'A licensed Lagos law firm that recovers what you\'re owed — demand letter today, court in 14 days if it\'s ignored.'
+const TITLE = 'Pandas LP | They owe you. We go after it.'
+const DESCRIPTION = 'A licensed Lagos law firm that recovers what you\'re owed: demand letter today, court in 14 days if it\'s ignored.'
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: TITLE, template: '%s — Pandas LP' },
+  title: { default: TITLE, template: '%s | Pandas LP' },
   description: DESCRIPTION,
   keywords: [
     'debt recovery Nigeria',
