@@ -2,7 +2,6 @@
 
 import { Scale, FileText, Shield, Gavel, MessageSquare, Clock } from 'lucide-react'
 import { useCountUp } from '../lib/useCountUp'
-import { formatNaira } from '../lib/formatNaira'
 
 const BADGES = [
   { icon: Scale, ring: 1, angle: 40, color: '#D6BB80' },
@@ -14,10 +13,10 @@ const BADGES = [
 ]
 
 export default function OrbitVisual() {
-  const [price, priceRef] = useCountUp(10000)
+  const [minutes, minutesRef] = useCountUp(10, { duration: 1200 })
 
   return (
-    <div className="orbit-visual" ref={priceRef} aria-hidden="true">
+    <div className="orbit-visual" ref={minutesRef} aria-hidden="true">
       <div className="orbit-ring orbit-ring-1 orbit-spin-ccw-slow">
         {BADGES.filter((b) => b.ring === 1).map((b, i) => (
           <OrbitBadge key={i} badge={b} spinClass="orbit-spin-cw-slow" />
@@ -35,8 +34,8 @@ export default function OrbitVisual() {
       </div>
 
       <div className="orbit-center">
-        <div className="orbit-center-value">{formatNaira(price)}</div>
-        <div className="orbit-center-label">Starting price</div>
+        <div className="orbit-center-value">{minutes} min</div>
+        <div className="orbit-center-label">Average interview time</div>
       </div>
     </div>
   )
