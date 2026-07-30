@@ -12,65 +12,53 @@ back against it. Written to be felt, not just read — validate the anger before
 ## The thread
 
 **1/**
-You paid. In full. Weeks ago.
-
-Not "half now, half on delivery." Not a deposit. The whole amount, because they told you that's how
-it works, and you trusted them — because why wouldn't you?
-
-Then nothing came.
+You paid the full amount, weeks ago. Not a deposit, not half now and half on delivery — the whole
+thing, because that's what they asked for and you had no reason to doubt them. Then nothing came.
 
 **2/**
-So you go back. Politely, at first. "Please, when will it be ready?" Then less politely. Then you stop
-asking when, and start asking for your money back.
-
-And that's when they hand you a slip of paper instead of your cash. "We don't refund. You can pick
-something else from the shop."
+So you went back and asked, politely, when it would be ready. Then you asked again. Eventually you
+stopped asking when, and started asking for your money back instead. And that's when they handed you
+a slip of paper and said "we don't refund, you can pick something else from the shop."
 
 **3/**
-Sit with that for a second. *They're* the ones who didn't deliver. *They* broke the agreement. And
-somehow, *you're* the one being told what your own money can and can't be used for.
-
-That's not a store policy. That's someone deciding your loss is their convenience.
+Think about what actually happened there. They're the one who didn't deliver. They're the one who
+broke the agreement. And somehow you're the one being told what your own money is allowed to become.
+That's not really a store policy. That's someone deciding your loss is their convenience.
 
 **4/**
-And it works on people, over and over, because most people genuinely don't know they have a choice.
-They think "no refund" is a wall. Final. Written in ink somewhere they can't argue with. So they take
-the slip, pick something they didn't even want, and swallow it.
-
-That swallowed anger doesn't disappear, by the way. It just moves — to the next vendor you don't
-trust, the next deal you talk yourself out of, the next time you tell a friend "just pay on delivery,
-trust no one." That's not caution. That's a small piece of you that stopped believing agreements mean
-anything.
+It keeps working because most people genuinely don't know they have a choice. "No refund" sounds like
+a rule, so they take the slip, pick something they didn't want, and move on. Except that feeling
+doesn't actually leave once you walk out of the shop. It's part of why people now say "pay on delivery
+only, trust no one" — that's not caution, that's a small bit of trust that got worn away.
 
 **5/**
-Here's what's actually true: if someone takes your money and doesn't deliver what you paid for, "we
-don't do refunds" is not automatically their decision to make. They broke the deal. You are not
-obligated to accept a credit note, a voucher, or "something else from the shop" as a substitute for
-money that was always, legally, still yours.
+Here's what's actually true, though: if someone takes your money and doesn't deliver what you paid
+for, "we don't do refunds" isn't automatically theirs to decide. They broke the deal. You're not
+obligated to accept a voucher or a credit note as a substitute for money that was, legally, always
+still yours.
 
 **6/**
-The only reason that shop's "no refund" sign has ever worked on you is that doing something about it
-used to mean a lawyer's office, a retainer you couldn't justify for the amount involved, and weeks of
-back and forth before anyone even wrote a letter.
-
-That's the exact gap we built the Small Claims Court Agent to close.
+The reason that sign has worked on you until now isn't that you're wrong. It's that doing something
+about it used to mean finding a lawyer, paying a retainer that didn't make sense for the amount
+involved, then waiting weeks before anyone even wrote a letter. That gap is exactly what the Small
+Claims Court Agent was built to close.
 
 **7/**
-Here's what it actually does: you tell it what happened — in your own words, like you're explaining it
-to a friend. It asks what a senior lawyer would ask. What did you pay, what were you promised, what
-proof do you have — receipts, transfer alerts, the WhatsApp chat where they promised delivery "next
-week." Ten minutes later, you have a real, court-ready Letter of Demand. A licensed lawyer reviews it
-and serves it. If they still refuse, it escalates to Small Claims Court.
+Here's how it actually works: you explain what happened in your own words, the way you'd tell a
+friend. It asks the questions a senior lawyer would ask — what you paid, what you were promised, what
+proof you have: receipts, transfer alerts, the WhatsApp message where they said "next week." Within
+about ten minutes, you have a real, court-ready Letter of Demand. A licensed lawyer reviews it and
+serves it. If they still won't budge, it escalates to Small Claims Court.
 
 **8/**
-You don't have to be the one who keeps calling. You don't have to be the one standing in that shop
-again, asking nicely for what was already yours. That part becomes our job, not yours.
+You don't have to be the one who keeps calling, or the one standing in that shop again asking nicely
+for what was already yours. That part becomes our job instead of yours.
 
 **9/**
-From ₦10,000. No retainer. Ten minutes of your time is the only cost that's actually yours to pay.
-
-If a vendor has ever handed you a slip instead of your money — you're not the only one, and it was
-never actually final. We're showing you the rest tonight, 7PM WAT.
+It starts from ₦10,000, with no retainer. The ten minutes it takes to explain what happened is really
+the only part that's still yours to spend. If a vendor has ever handed you a slip instead of your
+money, you weren't the only one it happened to, and it was never actually the end of it. We're showing
+you the rest tonight, 7PM WAT.
 
 ---
 
