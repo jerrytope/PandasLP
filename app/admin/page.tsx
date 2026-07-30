@@ -244,7 +244,9 @@ function AdminPageInner() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const [filterEmail, setFilterEmail] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
+  // Defaults to real, paid customers post-launch — staff can switch back to "All statuses" to
+  // see draft/incomplete interviews if they need to.
+  const [filterStatus, setFilterStatus] = useState('paid_plus')
   const [filterAgent, setFilterAgent] = useState('')
 
   useEffect(() => {
@@ -532,6 +534,7 @@ function AdminPageInner() {
               />
               <select className="input" aria-label="Filter by status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ maxWidth: 180, fontSize: 13 }}>
                 <option value="">All statuses</option>
+                <option value="paid_plus">Paid+ (real customers)</option>
                 <option value="has_document">Has Letter (any stage)</option>
                 {Object.entries(STAGE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>

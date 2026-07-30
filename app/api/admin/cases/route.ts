@@ -24,8 +24,14 @@ export async function GET(req: Request) {
   const agentFilter = url.searchParams.get('agentId')
   const emailFilter = url.searchParams.get('email')?.trim().toLowerCase()
 
+  // "paid_plus" isn't a real status — it's the post-launch default view (staff want real,
+  // transacted customers by default, not every abandoned/incomplete interview), so it expands
+  // to every stage from first payment onward rather than matching a single column value.
+  const PAID_PLUS_STATUSES = ['paid', 'letter_served', 'filed', 'judgment_obtained', 'closed']
+
   let query = supabaseAdmin.from('cases').select('*').order('created_at', { ascending: false })
-  if (statusFilter) query = query.eq('status', statusFilter)
+  if (statusFilter === 'paid_plus') query = query.in('status', PAID_PLUS_STATUSES)
+  else if (statusFilter) query = query.eq('status', statusFilter)
   if (agentFilter) query = query.eq('agent_id', agentFilter)
 
   const { data: cases, error: casesErr } = await query
