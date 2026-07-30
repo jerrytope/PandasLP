@@ -11,7 +11,7 @@ import { writeFileSync, readFileSync } from 'fs'
 const logoSrc = readFileSync(new URL('../../lib/logoDataLight.ts', import.meta.url), 'utf8')
 const LOGO_DATA_URI = logoSrc.match(/'(data:image\/png;base64[^']+)'/)[1]
 
-const bricolage = readFileSync(new URL('./bricolage-700.ttf', import.meta.url))
+const playfair = readFileSync(new URL('./playfair-900.ttf', import.meta.url))
 const dmMono = readFileSync(new URL('./dmmono-500.ttf', import.meta.url))
 const inter = readFileSync(new URL('./inter-400.ttf', import.meta.url))
 
@@ -67,8 +67,8 @@ const element = h(
       h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 13, color: MUTED, letterSpacing: '0.3em' } }, 'PANDAS LP'),
     ),
 
-    h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 32, color: MUTED, letterSpacing: '-0.01em' } }, 'They owe you.'),
-    h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 68, color: GOLD, letterSpacing: '-0.02em', marginTop: 2 } }, 'We go after it.'),
+    h('span', { style: { display: 'flex', fontFamily: 'Playfair Display', fontSize: 34, color: MUTED, letterSpacing: '0em' } }, 'They owe you.'),
+    h('span', { style: { display: 'flex', fontFamily: 'Playfair Display', fontSize: 84, color: GOLD, letterSpacing: '-0.01em', marginTop: 6, lineHeight: 1.05 } }, 'We go after it.'),
 
     h('span', {
       style: { display: 'flex', fontFamily: 'Inter', fontSize: 18, color: MUTED, marginTop: 22, textAlign: 'center', maxWidth: 520, lineHeight: 1.5 },
@@ -98,7 +98,7 @@ const element = h(
   h(
     'div',
     { style: { position: 'absolute', bottom: 62, display: 'flex', width: '100%', justifyContent: 'center' } },
-    h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 20, color: TEXT_1, letterSpacing: '0.02em' } }, 'PANDASLP.COM.NG'),
+    h('span', { style: { display: 'flex', fontFamily: 'Playfair Display', fontSize: 21, color: TEXT_1, letterSpacing: '0.01em' } }, 'PANDASLP.COM.NG'),
   ),
 )
 
@@ -106,7 +106,7 @@ const image = new ImageResponse(element, {
   width: SIZE,
   height: SIZE,
   fonts: [
-    { name: 'Bricolage Grotesque', data: bricolage, weight: 700, style: 'normal' },
+    { name: 'Playfair Display', data: playfair, weight: 900, style: 'normal' },
     { name: 'DM Mono', data: dmMono, weight: 500, style: 'normal' },
     { name: 'Inter', data: inter, weight: 400, style: 'normal' },
   ],
