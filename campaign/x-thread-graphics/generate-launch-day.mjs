@@ -1,14 +1,12 @@
-// "We're live" launch-day announcement graphic — same next/og ImageResponse pipeline as
-// generate-small-claims-journey.mjs, but rebuilt as a letterhead/dossier composition instead
-// of a generic SaaS-launch card: no gradient glow, no row of equal rounded stat tiles. Uses
-// the site's real type system (Bricolage Grotesque / Inter / DM Mono, same as app/layout.jsx)
-// embedded directly so this doesn't fall back to a generic sans face.
+// "We're live" launch-day graphic — rebuilt as a poster/seal composition rather than an
+// info-card layout. A rectangular grid with header/footer rules reads as a webpage screenshot,
+// not something you'd post; a badge/seal is the actual conventional device for signaling legal
+// authority (emblems/seals read as institutional credibility — litigation and defense firms
+// use this exact device), so the whole thing is built around one off-center medallion instead
+// of a bordered card. Real brand type (Bricolage Grotesque / DM Mono / Inter) still embedded.
 import { ImageResponse } from 'next/dist/compiled/@vercel/og/index.node.js'
 import { createElement as h } from 'react'
 import { writeFileSync, readFileSync } from 'fs'
-
-const logoSrc = readFileSync(new URL('../../lib/logoDataLight.ts', import.meta.url), 'utf8')
-const LOGO_DATA_URI = logoSrc.match(/'(data:image\/png;base64[^']+)'/)[1]
 
 const bricolage = readFileSync(new URL('./bricolage-700.ttf', import.meta.url))
 const dmMono = readFileSync(new URL('./dmmono-500.ttf', import.meta.url))
@@ -17,80 +15,112 @@ const inter = readFileSync(new URL('./inter-400.ttf', import.meta.url))
 const WIDTH = 1200
 const HEIGHT = 630
 
-const VOID = '#182A3A'
+const VOID = '#141F2B'
+const RING_BG = '#1B2C3C'
 const GOLD = '#D6BB80'
+const GOLD_DEEP = '#B9985F'
 const TEXT_1 = '#F3EFE3'
 const MUTED = '#8FAEC6'
-const LINE = 'rgba(214,187,128,0.3)'
 
-const exhibits = [
-  { tag: '10 MIN', copy: 'to a drafted letter' },
-  { tag: 'LICENSED LAWYERS', copy: 'review and serve every letter' },
-  { tag: 'FROM N10,000', copy: 'no retainer' },
-]
-
-function ExhibitRow({ tag, copy }) {
+function StampTag({ text, rotate, top, left }) {
   return h(
     'div',
-    { style: { display: 'flex', alignItems: 'baseline', gap: 18, borderTop: `1px solid ${LINE}`, padding: '14px 0' } },
-    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.06em', width: 210, flexShrink: 0 } }, tag),
-    h('span', { style: { display: 'flex', fontFamily: 'Inter', fontSize: 16, color: MUTED } }, copy),
+    {
+      style: {
+        position: 'absolute', top, left, display: 'flex',
+        transform: `rotate(${rotate}deg)`,
+        border: `1.5px solid ${GOLD_DEEP}`, borderRadius: 4,
+        padding: '8px 14px', background: 'rgba(20,31,43,0.4)',
+      },
+    },
+    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: GOLD, letterSpacing: '0.08em' } }, text),
   )
 }
 
 const element = h(
   'div',
-  {
+  { style: { width: '100%', height: '100%', display: 'flex', background: VOID, position: 'relative', overflow: 'hidden' } },
+
+  // Faint oversized ring, bled off-canvas top-left, for depth without a gradient-blob glow
+  h('div', {
     style: {
-      width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-      justifyContent: 'space-between', background: VOID, padding: '56px 68px',
+      position: 'absolute', top: -260, left: -260, width: 620, height: 620, borderRadius: '50%',
+      border: `1px solid rgba(214,187,128,0.14)`, display: 'flex',
     },
-  },
+  }),
 
-  // Header — wordmark left, plain status mark right (no badge/pill)
+  // The seal — bled off the top-right corner, rotated slightly off-axis
   h(
     'div',
-    { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 28, borderBottom: `1px solid ${LINE}` } },
+    {
+      style: {
+        position: 'absolute', top: -130, right: -90, width: 480, height: 480, borderRadius: '50%',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `radial-gradient(circle at 35% 30%, ${RING_BG} 0%, #101A24 78%)`,
+        border: `3px solid ${GOLD}`, transform: 'rotate(-6deg)',
+      },
+    },
     h(
       'div',
-      { style: { display: 'flex', alignItems: 'center', gap: 14 } },
-      h('img', { src: LOGO_DATA_URI, width: 62, height: 41, alt: '' }),
-      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 21, color: TEXT_1, letterSpacing: '-0.01em' } },
-        'Pandas ', h('span', { style: { display: 'flex', color: GOLD } }, 'LP')),
-    ),
-    h(
-      'div',
-      { style: { display: 'flex', alignItems: 'center', gap: 9 } },
-      h('span', { style: { display: 'flex', width: 7, height: 7, borderRadius: '50%', background: GOLD } }),
-      h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: GOLD, letterSpacing: '0.14em' } }, 'OPEN NOW'),
+      { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 40 } },
+      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 64, color: GOLD, letterSpacing: '0.02em' } }, 'PLP'),
+      h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 13, color: MUTED, letterSpacing: '0.24em' } }, 'PANDAS LP'),
     ),
   ),
 
-  // Body — headline left, dossier list right
+  // Ribbon banner draped across the seal's lower third
   h(
     'div',
-    { style: { display: 'flex', flex: 1, alignItems: 'center', gap: 56, paddingTop: 12 } },
-    h(
-      'div',
-      { style: { display: 'flex', flexDirection: 'column', gap: 14, flex: '1 1 0', minWidth: 0 } },
-      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 58, color: TEXT_1, lineHeight: 1.05, letterSpacing: '-0.02em' } }, 'They owe you.'),
-      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 58, color: GOLD, lineHeight: 1.05, letterSpacing: '-0.02em' } }, 'We go after it.'),
-      h('span', { style: { display: 'flex', fontFamily: 'Inter', fontSize: 18, color: MUTED, lineHeight: 1.5, marginTop: 8, maxWidth: 420 } },
-        'A licensed Lagos law firm that recovers what you’re owed.'),
-    ),
-    h(
-      'div',
-      { style: { display: 'flex', flexDirection: 'column', flex: '0 0 380px' } },
-      exhibits.map((e) => h(ExhibitRow, { key: e.tag, ...e })),
-    ),
+    {
+      style: {
+        position: 'absolute', top: 268, right: -140, width: 460, display: 'flex', justifyContent: 'center',
+        background: GOLD, padding: '10px 0', transform: 'rotate(-6deg)',
+        boxShadow: '0 6px 14px rgba(0,0,0,0.35)',
+      },
+    },
+    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 17, color: '#141F2B', fontWeight: 500, letterSpacing: '0.18em' } }, 'OPEN NOW'),
   ),
 
-  // Footer — letterhead sign-off
+  // Headline block — dramatic scale jump between the two lines, slight hand-set rotation
   h(
     'div',
-    { style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: 24, borderTop: `1px solid ${LINE}` } },
-    h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 22, color: GOLD, letterSpacing: '0.01em' } }, 'PANDASLP.COM.NG'),
-    h('span', { style: { display: 'flex', fontFamily: 'Inter', fontSize: 15, color: MUTED } }, 'Demand letter today. Court in 14 days if it’s ignored.'),
+    { style: { position: 'absolute', left: 70, top: 128, display: 'flex', flexDirection: 'column', width: 660 } },
+    h('span', {
+      style: {
+        display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 34, color: MUTED,
+        letterSpacing: '-0.01em', transform: 'rotate(-1deg)', marginBottom: 2,
+      },
+    }, 'They owe you.'),
+    h('span', {
+      style: {
+        display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 104, color: GOLD,
+        letterSpacing: '-0.03em', lineHeight: 0.95, transform: 'rotate(-2deg)', marginLeft: -4,
+      },
+    }, 'We go'),
+    h('span', {
+      style: {
+        display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 104, color: TEXT_1,
+        letterSpacing: '-0.03em', lineHeight: 0.95, transform: 'rotate(-2deg)', marginLeft: -4, marginTop: -6,
+      },
+    }, 'after it.'),
+    h('span', {
+      style: {
+        display: 'flex', fontFamily: 'Inter', fontSize: 17, color: MUTED, lineHeight: 1.5,
+        marginTop: 22, maxWidth: 420,
+      },
+    }, 'A licensed Lagos law firm that recovers what you’re owed — live now.'),
+  ),
+
+  // Scattered stamp tags, loosely arranged, not a neat grid
+  h(StampTag, { text: '10 MIN TO A DRAFTED LETTER', rotate: -3, top: 470, left: 70 }),
+  h(StampTag, { text: 'LICENSED LAWYERS REVIEW EVERY LETTER', rotate: 2, top: 522, left: 108 }),
+  h(StampTag, { text: 'FROM N10,000 · NO RETAINER', rotate: -2, top: 574, left: 70 }),
+
+  // Footer mark, floating, no rule line
+  h(
+    'div',
+    { style: { position: 'absolute', bottom: 34, right: 64, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' } },
+    h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 22, color: GOLD } }, 'PANDASLP.COM.NG'),
   ),
 )
 
