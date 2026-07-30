@@ -1,7 +1,8 @@
 // "We're live" launch-day announcement graphic — same next/og ImageResponse pipeline as
-// generate-small-claims-journey.mjs, so the brand look stays consistent with the site's own
-// OG images without pulling in a separate image-generation dependency or spending Higgsfield
-// credits on something that's fundamentally a text/logo card, not a photoreal scene.
+// generate-small-claims-journey.mjs, but rebuilt as a letterhead/dossier composition instead
+// of a generic SaaS-launch card: no gradient glow, no row of equal rounded stat tiles. Uses
+// the site's real type system (Bricolage Grotesque / Inter / DM Mono, same as app/layout.jsx)
+// embedded directly so this doesn't fall back to a generic sans face.
 import { ImageResponse } from 'next/dist/compiled/@vercel/og/index.node.js'
 import { createElement as h } from 'react'
 import { writeFileSync, readFileSync } from 'fs'
@@ -9,38 +10,31 @@ import { writeFileSync, readFileSync } from 'fs'
 const logoSrc = readFileSync(new URL('../../lib/logoDataLight.ts', import.meta.url), 'utf8')
 const LOGO_DATA_URI = logoSrc.match(/'(data:image\/png;base64[^']+)'/)[1]
 
+const bricolage = readFileSync(new URL('./bricolage-700.ttf', import.meta.url))
+const dmMono = readFileSync(new URL('./dmmono-500.ttf', import.meta.url))
+const inter = readFileSync(new URL('./inter-400.ttf', import.meta.url))
+
 const WIDTH = 1200
 const HEIGHT = 630
 
-const BG = '#182A3A'
-const CARD_BG = '#1F3446'
-const CARD_BORDER = 'rgba(214,187,128,0.25)'
+const VOID = '#182A3A'
 const GOLD = '#D6BB80'
 const TEXT_1 = '#F3EFE3'
-const MUTED = '#ABB1A2'
-const GREEN = '#3ECF8E'
+const MUTED = '#8FAEC6'
+const LINE = 'rgba(214,187,128,0.3)'
 
-const proofPoints = [
-  { n: '10 MIN', label: 'AI interview' },
-  { n: 'REAL LAWYERS', label: 'Review + serve' },
-  { n: 'N10,000', label: 'To get started' }, // ₦ glyph isn't in Satori's base font and requires a network font fetch — see lib/pdfGenerator.js's normalizeForPdf() for the same tradeoff
+const exhibits = [
+  { tag: '10 MIN', copy: 'to a drafted letter' },
+  { tag: 'LICENSED LAWYERS', copy: 'review and serve every letter' },
+  { tag: 'FROM N10,000', copy: 'no retainer' },
 ]
 
-function ProofPoint({ n, label }) {
+function ExhibitRow({ tag, copy }) {
   return h(
     'div',
-    { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', width: 200 } },
-    h(
-      'div',
-      {
-        style: {
-          display: 'flex', width: '100%', flexDirection: 'column', alignItems: 'center', gap: 8,
-          background: CARD_BG, border: `1px solid ${CARD_BORDER}`, borderRadius: 14, padding: '18px 12px',
-        },
-      },
-      h('span', { style: { display: 'flex', fontSize: 20, fontWeight: 700, color: GOLD, letterSpacing: '0.02em' } }, n),
-      h('span', { style: { display: 'flex', fontSize: 14, fontWeight: 500, color: MUTED, textAlign: 'center' } }, label),
-    ),
+    { style: { display: 'flex', alignItems: 'baseline', gap: 18, borderTop: `1px solid ${LINE}`, padding: '14px 0' } },
+    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.06em', width: 210, flexShrink: 0 } }, tag),
+    h('span', { style: { display: 'flex', fontFamily: 'Inter', fontSize: 16, color: MUTED } }, copy),
   )
 }
 
@@ -49,65 +43,66 @@ const element = h(
   {
     style: {
       width: '100%', height: '100%', display: 'flex', flexDirection: 'column',
-      justifyContent: 'space-between', background: BG, padding: '52px 64px', position: 'relative',
+      justifyContent: 'space-between', background: VOID, padding: '56px 68px',
     },
   },
-  h('div', {
-    style: {
-      position: 'absolute', top: -180, right: -140, width: 560, height: 560, borderRadius: '50%',
-      background: 'radial-gradient(circle, rgba(214,187,128,0.30) 0%, rgba(214,187,128,0) 70%)', display: 'flex',
-    },
-  }),
 
-  // Header
+  // Header — wordmark left, plain status mark right (no badge/pill)
   h(
     'div',
-    { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+    { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 28, borderBottom: `1px solid ${LINE}` } },
     h(
       'div',
       { style: { display: 'flex', alignItems: 'center', gap: 14 } },
-      h('img', { src: LOGO_DATA_URI, width: 73, height: 48, alt: '' }),
-      h('span', { style: { display: 'flex', fontSize: 24, fontWeight: 700, color: TEXT_1, letterSpacing: '-0.02em' } },
+      h('img', { src: LOGO_DATA_URI, width: 62, height: 41, alt: '' }),
+      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 21, color: TEXT_1, letterSpacing: '-0.01em' } },
         'Pandas ', h('span', { style: { display: 'flex', color: GOLD } }, 'LP')),
     ),
     h(
       'div',
-      { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-      h('span', { style: { display: 'flex', width: 9, height: 9, borderRadius: '50%', background: GREEN } }),
-      h('span', { style: { display: 'flex', fontSize: 15, fontWeight: 700, color: GREEN, letterSpacing: '0.14em' } }, 'LIVE NOW'),
+      { style: { display: 'flex', alignItems: 'center', gap: 9 } },
+      h('span', { style: { display: 'flex', width: 7, height: 7, borderRadius: '50%', background: GOLD } }),
+      h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: GOLD, letterSpacing: '0.14em' } }, 'OPEN NOW'),
     ),
   ),
 
-  // Headline
+  // Body — headline left, dossier list right
   h(
     'div',
-    { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
-    h('span', { style: { display: 'flex', fontSize: 52, fontWeight: 700, color: TEXT_1, lineHeight: 1.1, letterSpacing: '-0.02em' } },
-      "Nigeria's first AI-native"),
-    h('span', { style: { display: 'flex', fontSize: 52, fontWeight: 700, color: GOLD, lineHeight: 1.1, letterSpacing: '-0.02em' } },
-      'law firm is open.'),
-  ),
-
-  // Proof points
-  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16 } },
-    proofPoints.map((p, i) => h(ProofPoint, { key: p.n, ...p }))),
-
-  // Footer CTA
-  h(
-    'div',
-    { style: { display: 'flex', alignItems: 'center', gap: 16 } },
-    h('div', { style: { width: 40, height: 3, background: GOLD, display: 'flex' } }),
+    { style: { display: 'flex', flex: 1, alignItems: 'center', gap: 56, paddingTop: 12 } },
     h(
       'div',
-      { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
-      h('span', { style: { display: 'flex', fontSize: 22, fontWeight: 700, color: GOLD, letterSpacing: '0.02em' } }, 'PANDASLP.COM.NG'),
-      h('span', { style: { display: 'flex', fontSize: 17, color: MUTED } },
-        'AI drafts it in minutes. Real lawyers make it count.'),
+      { style: { display: 'flex', flexDirection: 'column', gap: 14, flex: '1 1 0', minWidth: 0 } },
+      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 58, color: TEXT_1, lineHeight: 1.05, letterSpacing: '-0.02em' } }, 'They owe you.'),
+      h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 58, color: GOLD, lineHeight: 1.05, letterSpacing: '-0.02em' } }, 'We go after it.'),
+      h('span', { style: { display: 'flex', fontFamily: 'Inter', fontSize: 18, color: MUTED, lineHeight: 1.5, marginTop: 8, maxWidth: 420 } },
+        'A licensed Lagos law firm that recovers what you’re owed.'),
     ),
+    h(
+      'div',
+      { style: { display: 'flex', flexDirection: 'column', flex: '0 0 380px' } },
+      exhibits.map((e) => h(ExhibitRow, { key: e.tag, ...e })),
+    ),
+  ),
+
+  // Footer — letterhead sign-off
+  h(
+    'div',
+    { style: { display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', paddingTop: 24, borderTop: `1px solid ${LINE}` } },
+    h('span', { style: { display: 'flex', fontFamily: 'Bricolage Grotesque', fontSize: 22, color: GOLD, letterSpacing: '0.01em' } }, 'PANDASLP.COM.NG'),
+    h('span', { style: { display: 'flex', fontFamily: 'Inter', fontSize: 15, color: MUTED } }, 'Demand letter today. Court in 14 days if it’s ignored.'),
   ),
 )
 
-const image = new ImageResponse(element, { width: WIDTH, height: HEIGHT })
+const image = new ImageResponse(element, {
+  width: WIDTH,
+  height: HEIGHT,
+  fonts: [
+    { name: 'Bricolage Grotesque', data: bricolage, weight: 700, style: 'normal' },
+    { name: 'DM Mono', data: dmMono, weight: 500, style: 'normal' },
+    { name: 'Inter', data: inter, weight: 400, style: 'normal' },
+  ],
+})
 const buffer = Buffer.from(await image.arrayBuffer())
 const outPath = new URL('./pandas-lp-launch-day.png', import.meta.url)
 writeFileSync(outPath, buffer)
