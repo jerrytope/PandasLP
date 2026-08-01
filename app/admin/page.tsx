@@ -52,6 +52,12 @@ interface WaitlistRow {
   created_at: string
 }
 
+interface CaseMessage {
+  role: 'user' | 'assistant'
+  content: string
+  created_at: string
+}
+
 const STAGE_LABEL: Record<string, string> = {
   draft: 'Interview',
   document_ready: 'Doc Ready',
@@ -115,6 +121,29 @@ function CaseCard({
   // with an unreviewed clean copy floating around just because they wanted to check on a lead.
   const isFinalClean = c.status === 'paid' && !!c.reviewed_at
 
+  const [showInterview, setShowInterview] = useState(false)
+  const [interviewLoading, setInterviewLoading] = useState(false)
+  const [interviewError, setInterviewError] = useState('')
+  const [messages, setMessages] = useState<CaseMessage[] | null>(null)
+
+  async function toggleInterview() {
+    if (showInterview) { setShowInterview(false); return }
+    setShowInterview(true)
+    if (messages) return // already loaded once — no need to refetch every toggle
+    setInterviewLoading(true)
+    setInterviewError('')
+    try {
+      const res = await authedFetch(`/api/admin/case-messages?caseId=${c.id}`)
+      const data = await res.json()
+      if (!res.ok) { setInterviewError(data.error || 'Failed to load the interview.'); return }
+      setMessages(data.messages ?? [])
+    } catch {
+      setInterviewError('Network error. Please try again.')
+    } finally {
+      setInterviewLoading(false)
+    }
+  }
+
   return (
     <div id={domId} className="card" style={{ padding: '18px 22px', ...(accentColor ? { borderColor: accentColor } : {}) }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -138,9 +167,9 @@ function CaseCard({
             <Phone size={13} strokeWidth={1.5} aria-hidden="true" /> {c.client_phone}
           </a>
         )}
-        {c.delivery_option === 'pandas-serves' && !c.client_phone && (
+        {!c.client_phone && (
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: 'var(--danger)' }}>
-            <AlertTriangle size={13} strokeWidth={1.5} aria-hidden="true" /> No callback number
+            <AlertTriangle size={13} strokeWidth={1.5} aria-hidden="true" /> No contact number
           </span>
         )}
       </div>
@@ -188,7 +217,46 @@ function CaseCard({
             {showLetter ? 'Hide Letter' : 'View Letter'}
           </button>
         )}
+        {/* Available on every case, letter drafted or not — the conversation itself is useful
+            context for a lawyer follow-up call, and staff shouldn't lose access to it just
+            because a document was drafted. */}
+        <button type="button" className="btn btn-sm" onClick={toggleInterview}>
+          {showInterview ? 'Hide Conversation' : 'View Conversation'}
+        </button>
       </div>
+
+      {showInterview && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: '16px 18px',
+            borderRadius: 10,
+            background: 'var(--bg-1)',
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            lineHeight: 1.7,
+            maxHeight: 420,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
+        >
+          {interviewLoading && <span style={{ color: 'var(--text-muted)' }}>Loading…</span>}
+          {interviewError && <span style={{ color: 'var(--danger)' }}>{interviewError}</span>}
+          {!interviewLoading && !interviewError && messages?.length === 0 && (
+            <span style={{ color: 'var(--text-muted)' }}>No messages yet.</span>
+          )}
+          {!interviewLoading && messages?.map((m, i) => (
+            <div key={i}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+                {m.role === 'user' ? c.userEmail || 'Client' : 'Pandas LP Agent'}
+              </div>
+              <div style={{ whiteSpace: 'pre-wrap' }}>{renderFormattedText(m.content)}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showLetter && c.document_body && (
         <div
@@ -244,9 +312,10 @@ function AdminPageInner() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const [filterEmail, setFilterEmail] = useState('')
-  // Defaults to real, paid customers post-launch — staff can switch back to "All statuses" to
-  // see draft/incomplete interviews if they need to.
-  const [filterStatus, setFilterStatus] = useState('paid_plus')
+  // Defaults to all statuses — staff need visibility into unpaid/draft cases too (conversations
+  // and drafted letters are useful for lawyer follow-up calls before a case ever gets paid).
+  // "Paid+" is still available in the dropdown for when a paid-only view is actually wanted.
+  const [filterStatus, setFilterStatus] = useState('')
   const [filterAgent, setFilterAgent] = useState('')
 
   useEffect(() => {
