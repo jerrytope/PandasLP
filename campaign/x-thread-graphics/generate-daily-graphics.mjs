@@ -86,8 +86,24 @@ const graphicB = h(
   ),
 )
 
-async function render(element, outName) {
-  const image = new ImageResponse(element, { width: SIZE, height: SIZE, fonts: FONTS })
+// ── Graphic C: LinkedIn quote card, landscape (LinkedIn displays wide images best) ──
+const graphicC = h(
+  'div',
+  { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: VOID, padding: '0 110px' } },
+  h('span', { style: { display: 'flex', fontFamily: 'Cinzel', fontSize: 22, color: GOLD_DIM, marginBottom: 26 } }, '“'),
+  h('span', {
+    style: { display: 'flex', fontFamily: 'Cinzel', fontSize: 38, color: TEXT_1, lineHeight: 1.4, letterSpacing: '0.01em', maxWidth: 880 },
+  }, 'How fast and how cheap you can deliver a service has far more to do with the process than with how complicated the problem actually is.'),
+  h(
+    'div',
+    { style: { display: 'flex', alignItems: 'center', gap: 14, marginTop: 36 } },
+    h('div', { style: { display: 'flex', width: 40, height: 1.5, background: GOLD } }),
+    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.08em' } }, 'ADEBAYO SOBAYO — FOUNDER OF PANDAS LP'),
+  ),
+)
+
+async function render(element, outName, width = SIZE, height = SIZE) {
+  const image = new ImageResponse(element, { width, height, fonts: FONTS })
   const buffer = Buffer.from(await image.arrayBuffer())
   const outPath = new URL(`./${outName}`, import.meta.url)
   writeFileSync(outPath, buffer)
@@ -96,3 +112,4 @@ async function render(element, outName) {
 
 await render(graphicA, 'pandas-lp-daily-evidence-tip.png')
 await render(graphicB, 'personal-quote-card.png')
+await render(graphicC, 'linkedin-quote-card.png', 1200, 630)
