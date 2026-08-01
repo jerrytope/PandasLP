@@ -82,7 +82,7 @@ const graphicB = h(
     'div',
     { style: { display: 'flex', alignItems: 'center', gap: 14, marginTop: 46 } },
     h('div', { style: { display: 'flex', width: 40, height: 1.5, background: GOLD } }),
-    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.08em' } }, '[FOUNDER NAME], FOUNDER OF PANDAS LP'),
+    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.08em' } }, 'ADEBAYO SOBAYO — FOUNDER OF PANDAS LP'),
   ),
 )
 
