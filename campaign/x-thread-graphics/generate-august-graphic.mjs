@@ -49,12 +49,23 @@ const element = h(
     'div',
     { style: { position: 'relative', display: 'flex', flexDirection: 'column', padding: '86px 0 0 78px', width: 720 } },
 
-    // The one red moment on the page — pulled from the mascot's own tie
+    // The one red moment on the page — pulled from the mascot's own tie. A pennant ribbon,
+    // not a bordered rectangle: solid fill body + a triangular tail built from CSS borders
+    // (the classic "pinked end" ribbon-banner shape), tilted slightly like a stuck-on label.
     h(
       'div',
-      { style: { display: 'flex', alignItems: 'center', gap: 10, border: `1.5px solid ${RED}`, borderRadius: 3, padding: '7px 14px', alignSelf: 'flex-start' } },
-      h('span', { style: { display: 'flex', width: 6, height: 6, background: RED, borderRadius: '50%' } }),
-      h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: RED, letterSpacing: '0.22em' } }, 'NEW MONTH'),
+      { style: { display: 'flex', alignItems: 'center', alignSelf: 'flex-start', transform: 'rotate(-3deg)' } },
+      h(
+        'div',
+        { style: { display: 'flex', alignItems: 'center', background: RED, padding: '9px 8px 9px 18px' } },
+        h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: '#141F2B', fontWeight: 500, letterSpacing: '0.2em' } }, 'NEW MONTH'),
+      ),
+      h('div', {
+        style: {
+          display: 'flex', width: 0, height: 0,
+          borderTop: '15px solid transparent', borderBottom: '15px solid transparent', borderLeft: `12px solid ${RED}`,
+        },
+      }),
     ),
 
     h('span', {
@@ -66,8 +77,8 @@ const element = h(
     }, 'WHOEVER STILL OWES YOU FROM JULY DOESN’T GET A FRESH START TOO.'),
 
     h('span', {
-      style: { display: 'flex', fontFamily: 'Inter', fontSize: 18, color: MUTED, marginTop: 26, maxWidth: 460, lineHeight: 1.55 },
-    }, 'Tell the Small Claims Court Agent what happened. Ten minutes later you have a court-ready Letter of Demand.'),
+      style: { display: 'flex', fontFamily: 'Inter', fontSize: 19, color: MUTED, marginTop: 26, maxWidth: 460, lineHeight: 1.55 },
+    }, 'Welcome to August. Let’s make this the month you finally get paid.'),
 
     h(
       'div',
