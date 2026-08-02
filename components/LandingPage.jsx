@@ -6,7 +6,7 @@ import {
   MessageSquare, FileText, Send, Scale, Shield, Clock,
   TrendingUp, ChevronDown, CheckCircle, ArrowUpRight,
   Sparkles, Users, Zap, Gavel, Building2, Briefcase,
-  CalendarCheck, Bell, Brain, Eye, AlertTriangle, Heart
+  CalendarCheck, Bell, Brain, Eye, Heart
 } from 'lucide-react'
 import Reveal from './Reveal'
 import HiwFlowLine from './HiwFlowLine'
@@ -104,7 +104,7 @@ const LAWYER_EQUIV = 80000
 
 /* ── Comparison rows ── */
 const COMPARE = [
-  { label: 'Time to start',       pandas: '10 minutes',           trad: '2–4 weeks',       diy: 'Weeks of research' },
+  { label: 'Time to start',       pandas: '10 minutes',           trad: '2-4 weeks',       diy: 'Weeks of research' },
   { label: 'Legal expertise',     pandas: '✓ Licensed lawyers',   trad: '✓ Lawyers only',  diy: '✗ None' },
   { label: 'Automated follow-up', pandas: '✓ Day 0, 7, 14',       trad: 'Manual',          diy: 'You chase them' },
   { label: 'Court filing',        pandas: '✓ Handled by us',      trad: '✓ Handled',       diy: '✗ Figure it out' },
@@ -183,58 +183,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 See how it works
               </a>
             </div>
-
-            <div className="hero-trust" style={{ animation: 'fade-in-up 0.6s ease 1.8s both' }}>
-              <span>CAC BN 9646741</span>
-              <span className="hero-trust-dot" />
-              <span>Same-Day Letters</span>
-              <span className="hero-trust-dot" />
-              <span>Real Lawyers</span>
-              <span className="hero-trust-dot" />
-              <span>10-Minute Process</span>
-            </div>
           </div>
 
-          {/* Right: Orbit visual (swap back to the phone-mockup-wrap block below if you'd
-              rather show the real product screen than this decorative visualization) */}
           <OrbitVisual />
-
-          {/* Right (alternate): Phone mockup — real chat UI preview, currently unused */}
-          <div className="phone-mockup-wrap" aria-hidden="true" style={{ display: 'none' }}>
-            <div className="phone-backdrop-shape" />
-            <div className="phone-mockup">
-              <div className="phone-notch-bar"><div className="phone-notch" /></div>
-              <div className="phone-header">
-                <div className="phone-header-dot" />
-                <span className="phone-header-text">Pandas LP · Small Claims Agent</span>
-              </div>
-              <div className="phone-chat">
-                <div className="phone-bubble phone-bubble-ai">
-                  Hello! How much money are you owed, and who owes it?
-                </div>
-                <div className="phone-bubble phone-bubble-user">
-                  John owes me ₦450,000 for consulting work from March.
-                </div>
-                <div className="phone-bubble phone-bubble-ai">
-                  Got it. Do you have a written agreement or invoice?
-                </div>
-                <div className="phone-bubble phone-bubble-user">
-                  Yes, I have an invoice and WhatsApp messages confirming.
-                </div>
-                <div className="phone-bubble phone-bubble-ai">
-                  Perfect, that's strong evidence. Let's draft your Letter of Demand.
-                </div>
-                <div className="typing-dots" style={{ paddingLeft: 4 }}>
-                  <span /><span /><span />
-                </div>
-              </div>
-            </div>
-
-            <div className="phone-status-card">
-              <div className="phone-status-title">✓ Demand Letter Sent</div>
-              <div className="phone-status-sub">Served on debtor · Day 0 of 14</div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -308,7 +259,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header">
-              <span className="label-mono">The Interview</span>
               <h2>Not a form.<br />A proper legal interview.</h2>
               <p style={{ maxWidth: 560 }}>
                 Every case follows Nigerian legal procedure, debt recovery case law,
@@ -371,7 +321,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div className="ai-demo-wrap" style={{ marginTop: 56 }}>
               <div className="ai-demo-header">
                 <div className="ai-demo-dot" />
-                <span className="ai-demo-label">Sample interview · Small Claims Agent · Debt Recovery</span>
+                <span className="ai-demo-label">Sample interview: Small Claims Agent</span>
               </div>
               <div className="ai-demo-body">
                 <div className="ai-demo-chat">
@@ -470,7 +420,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header">
-              <span className="label-mono">All Services</span>
               <h2>More ways we can help</h2>
               <p>Debt recovery is our flagship. Here's what else is live and what's coming.</p>
             </div>
@@ -656,7 +605,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header">
-              <span className="label-mono">Why Pandas LP</span>
               <h2>Everything a law firm does.<br />None of the friction.</h2>
             </div>
           </Reveal>
@@ -778,7 +726,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">Compare</span>
               <h2>The fastest path to getting paid</h2>
             </div>
           </Reveal>
@@ -861,26 +808,28 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 We're building the alternative. You get to use it first.
               </p>
 
-              {/* Three honest value props */}
+              {/* Three honest value props — a divided row instead of boxed cards, so this
+                  doesn't read as the same feature-grid pattern as the sections above it */}
               <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                gap: 16, marginBottom: 40,
-                textAlign: 'left',
+                display: 'flex', flexWrap: 'wrap',
+                marginBottom: 40, textAlign: 'left',
+                border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)',
+                overflow: 'hidden',
               }}>
                 {[
                   { icon: <Zap size={18} strokeWidth={1.5} aria-hidden="true" />,   title: 'First mover',       body: 'Fast, affordable debt recovery doesn\'t exist at scale in Nigeria yet. You\'re early.' },
                   { icon: <Scale size={18} strokeWidth={1.5} aria-hidden="true" />,  title: 'Real lawyers',       body: 'CAC-registered firm. Every document reviewed. Every filing handled by a licensed practitioner.' },
                   { icon: <Shield size={18} strokeWidth={1.5} aria-hidden="true" />, title: 'Your case, your data', body: 'Encrypted. Private. Only you and your assigned lawyer can see your case.' },
-                ].map(item => (
+                ].map((item, i) => (
                   <div key={item.title} style={{
-                    background: 'var(--bg-2)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '20px 18px',
+                    flex: '1 1 220px',
+                    padding: '22px 20px',
+                    borderLeft: i > 0 ? '1px solid var(--border-subtle)' : 'none',
                   }}>
-                    <div style={{ color: 'var(--accent)', marginBottom: 10 }}>{item.icon}</div>
-                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-1)', marginBottom: 6 }}>{item.title}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <span style={{ color: 'var(--accent)', display: 'flex' }}>{item.icon}</span>
+                      <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-1)' }}>{item.title}</span>
+                    </div>
                     <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6 }}>{item.body}</div>
                   </div>
                 ))}
@@ -908,7 +857,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container" style={{ maxWidth: 760 }}>
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">FAQ</span>
               <h2>Questions answered</h2>
             </div>
           </Reveal>
@@ -972,8 +920,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         }} />
         <div className="container" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto', position: 'relative' }}>
           <Reveal>
-            <span className="label-mono">Ready to start?</span>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,4vw,48px)', fontWeight: 800, letterSpacing: '-0.03em', marginTop: 10, marginBottom: 16, lineHeight: 1.1 }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(32px,4vw,48px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 16, lineHeight: 1.1 }}>
               Let's get your money back.
             </h2>
             <p style={{ color: 'var(--text-2)', fontSize: 17, lineHeight: 1.7, marginBottom: 36 }}>

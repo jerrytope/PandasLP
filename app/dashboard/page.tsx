@@ -197,7 +197,22 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {loading && <p style={{ color: 'var(--text-muted)' }}>Loading your cases…</p>}
+        {loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }} aria-label="Loading your cases">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="card" style={{ padding: '22px 24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--bg-2)' }} />
+                  <div style={{ flex: 1, minWidth: 200 }}>
+                    <div style={{ height: 16, width: `${45 - i * 8}%`, borderRadius: 4, background: 'var(--bg-2)' }} />
+                    <div style={{ height: 12, width: '30%', borderRadius: 4, background: 'var(--bg-2)', marginTop: 8 }} />
+                  </div>
+                  <div style={{ height: 26, width: 90, borderRadius: 10, background: 'var(--bg-2)' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {!loading && cases.length === 0 && (
           <div className="card" style={{ maxWidth: 480 }}>
