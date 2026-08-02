@@ -1,23 +1,23 @@
 import Script from 'next/script'
-import { Bricolage_Grotesque, Inter, DM_Mono } from 'next/font/google'
+import { Instrument_Sans, Geist, Geist_Mono } from 'next/font/google'
 import { safeJsonLd } from '@/lib/jsonLd'
 import './globals.css'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
-const display = Bricolage_Grotesque({
+const display = Instrument_Sans({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700', '800'],
+  weight: ['500', '600', '700'],
 })
 
-const sans = Inter({
+const sans = Geist({
   subsets: ['latin'],
   variable: '--font-sans',
   weight: ['400', '500', '600', '700'],
 })
 
-const mono = DM_Mono({
+const mono = Geist_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500'],

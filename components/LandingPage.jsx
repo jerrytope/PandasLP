@@ -11,7 +11,7 @@ import {
 import Reveal from './Reveal'
 import HiwFlowLine from './HiwFlowLine'
 import TypewriterHeadline from './TypewriterHeadline'
-import OrbitVisual from './OrbitVisual'
+import LetterHero from './LetterHero'
 import TypingBeat from './TypingBeat'
 import { useCountUp } from '../lib/useCountUp'
 import { formatNaira } from '../lib/formatNaira'
@@ -185,7 +185,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </div>
           </div>
 
-          <OrbitVisual />
+          <LetterHero />
         </div>
       </section>
 
