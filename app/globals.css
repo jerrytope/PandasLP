@@ -1318,12 +1318,13 @@ h1, h2, h3, h4, h5, h6 {
 .faq-item.open .faq-chevron { transform: rotate(180deg); }
 
 .faq-body {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height var(--anim-med), padding var(--anim-med);
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--anim-med);
 }
-.faq-item.open .faq-body { max-height: 400px; }
+.faq-item.open .faq-body { grid-template-rows: 1fr; }
 .faq-answer {
+  overflow: hidden;
   font-size: 14px;
   line-height: 1.75;
   color: var(--text-2);
