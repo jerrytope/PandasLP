@@ -16,6 +16,7 @@
   /* Accent */
   --accent: #D6BB80;
   --accent-glow: rgba(214, 187, 128, 0.3);
+  --accent-glow-soft: rgba(214, 187, 128, 0.06);
   --accent-hover: #C7A968;
   --accent-deep: #A08348;
 
@@ -349,6 +350,24 @@ h1, h2, h3, h4, h5, h6 {
 .badge-warning { background: rgba(251,191,36,0.12);  color: var(--warning);  border-color: rgba(251,191,36,0.2); }
 .badge-info    { background: rgba(56,189,248,0.12);  color: var(--info);     border-color: rgba(56,189,248,0.2); }
 .badge-muted   { background: var(--bg-2);            color: var(--text-2);   border-color: var(--border-subtle); }
+.badge-sm      { font-size: 9px; padding: 2px 7px; }
+
+/* ── Notify-me / secondary utility button ── */
+.notify-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: border-color var(--anim-fast), color var(--anim-fast);
+}
+.notify-btn:hover { border-color: var(--border-focus); color: var(--text-1); }
 
 /* ── Animations ── */
 @keyframes border-shimmer {
@@ -623,6 +642,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .founding-glow, .bottom-cta-glow {
+  background: radial-gradient(circle, var(--accent-glow-soft) 0%, transparent 70%);
   animation: heroGlowDrift 16s ease-in-out infinite alternate;
 }
 

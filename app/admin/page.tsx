@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
@@ -458,13 +459,20 @@ function AdminPageInner() {
               aria-selected={tab === t}
               onClick={() => setTab(t)}
               style={{
+                position: 'relative',
                 background: 'none', border: 'none', cursor: 'pointer',
                 padding: '10px 4px', marginRight: 20, fontSize: 14, fontWeight: 600,
                 color: tab === t ? 'var(--accent)' : 'var(--text-muted)',
-                borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
               }}
             >
               {t === 'queue' ? 'Queue' : t === 'cases' ? 'Cases' : t === 'claims' ? 'Custom Claims' : 'Waitlist Signups'}
+              {tab === t && (
+                <motion.div
+                  layoutId="admin-tab-underline"
+                  style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--accent)' }}
+                  transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+                />
+              )}
             </button>
           ))}
         </div>

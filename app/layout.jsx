@@ -1,5 +1,6 @@
 import Script from 'next/script'
 import { Instrument_Sans, Geist, Geist_Mono } from 'next/font/google'
+import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
 import './globals.css'
 
@@ -99,7 +100,7 @@ export default function RootLayout({ children }) {
             </Script>
           </>
         )}
-        {children}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
       </body>
     </html>
   )

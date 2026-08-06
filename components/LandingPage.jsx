@@ -25,7 +25,6 @@ const TESTING_SERVICES = [
     shortName: 'Enforce a judgment',
     description: 'Already won in court but the debtor won\'t pay? We file a Garnishee Order or Writ of Execution to compel payment.',
     price: '₦10,000 + 5% of judgment',
-    color: '#b03a2e',
   },
   {
     id: 'lawyer-consultation',
@@ -34,7 +33,6 @@ const TESTING_SERVICES = [
     shortName: 'Speak to a lawyer',
     description: 'Book a 45-minute session with a licensed Nigerian lawyer. Get real legal advice, one-on-one.',
     price: '₦15,000 per session',
-    color: '#2a7d4f',
   },
 ]
 
@@ -44,21 +42,18 @@ const COMING_SOON_SERVICES = [
     icon: <Building2 size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'Recovery of Premises',
     description: 'Tenant won\'t leave after notice? We prepare your eviction letter and file at the Rent Tribunal.',
-    color: '#1d6fa4',
   },
   {
     id: 'contracts',
     icon: <Briefcase size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'Contracts & Commercial',
     description: 'Draft or review business agreements, NDAs, service contracts, and partnership deeds.',
-    color: '#6b4fc9',
   },
   {
     id: 'cac-registration',
     icon: <Shield size={20} strokeWidth={1.5} aria-hidden="true" />,
     name: 'CAC Registration',
     description: 'Register your business with the Corporate Affairs Commission. Business name or full incorporation.',
-    color: '#c97a1a',
   },
 ]
 
@@ -272,32 +267,28 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             {[
               {
                 icon: <Brain size={20} strokeWidth={1.5} aria-hidden="true" />,
-                iconBg: 'rgba(214, 187, 128, 0.12)',
-                iconColor: '#D6BB80',
+                accentVar: '--accent',
                 tag: 'Structured Intake',
                 title: 'Asks the right questions in the right order',
                 body: 'The interview follows the same intake logic a senior litigator uses: debtor identity, relationship to the debt, contract terms, payment history, evidence quality, limitation period. Every time, in the right sequence, nothing skipped.',
               },
               {
                 icon: <Eye size={20} strokeWidth={1.5} aria-hidden="true" />,
-                iconBg: 'rgba(143, 174, 198, 0.12)',
-                iconColor: '#8FAEC6',
+                accentVar: '--secondary',
                 tag: 'Case Analysis',
                 title: 'Spots the holes before the judge does',
                 body: 'If your dates don\'t add up, it flags it. If your only evidence is a verbal promise, it tells you that\'s a weak case and explains why. It asks follow-up questions until your case is tight enough to put in front of a court.',
               },
               {
                 icon: <Heart size={20} strokeWidth={1.5} aria-hidden="true" />,
-                iconBg: 'rgba(99,102,241,0.12)',
-                iconColor: '#818CF8',
+                accentVar: '--info',
                 tag: 'Reads the Room',
                 title: 'Meets you where you\'re at',
                 body: 'A client typing in short, angry fragments is probably at their limit. Someone who writes "I don\'t know if this will work" needs reassurance before they need information. The interview adjusts to it: calmer when you\'re stressed, more direct when you\'re ready to move.',
               },
               {
                 icon: <Scale size={20} strokeWidth={1.5} aria-hidden="true" />,
-                iconBg: 'rgba(56,189,248,0.12)',
-                iconColor: '#38BDF8',
+                accentVar: '--accent',
                 tag: 'Nigerian Law',
                 title: 'Grounded in real Nigerian legal framework',
                 body: 'The system is built on the Limitation Law of Lagos State, CAMA 2020, the Small Claims Court Civil Procedure Rules, and Nigerian digital evidence standards, not generic templates. It knows which court to file in, what threshold requires what evidence, and what the debtor\'s defences are likely to be.',
@@ -305,7 +296,13 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             ].map((f, i) => (
               <Reveal key={i} delay={i * 60}>
                 <div className="ai-feature-card">
-                  <div className="ai-feature-icon" style={{ background: f.iconBg, color: f.iconColor }}>
+                  <div
+                    className="ai-feature-icon"
+                    style={{
+                      background: `color-mix(in srgb, var(${f.accentVar}) 12%, transparent)`,
+                      color: `var(${f.accentVar})`,
+                    }}
+                  >
                     {f.icon}
                   </div>
                   <h3 className="ai-feature-title">{f.title}</h3>
@@ -396,7 +393,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 </div>
 
                 {/* Annotations panel */}
-                <div className="ai-demo-annotations" style={{ animation: 'fade-in-up 0.6s ease 2.3s both' }}>
+                <Reveal delay={2300} className="ai-demo-annotations">
                   <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-3)', margin: '0 0 8px' }}>
                     What this catches
                   </p>
@@ -408,7 +405,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                     <div className="ai-annotation-tag">Mistake Caught</div>
                     <div className="ai-annotation-text">Catches the prior notice issue before it becomes a problem at court</div>
                   </div>
-                </div>
+                </Reveal>
               </div>
             </div>
           </Reveal>
@@ -429,12 +426,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           <Reveal delay={80}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <span className="label-mono">Available for Testing</span>
-              <span style={{
-                background: 'rgba(214, 187, 128, 0.12)', color: 'var(--accent)',
-                border: '1px solid rgba(214, 187, 128, 0.25)',
-                borderRadius: 'var(--radius-pill)', padding: '3px 10px',
-                fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
-              }}>BETA</span>
+              <span className="badge badge-accent">BETA</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 48 }}>
               {TESTING_SERVICES.map((svc, i) => (
@@ -448,24 +440,16 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                     tabIndex={0}
                     aria-label={`Start ${svc.name}`}
                   >
-                    {/* Top colour bar */}
-                    <span style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: svc.color }} />
-
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                       <div style={{
                         width: 40, height: 40, borderRadius: 10,
                         background: 'var(--bg-2)', border: '1px solid var(--border-subtle)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: svc.color,
+                        color: 'var(--accent)',
                       }}>
                         {svc.icon}
                       </div>
-                      <span style={{
-                        background: 'rgba(214, 187, 128, 0.1)', color: 'var(--accent)',
-                        border: '1px solid rgba(214, 187, 128, 0.2)',
-                        borderRadius: 4, padding: '2px 7px',
-                        fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
-                      }}>BETA</span>
+                      <span className="badge badge-accent badge-sm">BETA</span>
                     </div>
 
                     <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -479,7 +463,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                     </p>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>{svc.price}</span>
-                      <span style={{ color: svc.color, fontSize: 13, fontWeight: 600 }}>Try it →</span>
+                      <span style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Try it →</span>
                     </div>
                   </div>
                 </Reveal>
@@ -491,12 +475,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           <Reveal delay={120}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <span className="label-mono">Coming Soon</span>
-              <span style={{
-                background: 'var(--bg-2)', color: 'var(--text-3)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-pill)', padding: '3px 10px',
-                fontSize: 10, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', fontWeight: 600,
-              }}>SOON</span>
+              <span className="badge badge-muted">SOON</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
               {COMING_SOON_SERVICES.map((svc, i) => {
@@ -512,8 +491,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       position: 'relative', overflow: 'hidden',
                       opacity: 0.7,
                     }}>
-                      <span style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: svc.color, opacity: 0.5 }} />
-
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                         <div style={{
                           width: 40, height: 40, borderRadius: 10,
@@ -523,12 +500,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                         }}>
                           {svc.icon}
                         </div>
-                        <span style={{
-                          background: 'var(--bg-2)', color: 'var(--text-3)',
-                          border: '1px solid var(--border-subtle)',
-                          borderRadius: 4, padding: '2px 7px',
-                          fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.08em',
-                        }}>SOON</span>
+                        <span className="badge badge-muted badge-sm">SOON</span>
                       </div>
 
                       <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 8, color: 'var(--text-2)' }}>
@@ -576,15 +548,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       ) : (
                         <button
                           type="button"
-                          style={{
-                            background: 'none', border: '1px solid var(--border-subtle)',
-                            borderRadius: 8, padding: '8px 14px',
-                            fontSize: 13, color: 'var(--text-2)', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            transition: 'border-color var(--anim-fast), color var(--anim-fast)',
-                          }}
-                          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-focus)'; e.currentTarget.style.color = 'var(--text-1)' }}
-                          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; e.currentTarget.style.color = 'var(--text-2)' }}
+                          className="notify-btn"
                           onClick={() => setNotifyState(s => ({ ...s, [svc.id]: 'open' }))}
                         >
                           <Bell size={13} strokeWidth={1.5} aria-hidden="true" />
@@ -784,7 +748,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <div className="founding-glow" aria-hidden="true" style={{
                 position: 'absolute', top: '-60%', left: '50%', transform: 'translateX(-50%)',
                 width: 500, height: 300,
-                background: 'radial-gradient(circle, rgba(214, 187, 128, 0.07) 0%, transparent 70%)',
                 pointerEvents: 'none',
               }} />
 
@@ -915,7 +878,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="bottom-cta-glow" aria-hidden="true" style={{
           position: 'absolute', bottom: '-40%', left: '50%', transform: 'translateX(-50%)',
           width: 520, height: 320,
-          background: 'radial-gradient(circle, rgba(214, 187, 128, 0.06) 0%, transparent 70%)',
           pointerEvents: 'none',
         }} />
         <div className="container" style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto', position: 'relative' }}>
