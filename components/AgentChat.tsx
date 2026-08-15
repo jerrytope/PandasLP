@@ -627,7 +627,14 @@ export default function AgentChat({
 
                 <div className={styles.documentActions}>
                   {!paid ? (
-                    <button type="button" className="btn btn-primary" onClick={() => setPayOpen(true)}>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => {
+                        trackEvent('payment_started', { agent_id: agent.id, amount: effectiveAmount })
+                        setPayOpen(true)
+                      }}
+                    >
                       Approve & Pay ₦{effectiveAmount.toLocaleString()} →
                     </button>
                   ) : (

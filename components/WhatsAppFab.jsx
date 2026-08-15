@@ -1,5 +1,7 @@
 'use client'
 
+import { trackEvent } from '@/lib/analytics'
+
 const WHATSAPP_NUMBER = '2348118080189'
 const PREFILLED_MESSAGE = 'Hello Pandas LP, I want to ask about recovering a debt.'
 
@@ -15,6 +17,7 @@ export default function WhatsAppFab() {
       rel="noopener noreferrer"
       className="whatsapp-fab"
       aria-label="Chat with Pandas LP on WhatsApp"
+      onClick={() => trackEvent('whatsapp_click', { source: typeof window !== 'undefined' ? window.location.pathname : undefined })}
     >
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
