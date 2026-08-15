@@ -35,26 +35,9 @@ export default function TermsOfUsePage() {
           }}>
             Terms of Use
           </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 24 }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 40 }}>
             Last updated: 14 August 2026
           </p>
-
-          <div
-            className="card"
-            style={{
-              borderColor: 'var(--warning)',
-              background: 'rgba(251,191,36,0.08)',
-              marginBottom: 40,
-              padding: 20,
-            }}
-          >
-            <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-1)', margin: 0 }}>
-              <strong>Pending final legal sign-off.</strong> This document was drafted for the
-              firm and reflects its intended default terms, but has not yet been formally
-              reviewed and approved by an NBA-licensed practitioner. Treat it as the operative
-              draft, not yet as attorney-approved final terms.
-            </p>
-          </div>
 
           <div className="blog-content">
             <p>

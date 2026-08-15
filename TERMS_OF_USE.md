@@ -3,12 +3,6 @@
 **Pandas LP** — pandaslp.com.ng
 Last updated: 14 August 2026
 
-> **Drafting note (remove before publishing):** This document reflects the firm's intended
-> default terms but has not yet been formally reviewed and approved by an NBA-licensed
-> Nigerian legal practitioner. Treat it as the operative draft, not yet as attorney-approved
-> final terms — in particular the governing-law/dispute-resolution clause (Section 9), which
-> has direct implications for a firm whose core service is helping clients access the courts.
-
 ---
 
 ## Preamble
