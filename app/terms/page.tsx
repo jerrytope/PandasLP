@@ -36,7 +36,7 @@ export default function TermsOfUsePage() {
             Terms of Use
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 24 }}>
-            Last updated: [Insert Publication Date]
+            Last updated: 14 August 2026
           </p>
 
           <div
@@ -49,10 +49,10 @@ export default function TermsOfUsePage() {
             }}
           >
             <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--text-1)', margin: 0 }}>
-              <strong>Draft pending legal review.</strong> This page is a working draft and has
-              not yet been reviewed or approved by an NBA-licensed practitioner at the firm.
-              Bracketed placeholders below (governing state, liability cap, etc.) are not yet
-              finalized. Do not treat this page as binding until this notice is removed.
+              <strong>Pending final legal sign-off.</strong> This document was drafted for the
+              firm and reflects its intended default terms, but has not yet been formally
+              reviewed and approved by an NBA-licensed practitioner. Treat it as the operative
+              draft, not yet as attorney-approved final terms.
             </p>
           </div>
 
@@ -137,13 +137,13 @@ export default function TermsOfUsePage() {
               otherwise relied upon.
             </p>
             <p>
-              2.2.2 <strong>Formation of the client relationship.</strong> [Bracketed — confirm
-              with firm&rsquo;s own counsel:] An attorney-client relationship with Pandas LP is
-              formed [upon payment for a specific matter / upon our written acceptance of your
-              matter following intake], not merely by browsing the Platform, starting an AI
-              interview, or creating an account. Information you share with the AI agent before
-              that point is still handled confidentially per our Privacy Policy, but no
-              representation is undertaken until engagement is confirmed.
+              2.2.2 <strong>Formation of the client relationship.</strong> An attorney-client
+              relationship with Pandas LP is formed upon payment for a specific matter (or upon
+              our written acceptance of your matter following intake, if that comes first), not
+              merely by browsing the Platform, starting an AI interview, or creating an account.
+              Information you share with the AI agent before that point is still handled
+              confidentially per our Privacy Policy, but no representation is undertaken until
+              engagement is confirmed.
             </p>
             <p>
               2.2.3 <strong>AI limitations.</strong> The AI agent may misunderstand facts you
@@ -284,14 +284,12 @@ export default function TermsOfUsePage() {
               action.
             </p>
             <p>
-              7.3 <strong>Limitation of monetary liability.</strong> [Bracketed — a liability
-              cap is a policy decision for the firm&rsquo;s own counsel/insurer to set:] To the
-              maximum extent permitted by Nigerian law, our aggregate liability to you arising
-              out of or relating to the Platform or these Terms shall not exceed [Insert Cap —
-              e.g., the fees you paid us for the specific matter giving rise to the claim],
-              except where such limitation is not permitted by law or would be inconsistent
-              with our professional-conduct obligations as legal practitioners (which cannot be
-              excluded by contract).
+              7.3 <strong>Limitation of monetary liability.</strong> To the maximum extent
+              permitted by Nigerian law, our aggregate liability to you arising out of or
+              relating to the Platform or these Terms shall not exceed the total fees you paid
+              us for the specific matter giving rise to the claim, except where such limitation
+              is not permitted by law or would be inconsistent with our professional-conduct
+              obligations as legal practitioners (which cannot be excluded by contract).
             </p>
             <p>
               7.4 <strong>Excluded losses.</strong> To the maximum extent permitted by law, we
@@ -330,23 +328,18 @@ export default function TermsOfUsePage() {
             <h2>9. Governing Law &amp; Dispute Resolution</h2>
             <p>
               9.1 <strong>Governing law.</strong> These Terms are governed by the laws of the
-              Federal Republic of Nigeria, specifically [Insert State — e.g., Lagos State].
+              Federal Republic of Nigeria, specifically Lagos State.
             </p>
             <p>
-              9.2 <strong>Venue.</strong> [Bracketed — policy decision for the firm&rsquo;s
-              counsel:] Subject to Section 9.3, any dispute arising from these Terms shall be
-              subject to the exclusive jurisdiction of the courts of [Insert State/Judicial
-              Division], Nigeria.
+              9.2 <strong>Venue.</strong> Subject to Section 9.3, any dispute arising from these
+              Terms shall be subject to the exclusive jurisdiction of the courts of Lagos State,
+              Nigeria.
             </p>
             <p>
-              9.3 <strong>Note on arbitration clauses.</strong> A mandatory binding-arbitration
-              clause is common in standard SaaS Terms of Use, but sits awkwardly for a law firm
-              whose core service is helping clients access the courts — requiring your own
-              clients to waive court access against you, while you actively help them sue
-              others, is worth deliberate consideration rather than default inclusion. This
-              draft defaults to ordinary court jurisdiction (9.2). If the firm prefers
-              arbitration or a tiered negotiation-then-arbitration clause, it will be inserted
-              here explicitly following review.
+              9.3 <strong>No mandatory arbitration.</strong> Disputes are resolved through the
+              ordinary courts named in Section 9.2, not private arbitration. As a firm whose own
+              service is helping clients access the courts, we don&rsquo;t ask our own clients to
+              waive that same access when the dispute is with us.
             </p>
             <p>
               9.4 <strong>Complaints.</strong> Before pursuing formal dispute resolution, you

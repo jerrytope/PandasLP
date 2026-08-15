@@ -1,15 +1,13 @@
 # Terms of Use
 
 **Pandas LP** — pandaslp.com.ng
-Last updated: [Insert Publication Date]
+Last updated: 14 August 2026
 
-> **Drafting note (remove before publishing):** This document was generated as a starting
-> draft from the Pandas LP codebase and existing legal pages (`/privacy`, `/refund-policy`)
-> for internal review. It is **not** final and must be reviewed and approved by a
-> NBA-licensed Nigerian legal practitioner before publication — including confirmation of
-> every bracketed placeholder below and, in particular, the governing-law/dispute-resolution
-> clause (Section 9), which has direct implications for a firm whose core service is helping
-> clients access the courts.
+> **Drafting note (remove before publishing):** This document reflects the firm's intended
+> default terms but has not yet been formally reviewed and approved by an NBA-licensed
+> Nigerian legal practitioner. Treat it as the operative draft, not yet as attorney-approved
+> final terms — in particular the governing-law/dispute-resolution clause (Section 9), which
+> has direct implications for a firm whose core service is helping clients access the courts.
 
 ---
 
@@ -77,12 +75,12 @@ use to gather facts efficiently; it does not independently decide your legal str
 finalize any document. A licensed legal practitioner at Pandas LP reviews every document
 before it is served, filed, or otherwise relied upon.
 
-2.2.2 **Formation of the client relationship.** [Bracketed — confirm with firm's own counsel:]
-An attorney-client relationship with Pandas LP is formed [upon payment for a specific matter /
-upon our written acceptance of your matter following intake], not merely by browsing the
-Platform, starting an AI interview, or creating an account. Information you share with the AI
-agent before that point is still handled confidentially per our Privacy Policy, but no
-representation is undertaken until engagement is confirmed.
+2.2.2 **Formation of the client relationship.** An attorney-client relationship with Pandas LP
+is formed upon payment for a specific matter (or upon our written acceptance of your matter
+following intake, if that comes first), not merely by browsing the Platform, starting an AI
+interview, or creating an account. Information you share with the AI agent before that point is
+still handled confidentially per our Privacy Policy, but no representation is undertaken until
+engagement is confirmed.
 
 2.2.3 **AI limitations.** The AI agent may misunderstand facts you provide, and its
 draft output is a starting point for lawyer review, not a final legal opinion. You must
@@ -198,13 +196,11 @@ that the Platform will be uninterrupted, error-free, or free of technical defect
 7.2 **No warranty of outcome.** As stated in Section 2.2.4, we do not warrant or guarantee
 the outcome of any claim, dispute, filing, or enforcement action.
 
-7.3 **Limitation of monetary liability.** [Bracketed — a liability cap is a policy decision
-for the firm's own counsel/insurer to set, not something to be drafted unilaterally:] To the
-maximum extent permitted by Nigerian law, our aggregate liability to you arising out of or
-relating to the Platform or these Terms shall not exceed [Insert Cap — e.g., the fees you
-paid us for the specific matter giving rise to the claim], except where such limitation is
-not permitted by law or would be inconsistent with our professional-conduct obligations as
-legal practitioners (which cannot be excluded by contract).
+7.3 **Limitation of monetary liability.** To the maximum extent permitted by Nigerian law, our
+aggregate liability to you arising out of or relating to the Platform or these Terms shall not
+exceed the total fees you paid us for the specific matter giving rise to the claim, except
+where such limitation is not permitted by law or would be inconsistent with our
+professional-conduct obligations as legal practitioners (which cannot be excluded by contract).
 
 7.4 **Excluded losses.** To the maximum extent permitted by law, we are not liable for
 indirect, incidental, or consequential losses, including loss of profit or loss of the
@@ -238,24 +234,18 @@ professional-conduct rules).
 ## 9. Governing Law & Dispute Resolution
 
 9.1 **Governing law.** These Terms are governed by the laws of the Federal Republic of
-Nigeria, specifically [Insert State — e.g., Lagos State].
+Nigeria, specifically Lagos State.
 
-9.2 **Venue.** [Bracketed — policy decision for the firm's counsel:] Subject to Section 9.3,
-any dispute arising from these Terms shall be subject to the exclusive jurisdiction of the
-courts of [Insert State/Judicial Division], Nigeria.
+9.2 **Venue.** Subject to Section 9.3, any dispute arising from these Terms shall be subject
+to the exclusive jurisdiction of the courts of Lagos State, Nigeria.
 
-9.3 **Note on arbitration clauses.** [Drafting note — do not remove until reviewed:] A
-mandatory binding-arbitration clause is common in standard SaaS Terms of Use, but sits
-awkwardly for a law firm whose core service is helping clients access the courts — requiring
-your own clients to waive court access against you, while you actively help them sue others,
-is worth deliberate consideration rather than default inclusion. This draft defaults to
-ordinary court jurisdiction (9.2). If the firm prefers arbitration or a tiered
-negotiation-then-arbitration clause, insert it here explicitly rather than by silent template
-default.
+9.3 **No mandatory arbitration.** Disputes are resolved through the ordinary courts named in
+Section 9.2, not private arbitration. As a firm whose own service is helping clients access
+the courts, we don't ask our own clients to waive that same access when the dispute is with us.
 
 9.4 **Complaints.** Before pursuing formal dispute resolution, you agree to first raise any
-concern with us at [Insert Contact Email — e.g., pandaslegalpractitioners@gmail.com], so we
-have an opportunity to resolve it directly.
+concern with us at pandaslegalpractitioners@gmail.com, so we have an opportunity to resolve
+it directly.
 
 ---
 
