@@ -59,3 +59,46 @@ export async function GET(req: Request) {
 
   return Response.json({ cases: enriched, total: enriched.length })
 }
+
+export async function DELETE(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`admin-cases-delete:${getClientIp(req)}`, 20, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
+  const authResult = await requireAdmin(req)
+  if (authResult instanceof Response) return authResult
+
+  const url = new URL(req.url)
+  const caseId = url.searchParams.get('caseId')?.trim()
+  if (!caseId) {
+    return Response.json({ error: 'Missing caseId query parameter.' }, { status: 400 })
+  }
+
+  // Verify the case exists before attempting delete so we can return a meaningful 404.
+  const { data: existing, error: fetchErr } = await supabaseAdmin
+    .from('cases')
+    .select('id')
+    .eq('id', caseId)
+    .single()
+
+  if (fetchErr || !existing) {
+    return Response.json({ error: 'Case not found.' }, { status: 404 })
+  }
+
+  // Hard-delete — ON DELETE CASCADE on messages.case_id and case_status_history.case_id
+  // means related rows are automatically removed by Postgres. No orphan risk.
+  const { error: deleteErr } = await supabaseAdmin
+    .from('cases')
+    .delete()
+    .eq('id', caseId)
+
+  if (deleteErr) {
+    return Response.json({ error: 'Failed to delete case.' }, { status: 500 })
+  }
+
+  return Response.json({ ok: true })
+}

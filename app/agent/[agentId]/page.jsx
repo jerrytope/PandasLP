@@ -95,10 +95,12 @@ function AgentPageInner() {
 
       const draftDoc =
         caseData.document_title && caseData.document_body
-          ? { title: caseData.document_title, body: caseData.document_body }
+          ? { title: caseData.document_title, body: caseData.document_body, price: caseData.expected_amount ?? null }
           : null
 
-      setResumeData({ caseId: resumeId, messages: msgs ?? [], draftDoc, clientPhone: caseData.client_phone ?? null })
+      const alreadyPaid = ['paid', 'letter_served', 'filed', 'judgment_obtained', 'closed'].includes(caseData.status)
+
+      setResumeData({ caseId: resumeId, messages: msgs ?? [], draftDoc, clientPhone: caseData.client_phone ?? null, initialPaid: alreadyPaid })
       if (auto) setAutoMessage(auto)
       else if (fileCourt) setAutoMessage(AUTO_FILE_COURT_MESSAGE)
       setResumeLoading(false)
@@ -159,6 +161,7 @@ function AgentPageInner() {
           initialDraftDoc={resumeData?.draftDoc}
           initialAutoMessage={autoMessage}
           initialClientPhone={resumeData?.clientPhone}
+          initialPaid={resumeData?.initialPaid ?? false}
         />
       )}
 

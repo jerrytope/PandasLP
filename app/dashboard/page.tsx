@@ -236,6 +236,7 @@ export default function DashboardPage() {
               const isServed = c.status === 'letter_served'
               const isPaid   = stageIndex(c.status) >= stageIndex('paid')
               const isJudgment = c.status === 'judgment_obtained'
+              const isDocumentReady = c.status === 'document_ready'
 
               return (
                 <div
@@ -386,6 +387,31 @@ export default function DashboardPage() {
 
                   {/* Action buttons */}
                   <div style={{ display: 'flex', gap: 10, marginTop: 16, flexWrap: 'wrap' }}>
+                    {/* Complete Payment — recovery path for document_ready cases */}
+                    {isDocumentReady && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                        <div style={{
+                          background: 'var(--accent-glow-soft)',
+                          border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+                          borderRadius: 10,
+                          padding: '12px 16px',
+                          fontSize: 13,
+                          color: 'var(--text-2)',
+                          lineHeight: 1.6,
+                        }}>
+                          <span style={{ color: 'var(--accent)', fontWeight: 600 }}>Your document is ready. </span>
+                          Complete payment to proceed with your case.
+                        </div>
+                        <Link
+                          href={`/agent/${c.agent_id}?resume=${c.id}`}
+                          className="btn btn-primary"
+                          style={{ fontSize: 13, alignSelf: 'flex-start' }}
+                        >
+                          Complete Payment →
+                        </Link>
+                      </div>
+                    )}
+
                     {/* Mark as Served — shown after payment AND after a lawyer has reviewed it */}
                     {isPaid && c.status === 'paid' && c.reviewed_at && (
                       <button

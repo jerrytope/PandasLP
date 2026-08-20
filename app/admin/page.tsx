@@ -103,13 +103,19 @@ function formatDate(iso: string) {
 function CaseCard({
   c,
   updatingId,
+  deletingId,
+  confirmDeleteId,
   onAction,
+  onDeleteAction,
   accentColor,
   domId,
 }: {
   c: AdminCaseRow
   updatingId: string | null
+  deletingId?: string | null
+  confirmDeleteId?: string | null
   onAction: (caseId: string, action: CaseAction) => void
+  onDeleteAction?: (caseId: string, action: 'request' | 'cancel' | 'confirm') => void
   accentColor?: string
   domId?: string
 }) {
@@ -224,6 +230,20 @@ function CaseCard({
         <button type="button" className="btn btn-sm" onClick={toggleInterview}>
           {showInterview ? 'Hide Conversation' : 'View Conversation'}
         </button>
+        {onDeleteAction && (
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+            {confirmDeleteId === c.id ? (
+              <>
+                <button type="button" className="btn btn-sm" onClick={() => onDeleteAction(c.id, 'cancel')}>Cancel</button>
+                <button type="button" className="btn btn-sm" style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }} disabled={deletingId === c.id} onClick={() => onDeleteAction(c.id, 'confirm')}>
+                  {deletingId === c.id ? 'Deleting…' : 'Confirm Delete'}
+                </button>
+              </>
+            ) : (
+              <button type="button" className="btn btn-sm" style={{ color: 'color-mix(in srgb, var(--text-muted) 60%, var(--danger))', borderColor: 'transparent' }} onClick={() => onDeleteAction(c.id, 'request')}>Delete</button>
+            )}
+          </div>
+        )}
       </div>
 
       {showInterview && (
@@ -311,6 +331,8 @@ function AdminPageInner() {
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
   const [filterEmail, setFilterEmail] = useState('')
   // Defaults to all statuses — staff need visibility into unpaid/draft cases too (conversations
@@ -340,7 +362,7 @@ function AdminPageInner() {
     document.getElementById(`case-${deepLinkCaseId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [deepLinkCaseId, cases])
 
-  async function loadTab(which: Tab) {
+  async function loadTab(which: Tab, overrideStatus?: string) {
     setLoading(true)
     setLoadError('')
     try {
@@ -359,10 +381,11 @@ function AdminPageInner() {
         // sitting at that one stage, hiding every drafted letter that went on to get paid,
         // served, etc. This option is handled client-side instead: fetch everything (no
         // status param) and keep only rows that actually have a letter.
-        const hasDocumentOnly = filterStatus === 'has_document'
+        const statusToUse = overrideStatus !== undefined ? overrideStatus : filterStatus
+        const hasDocumentOnly = statusToUse === 'has_document'
         const params = new URLSearchParams()
         if (filterEmail) params.set('email', filterEmail)
-        if (filterStatus && !hasDocumentOnly) params.set('status', filterStatus)
+        if (statusToUse && !hasDocumentOnly) params.set('status', statusToUse)
         if (filterAgent) params.set('agentId', filterAgent)
         const res = await authedFetch(`/api/admin/cases?${params.toString()}`)
         if (res.status === 403) { setAccessDenied(true); return }
@@ -417,6 +440,33 @@ function AdminPageInner() {
       setLoadError('Network error. Please try again.')
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  async function handleDeleteAction(caseId: string, action: 'request' | 'cancel' | 'confirm') {
+    if (action === 'request') {
+      setConfirmDeleteId(caseId)
+    } else if (action === 'cancel') {
+      setConfirmDeleteId(null)
+    } else if (action === 'confirm') {
+      setDeletingId(caseId)
+      try {
+        const res = await authedFetch(`/api/admin/cases?caseId=${caseId}`, {
+          method: 'DELETE',
+        })
+        const data = await res.json()
+        if (!res.ok || data.error) {
+          setLoadError(data.error || 'Could not delete this case.')
+          return
+        }
+        // Optimistic UI update
+        setCases((prev) => prev.filter((c) => c.id !== caseId))
+        setConfirmDeleteId(null)
+      } catch {
+        setLoadError('Network error. Please try again.')
+      } finally {
+        setDeletingId(null)
+      }
     }
   }
 
@@ -563,7 +613,10 @@ function AdminPageInner() {
                           key={c.id}
                           c={c}
                           updatingId={updatingId}
+                          deletingId={deletingId}
+                          confirmDeleteId={confirmDeleteId}
                           onAction={handleStatusAction}
+                          onDeleteAction={handleDeleteAction}
                           accentColor={daysSincePaid >= 3 ? 'var(--danger)' : undefined}
                         />
                       )
@@ -577,7 +630,7 @@ function AdminPageInner() {
                   {deadlinePassed.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases past their response deadline.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
                     {deadlinePassed.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} onAction={handleStatusAction} accentColor="var(--warning)" />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} accentColor="var(--warning)" />
                     ))}
                   </div>
 
@@ -588,7 +641,7 @@ function AdminPageInner() {
                   {awaitingJudgment.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases waiting on a judgment.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {awaitingJudgment.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} onAction={handleStatusAction} />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} />
                     ))}
                   </div>
                 </>
@@ -599,7 +652,7 @@ function AdminPageInner() {
 
         {tab === 'cases' && (
           <>
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 20 }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 16 }}>
               <input
                 className="input"
                 aria-label="Filter by client email"
@@ -609,17 +662,37 @@ function AdminPageInner() {
                 onKeyDown={(e) => { if (e.key === 'Enter') loadTab('cases') }}
                 style={{ maxWidth: 240, fontSize: 13 }}
               />
-              <select className="input" aria-label="Filter by status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ maxWidth: 180, fontSize: 13 }}>
-                <option value="">All statuses</option>
-                <option value="paid_plus">Paid+ (real customers)</option>
-                <option value="has_document">Has Letter (any stage)</option>
-                {Object.entries(STAGE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-              </select>
               <select className="input" aria-label="Filter by agent" value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} style={{ maxWidth: 200, fontSize: 13 }}>
                 <option value="">All agents</option>
                 {Object.values(AGENTS).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => loadTab('cases')}>Apply Filters</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => loadTab('cases')}>Apply Search</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 }}>
+              {[
+                { value: '', label: 'All' },
+                { value: 'paid_plus', label: 'Paid+ (real customers)' },
+                { value: 'has_document', label: 'Has Letter (any stage)' },
+                ...Object.entries(STAGE_LABEL).map(([k, v]) => ({ value: k, label: v }))
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`btn btn-sm ${filterStatus === opt.value ? '' : 'btn-ghost'}`}
+                  style={{ 
+                    fontSize: 12, 
+                    padding: '6px 12px',
+                    ...(filterStatus === opt.value ? { background: 'var(--accent)', color: 'var(--bg)', borderColor: 'var(--accent)' } : {})
+                  }}
+                  onClick={() => {
+                    setFilterStatus(opt.value)
+                    loadTab('cases', opt.value)
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
             {loading && <p style={{ color: 'var(--text-muted)' }}>Loading…</p>}
@@ -631,7 +704,10 @@ function AdminPageInner() {
                   key={c.id}
                   c={c}
                   updatingId={updatingId}
+                  deletingId={deletingId}
+                  confirmDeleteId={confirmDeleteId}
                   onAction={handleStatusAction}
+                  onDeleteAction={handleDeleteAction}
                   domId={`case-${c.id}`}
                   accentColor={c.id === deepLinkCaseId ? 'var(--accent)' : undefined}
                 />

@@ -35,6 +35,11 @@ interface AgentChatProps {
   // Whether this resumed case already has a callback number on file — see the post-payment
   // fallback phone form below for why this matters.
   initialClientPhone?: string | null
+  // True when the resumed case is already in a paid-or-beyond status in the DB — prevents
+  // the pay button and "Preview" badge from re-appearing after a page refresh on a case
+  // that has already been paid. Without this, `paid` state always initialises false and the
+  // user sees a stale pre-payment UI even though the DB shows the case as paid.
+  initialPaid?: boolean
   // Render as a page-filling section (no dark backdrop, no floating card) instead of a modal overlay
   fullPage?: boolean
 }
@@ -70,6 +75,7 @@ export default function AgentChat({
   initialDraftDoc,
   initialAutoMessage,
   initialClientPhone,
+  initialPaid = false,
   fullPage = false,
 }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>(
@@ -81,7 +87,13 @@ export default function AgentChat({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [draftDoc, setDraftDoc] = useState<DraftDocument | null>(initialDraftDoc ?? null)
-  const [paid, setPaid] = useState(false)
+  // True only when the most recent draftDoc failed to persist to the case row — blocks
+  // payment on that document until a later turn saves successfully, so a client can never
+  // pay against a document that exists only in this tab's memory (see saveTurn/sendToAgent).
+  const [docSaveFailed, setDocSaveFailed] = useState(false)
+  // Hydrated from initialPaid so a resumed paid case shows the correct post-payment UI
+  // immediately on mount, without waiting for the user to trigger a payment flow.
+  const [paid, setPaid] = useState(initialPaid)
   const [payOpen, setPayOpen] = useState(false)
   const [verifying, setVerifying] = useState(false)
   const [payError, setPayError] = useState('')
@@ -216,15 +228,21 @@ export default function AgentChat({
     return { ...doc, body: doc.body.split('{{REF_NUMBER}}').join(ref) }
   }
 
-  async function saveTurn(userMsg: Message, assistantMsg: Message, newDoc: DraftDocument | null) {
+  // Returns false when a drafted document failed to persist, so callers can warn the user
+  // instead of leaving them looking at a document preview that only exists in local React
+  // state — the Supabase client resolves {error} on a failed write rather than throwing, so
+  // a bare `await` here would otherwise swallow that failure silently (see the caller in
+  // sendToAgent, which used to fire-and-forget this with only a .catch for network-level throws).
+  async function saveTurn(userMsg: Message, assistantMsg: Message, newDoc: DraftDocument | null): Promise<boolean> {
     const caseInfo = await ensureCase()
-    if (!caseInfo) return
+    if (!caseInfo) return false
     const id = caseInfo.id
 
-    await supabase.from('messages').insert([
+    const { error: msgErr } = await supabase.from('messages').insert([
       { case_id: id, role: 'user', content: userMsg.content },
       { case_id: id, role: 'assistant', content: assistantMsg.content },
     ])
+    if (msgErr) console.error('Failed to save conversation turn:', msgErr)
 
     if (newDoc) {
       // Provisional — /api/update-case-status recalculates this from the real "served" date
@@ -241,7 +259,7 @@ export default function AgentChat({
       const deliveryOption =
         agent.id === 'small-claims' ? ((newDoc.price ?? amount) >= 25000 ? 'pandas-serves' : 'self-serve') : null
 
-      await supabase
+      const { error: docErr } = await supabase
         .from('cases')
         .update({
           document_title: newDoc.title,
@@ -253,8 +271,14 @@ export default function AgentChat({
         })
         .eq('id', id)
 
+      if (docErr) {
+        console.error('Failed to save document to case:', docErr)
+        return false
+      }
+
       trackEvent('document_ready', { agent_id: agent.id, amount: newDoc.price ?? amount })
     }
+    return true
   }
 
   async function saveClientPhone(phone: string) {
@@ -368,7 +392,19 @@ export default function AgentChat({
       const doc = await finalizeDocument(rawDoc)
       if (doc) setDraftDoc(doc)
       if (phone) saveClientPhone(phone).catch((err) => console.error('Failed to save client phone:', err))
-      saveTurn(msgToPersist, assistantMsg, doc).catch((err) => console.error('Failed to save conversation turn:', err))
+      // Awaited (not fire-and-forget) specifically so a failed document save can be surfaced
+      // before the user reaches the payment button — otherwise they'd pay against a document
+      // that only ever existed in this tab's memory and vanishes on refresh (see saveTurn).
+      const saved = await saveTurn(msgToPersist, assistantMsg, doc).catch((err) => {
+        console.error('Failed to save conversation turn:', err)
+        return false
+      })
+      if (doc) {
+        setDocSaveFailed(!saved)
+        if (!saved) {
+          setError("We couldn't save your document. Please try again before paying — your progress may not persist on refresh otherwise.")
+        }
+      }
     } catch (err) {
       console.error('Chat request failed:', err)
       setError('Network error. Please check your connection and try again.')
@@ -457,6 +493,7 @@ export default function AgentChat({
     setMessages([{ role: 'assistant', content: agent.starterMessage }])
     setError('')
     setDraftDoc(null)
+    setDocSaveFailed(false)
     setPaid(false)
     setPayOpen(false)
     setCaseId(null)
@@ -625,11 +662,19 @@ export default function AgentChat({
                   </p>
                 )}
 
+                {docSaveFailed && !paid && (
+                  <p role="alert" className={styles.bubbleError} style={{ marginTop: 10 }}>
+                    This document hasn't saved yet — send your last message again before paying.
+                  </p>
+                )}
+
                 <div className={styles.documentActions}>
                   {!paid ? (
                     <button
                       type="button"
                       className="btn btn-primary"
+                      disabled={docSaveFailed}
+                      title={docSaveFailed ? "This document hasn't saved yet — retry before paying." : undefined}
                       onClick={() => {
                         trackEvent('payment_started', { agent_id: agent.id, amount: effectiveAmount })
                         setPayOpen(true)
