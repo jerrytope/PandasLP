@@ -1,6 +1,15 @@
 import { defineConfig } from 'vitest/config'
+import path from 'node:path'
 
 export default defineConfig({
+  // Mirrors tsconfig.json's "@/*" -> "./*" path mapping — Next.js resolves this on its own,
+  // but vitest doesn't read tsconfig paths, so any test importing a module that itself uses
+  // an `@/` import (e.g. an app/api/**/route.ts file) fails to resolve without this.
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, '.'),
+    },
+  },
   test: {
     environment: 'node',
     include: ['**/__tests__/**/*.test.ts'],

@@ -105,8 +105,10 @@ function CaseCard({
   updatingId,
   deletingId,
   confirmDeleteId,
+  regeneratingId,
   onAction,
   onDeleteAction,
+  onRegenerateDocument,
   accentColor,
   domId,
 }: {
@@ -114,8 +116,10 @@ function CaseCard({
   updatingId: string | null
   deletingId?: string | null
   confirmDeleteId?: string | null
+  regeneratingId?: string | null
   onAction: (caseId: string, action: CaseAction) => void
   onDeleteAction?: (caseId: string, action: 'request' | 'cancel' | 'confirm') => void
+  onRegenerateDocument?: (caseId: string) => void
   accentColor?: string
   domId?: string
 }) {
@@ -190,6 +194,20 @@ function CaseCard({
             onClick={() => onAction(c.id, next.action)}
           >
             {updatingId === c.id ? 'Updating…' : next.label}
+          </button>
+        )}
+        {/* Recovery action for cases whose document never persisted — see the schema-drift
+            note in app/api/admin/regenerate-document/route.ts. Only shown once a case has
+            actually reached document drafting or beyond (status !== 'draft'); a case still
+            mid-interview just hasn't gotten there yet, that's not a bug to recover from. */}
+        {!c.document_body && c.status !== 'draft' && onRegenerateDocument && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={regeneratingId === c.id}
+            onClick={() => onRegenerateDocument(c.id)}
+          >
+            {regeneratingId === c.id ? 'Regenerating…' : 'Regenerate from Conversation'}
           </button>
         )}
         {/* Staff can always download any drafted letter, paid or not — useful for following
@@ -333,6 +351,7 @@ function AdminPageInner() {
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
 
   const [filterEmail, setFilterEmail] = useState('')
   // Defaults to all statuses — staff need visibility into unpaid/draft cases too (conversations
@@ -467,6 +486,28 @@ function AdminPageInner() {
       } finally {
         setDeletingId(null)
       }
+    }
+  }
+
+  async function handleRegenerateDocument(caseId: string) {
+    setRegeneratingId(caseId)
+    setLoadError('')
+    try {
+      const res = await authedFetch('/api/admin/regenerate-document', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLoadError(data.error || 'Could not regenerate this document.')
+        return
+      }
+      await loadTab(tab)
+    } catch {
+      setLoadError('Network error. Please try again.')
+    } finally {
+      setRegeneratingId(null)
     }
   }
 
@@ -615,6 +656,8 @@ function AdminPageInner() {
                           updatingId={updatingId}
                           deletingId={deletingId}
                           confirmDeleteId={confirmDeleteId}
+                          regeneratingId={regeneratingId}
+                          onRegenerateDocument={handleRegenerateDocument}
                           onAction={handleStatusAction}
                           onDeleteAction={handleDeleteAction}
                           accentColor={daysSincePaid >= 3 ? 'var(--danger)' : undefined}
@@ -630,7 +673,7 @@ function AdminPageInner() {
                   {deadlinePassed.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases past their response deadline.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
                     {deadlinePassed.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} accentColor="var(--warning)" />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} accentColor="var(--warning)" />
                     ))}
                   </div>
 
@@ -641,7 +684,7 @@ function AdminPageInner() {
                   {awaitingJudgment.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases waiting on a judgment.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {awaitingJudgment.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} />
                     ))}
                   </div>
                 </>
@@ -706,8 +749,10 @@ function AdminPageInner() {
                   updatingId={updatingId}
                   deletingId={deletingId}
                   confirmDeleteId={confirmDeleteId}
+                  regeneratingId={regeneratingId}
                   onAction={handleStatusAction}
                   onDeleteAction={handleDeleteAction}
+                  onRegenerateDocument={handleRegenerateDocument}
                   domId={`case-${c.id}`}
                   accentColor={c.id === deepLinkCaseId ? 'var(--accent)' : undefined}
                 />
