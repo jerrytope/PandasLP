@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -137,6 +137,53 @@ function CaseCard({
   const [interviewError, setInterviewError] = useState('')
   const [messages, setMessages] = useState<CaseMessage[] | null>(null)
 
+  // Lets staff upload the actual reviewed-and-stamped PDF for this case so THAT file (not
+  // the auto-generated one) is what "Send to Customer" attaches — see
+  // app/api/admin/upload-reviewed-document/route.ts and lib/sendCaseEmail.ts.
+  const [uploadingStamp, setUploadingStamp] = useState(false)
+  const [stampError, setStampError] = useState('')
+  const [stampUploaded, setStampUploaded] = useState(false)
+  const stampInputRef = useRef<HTMLInputElement>(null)
+
+  async function handleStampFileSelect(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    if (file.type !== 'application/pdf') {
+      setStampError('Please upload a PDF.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setStampError('File too large. Maximum size is 10 MB.')
+      return
+    }
+    setStampError('')
+    setUploadingStamp(true)
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const res = await authedFetch('/api/admin/upload-reviewed-document', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId: c.id, fileBase64: base64 }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setStampError(data.error || 'Upload failed. Please try again.')
+        return
+      }
+      setStampUploaded(true)
+    } catch {
+      setStampError('Network error. Please try again.')
+    } finally {
+      setUploadingStamp(false)
+    }
+  }
+
   async function toggleInterview() {
     if (showInterview) { setShowInterview(false); return }
     setShowInterview(true)
@@ -222,6 +269,35 @@ function CaseCard({
             Download PDF
           </button>
         )}
+        {/* Upload the actual signed/stamped PDF for this case — once present, that exact
+            file (not the auto-generated one) is what "Send to Customer" attaches. Only
+            shown once reviewed, matching "reviewed and stamped" being one step. */}
+        {c.reviewed_at && (
+          <>
+            <input
+              ref={stampInputRef}
+              type="file"
+              accept="application/pdf"
+              style={{ display: 'none' }}
+              onChange={handleStampFileSelect}
+            />
+            <button
+              type="button"
+              className="btn btn-sm"
+              disabled={uploadingStamp}
+              onClick={() => stampInputRef.current?.click()}
+              title="Upload the signed/stamped PDF to send instead of the auto-generated one"
+            >
+              {uploadingStamp ? 'Uploading…' : stampUploaded ? 'Replace Stamped Document' : 'Upload Stamped Document'}
+            </button>
+            {stampUploaded && (
+              <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
+                <Check size={12} strokeWidth={2} aria-hidden="true" /> Stamped copy on file
+              </span>
+            )}
+          </>
+        )}
+        {stampError && <span role="alert" style={{ color: 'var(--danger)', fontSize: 12 }}>{stampError}</span>}
         {c.status === 'paid' && c.reviewed_at && (
           <button
             type="button"

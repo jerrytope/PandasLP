@@ -60,7 +60,16 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       deliveryOption: caseData.delivery_option,
       siteUrl,
     }))
-    const pdfBuffer = buildTextDocumentBuffer(caseData.document_title, caseData.document_body, { watermark: false })
+    // A staff-uploaded, reviewed-and-stamped PDF takes priority over the auto-generated one
+    // if a member of staff has uploaded one for this case (see
+    // app/api/admin/upload-reviewed-document/route.ts) — that's the actual signed/stamped
+    // document, not just the same text re-rendered. Falls back to generating one from
+    // document_body when no stamped version has been uploaded.
+    const stampedPath = `reviewed/${caseId}.pdf`
+    const { data: stampedBlob } = await supabaseAdmin.storage.from('case-documents').download(stampedPath)
+    const pdfBuffer = stampedBlob
+      ? Buffer.from(await stampedBlob.arrayBuffer())
+      : buildTextDocumentBuffer(caseData.document_title, caseData.document_body, { watermark: false })
     attachments = [{ filename: 'demand-letter.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
   } else if (options.type === 'payment_confirmed') {
     ;({ subject, html, text } = getPaymentConfirmedEmail({

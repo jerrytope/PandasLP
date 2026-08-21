@@ -217,6 +217,18 @@ CREATE TRIGGER cases_touch
 --     over from before that fix and no longer match what actually gets sent
 --     (see lib/emailTemplates.ts).
 --
+-- insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+-- values ('case-documents', 'case-documents', false, 10485760, array['application/pdf'])
+-- on conflict (id) do nothing;
+--   ^ REQUIRED for the "Upload Stamped Document" admin action (see
+--     app/api/admin/upload-reviewed-document/route.ts) to work at all — without this bucket,
+--     uploads fail outright. Deliberately NOT a new `cases` column (see the missing-columns
+--     incident this same file's ALTER TABLE section exists to prevent): the uploaded PDF
+--     lives at a deterministic per-case Storage path instead, so there's no new column to
+--     forget to migrate. Private bucket (public: false) — only ever read/written via
+--     supabaseAdmin (the service-role key bypasses Storage RLS same as it does for tables),
+--     never directly from the browser, so no Storage policies are needed either.
+--
 -- ============================================================
 -- ATTRIBUTION READOUT — run ad hoc in the SQL editor, not part of setup.
 -- Cases by source, by week — rough funnel proxy until Build 3's ops panel
