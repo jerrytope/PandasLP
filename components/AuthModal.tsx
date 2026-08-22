@@ -12,12 +12,29 @@ interface AuthModalProps {
 }
 
 const GENERIC_ERROR = "Something went wrong sending your sign-in link. Please try again in a moment."
+const GOOGLE_GENERIC_ERROR = "Something went wrong starting Google sign-in. Please try again in a moment."
+
+function GoogleIcon() {
+  // Google's real four-color "G" mark — standard on any "Continue with Google" button,
+  // not a decorative/fake logo (see design-taste-frontend's rule against fake brand marks;
+  // this one's the genuine, expected OAuth affordance users already recognize).
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.9c1.7-1.57 2.7-3.87 2.7-6.62z" />
+      <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.94v2.33A9 9 0 0 0 9 18z" />
+      <path fill="#FBBC05" d="M3.95 10.7A5.4 5.4 0 0 1 3.67 9c0-.59.1-1.17.28-1.7V4.97H.94A9 9 0 0 0 0 9c0 1.45.35 2.83.94 4.03l3.01-2.33z" />
+      <path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .94 4.97l3.01 2.33C4.66 5.17 6.65 3.58 9 3.58z" />
+    </svg>
+  )
+}
 
 export default function AuthModal({ onClose }: AuthModalProps) {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleError, setGoogleError] = useState('')
   const [closing, setClosing] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
   const reduceMotion = useReducedMotion()
@@ -78,6 +95,35 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     }
   }
 
+  // Full-page redirect to Google, then back to /auth/callback — that page is already
+  // provider-agnostic (supabase-js v2 exchanges the ?code= param for a session regardless
+  // of whether it came from a magic link or OAuth), so no changes were needed there.
+  // Requires Google to actually be enabled as a provider in the Supabase dashboard
+  // (Authentication → Providers → Google, with a real Google Cloud OAuth client ID/secret)
+  // — that's a manual setup step outside this codebase, not something this button can do
+  // on its own. Until that's done, this will fail with a real Supabase error explaining as
+  // much, rather than something silent.
+  async function handleGoogleSignIn() {
+    if (googleLoading) return
+    setGoogleLoading(true)
+    setGoogleError('')
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+      // On success the browser navigates away to Google immediately — this only ever
+      // resolves here if it failed to even start (no user to show a "logging in" state to).
+      if (authError) {
+        setGoogleError(authError.message && authError.message.trim() !== '{}' ? authError.message : GOOGLE_GENERIC_ERROR)
+        setGoogleLoading(false)
+      }
+    } catch (err) {
+      setGoogleError(err instanceof Error && err.message ? err.message : GOOGLE_GENERIC_ERROR)
+      setGoogleLoading(false)
+    }
+  }
+
   return (
     <AnimatePresence onExitComplete={onClose}>
       {!closing && (
@@ -129,6 +175,23 @@ export default function AuthModal({ onClose }: AuthModalProps) {
               </div>
             ) : (
               <form className={styles.body} onSubmit={handleSubmit}>
+                <button
+                  type="button"
+                  className={`btn btn-block ${styles.googleBtn}`}
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading}
+                >
+                  {googleLoading ? <span className="spinner" /> : (
+                    <>
+                      <GoogleIcon />
+                      Continue with Google
+                    </>
+                  )}
+                </button>
+                {googleError && <p role="alert" className="error-text" style={{ marginTop: 8 }}>{googleError}</p>}
+
+                <div className={styles.divider}><span>or</span></div>
+
                 <div className="form-group">
                   <label htmlFor="auth-email">Email address</label>
                   <input

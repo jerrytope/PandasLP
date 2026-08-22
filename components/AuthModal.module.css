@@ -77,3 +77,34 @@
   text-align: center;
   margin: 14px 0 0;
 }
+
+.googleBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  color: #1F1F1F;
+  border: 1px solid var(--border);
+}
+
+.googleBtn:hover:not(:disabled) {
+  background: #F8F8F8;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
