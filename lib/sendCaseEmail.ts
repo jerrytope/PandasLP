@@ -2,6 +2,7 @@ import { getFollowUpEmail, getPaymentConfirmedEmail, getResolutionEmail, getRevi
 import { supabaseAdmin } from './supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from './mailer'
 import { buildTextDocumentBuffer } from './pdfGenerator.js'
+import { TERMS_OF_USE_TITLE, TERMS_OF_USE_TEXT } from './legalDocs'
 
 export type SendCaseEmailOptions =
   | { type: 'payment_confirmed' }
@@ -70,7 +71,15 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
     const pdfBuffer = stampedBlob
       ? Buffer.from(await stampedBlob.arrayBuffer())
       : buildTextDocumentBuffer(caseData.document_title, caseData.document_body, { watermark: false })
-    attachments = [{ filename: 'demand-letter.pdf', content: pdfBuffer, contentType: 'application/pdf' }]
+    // Terms of Use is sent alongside every reviewed document — same letterhead PDF renderer,
+    // content transcribed from app/terms/page.tsx (see lib/legalDocs.ts's own header comment
+    // for the sync caveat), with a signature block appended so the client has something
+    // physically signable, not just something to read.
+    const termsBuffer = buildTextDocumentBuffer(TERMS_OF_USE_TITLE, TERMS_OF_USE_TEXT, { watermark: false })
+    attachments = [
+      { filename: 'demand-letter.pdf', content: pdfBuffer, contentType: 'application/pdf' },
+      { filename: 'pandas-lp-terms-of-use.pdf', content: termsBuffer, contentType: 'application/pdf' },
+    ]
   } else if (options.type === 'payment_confirmed') {
     ;({ subject, html, text } = getPaymentConfirmedEmail({
       recipientEmail,

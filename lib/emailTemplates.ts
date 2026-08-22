@@ -315,6 +315,8 @@ ${caseTitle} has been reviewed by ${reviewedBy} and is attached to this email as
 
 ${nextStepText}
 
+Also attached: our Terms of Use. Please read, sign, and return it at your convenience — it covers the terms under which we're acting for you on this matter.
+
 View your case: ${dashboardUrl}
 
 Pandas LP
@@ -330,8 +332,12 @@ pandaslegalpractitioners@gmail.com`,
         <strong style="color:#F3EFE3;">${caseTitle}</strong> has been reviewed by
         <strong style="color:#F3EFE3;">${reviewedBy}</strong> and is attached to this email as a PDF.
       </p>
-      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
         ${nextStepText}
+      </p>
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Also attached: our Terms of Use. Please read, sign, and return it at your convenience —
+        it covers the terms under which we're acting for you on this matter.
       </p>
       <a href="${dashboardUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">
         View Your Case →
