@@ -2,6 +2,7 @@ import Script from 'next/script'
 import { Instrument_Sans, Geist, Geist_Mono } from 'next/font/google'
 import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
 import './globals.css'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
@@ -39,7 +40,21 @@ export const metadata = {
     'fast debt recovery Nigeria',
     'recover unpaid invoice Nigeria',
   ],
-  icons: { icon: '/favicon.png' },
+  icons: {
+    icon: '/favicon.png',
+    // iOS Safari's "Add to Home Screen" ignores the Web Manifest's icons entirely — it only
+    // ever looks for an apple-touch-icon link, so this is required (not redundant with
+    // manifest.ts's icons array) for the home-screen icon to be right on iPhone/iPad.
+    apple: '/icons/192',
+  },
+  // appleWebApp is the other half of iOS support — without capable: true, "Add to Home
+  // Screen" still works but opens inside Safari's chrome (address bar, tab strip) instead
+  // of as a standalone app window.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Pandas LP',
+  },
   robots: { index: true, follow: true },
   alternates: { canonical: '/' },
   openGraph: {
@@ -55,6 +70,13 @@ export const metadata = {
     title: TITLE,
     description: DESCRIPTION,
   },
+}
+
+// Split out of `metadata` per Next's viewport/themeColor API (moved out of the metadata
+// object in Next 14+) — this is what colors the Android status bar / task switcher when the
+// app is installed, matching the manifest's own theme_color.
+export const viewport = {
+  themeColor: '#182A3A',
 }
 
 const legalServiceJsonLd = {
@@ -101,6 +123,7 @@ export default function RootLayout({ children }) {
           </>
         )}
         <MotionConfig reducedMotion="user">{children}</MotionConfig>
+        <ServiceWorkerRegister />
       </body>
     </html>
   )
