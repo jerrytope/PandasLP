@@ -10,6 +10,7 @@ import { getAttribution } from '@/lib/attribution'
 import { trackEvent } from '@/lib/analytics'
 import { X, Paperclip, Check } from 'lucide-react'
 import PaymentForm from './PaymentForm'
+import ExtractionConfirmModal, { type PendingExtraction } from './ExtractionConfirmModal'
 import styles from './AgentChat.module.css'
 
 export interface Message {
@@ -108,6 +109,11 @@ export default function AgentChat({
   const [phoneSaveError, setPhoneSaveError] = useState('')
   const [caseId, setCaseId] = useState<string | null>(initialCaseId ?? null)
   const [extracting, setExtracting] = useState(false)
+  // Set once /api/extract returns, cleared once the user confirms or discards — see
+  // ExtractionConfirmModal. Holds the just-added "Attached: <file>" bubble alongside the
+  // extraction so cancelling can cleanly remove it (nothing was actually contributed).
+  const [pendingExtraction, setPendingExtraction] = useState<PendingExtraction | null>(null)
+  const pendingAttachMsgRef = useRef<Message | null>(null)
   const messagesRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const caseRefRef = useRef<string>('')
@@ -475,18 +481,44 @@ export default function AgentChat({
         return
       }
 
-      // Inject extracted facts as a user context message, then get AI to acknowledge and continue
-      const factsMsg: Message = {
-        role: 'user',
-        content: `DOCUMENT CONTEXT: Facts extracted from ${file.name}:\n${data.facts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
-      }
-      await sendToAgent([...messages, attachMsg, factsMsg], factsMsg)
+      // Hold here — nothing gets sent to the agent until the user reviews and confirms in
+      // ExtractionConfirmModal. An AI read of a scanned document is a read, not a fact,
+      // until a human has looked at it once.
+      pendingAttachMsgRef.current = attachMsg
+      setPendingExtraction({
+        filename: file.name,
+        mediaType: file.type,
+        fileDataUrl: `data:${file.type};base64,${base64}`,
+        originalFacts: data.facts,
+      })
     } catch (err) {
       console.error('Document extraction failed:', err)
       setError('Network error during document analysis.')
     } finally {
       setExtracting(false)
     }
+  }
+
+  async function confirmExtraction(editedFacts: string) {
+    const attachMsg = pendingAttachMsgRef.current
+    const filename = pendingExtraction?.filename ?? 'the uploaded document'
+    setPendingExtraction(null)
+    pendingAttachMsgRef.current = null
+    if (!attachMsg) return
+    const factsMsg: Message = {
+      role: 'user',
+      content: `DOCUMENT CONTEXT: Facts extracted from ${filename} (reviewed and confirmed by the client):\n${editedFacts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
+    }
+    await sendToAgent([...messages, attachMsg, factsMsg], factsMsg)
+  }
+
+  // Discarding removes the "Attached: <file>" bubble too — nothing was actually contributed
+  // to the case, so the chat shouldn't show a dangling attachment that never went anywhere.
+  function cancelExtraction() {
+    const attachMsg = pendingAttachMsgRef.current
+    setPendingExtraction(null)
+    pendingAttachMsgRef.current = null
+    if (attachMsg) setMessages((prev) => prev.filter((m) => m !== attachMsg))
   }
 
   function handleClear() {
@@ -777,6 +809,13 @@ export default function AgentChat({
           </>
         )}
       </div>
+      {pendingExtraction && (
+        <ExtractionConfirmModal
+          extraction={pendingExtraction}
+          onConfirm={confirmExtraction}
+          onCancel={cancelExtraction}
+        />
+      )}
     </div>
   )
 }
