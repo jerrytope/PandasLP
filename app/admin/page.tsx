@@ -11,6 +11,7 @@ import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { downloadTextDocument } from '@/lib/pdfGenerator'
 import AudioReader from '@/components/AudioReader'
+import TranslationPane from '@/components/TranslationPane'
 import { Phone, AlertTriangle, Scale, Check, Clock } from 'lucide-react'
 
 interface AdminCaseRow {
@@ -539,6 +540,9 @@ function CaseCard({
           )}
           {renderFormattedText(c.document_body)}
           <AudioReader text={c.document_body} label="Listen to this letter" />
+          {/* View-only — no replace action here. This document may already be reviewed/sent;
+              silently swapping its text would bypass the mandatory lawyer-review gate. */}
+          <TranslationPane originalText={c.document_body} allowReplace={false} />
         </div>
       )}
     </div>

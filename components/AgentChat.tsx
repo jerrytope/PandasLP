@@ -13,6 +13,7 @@ import PaymentForm from './PaymentForm'
 import ExtractionConfirmModal, { type PendingExtraction } from './ExtractionConfirmModal'
 import VoiceRecorder from './VoiceRecorder'
 import AudioReader from './AudioReader'
+import TranslationPane from './TranslationPane'
 import styles from './AgentChat.module.css'
 
 export interface Message {
@@ -523,6 +524,30 @@ export default function AgentChat({
     if (attachMsg) setMessages((prev) => prev.filter((m) => m !== attachMsg))
   }
 
+  // TranslationPane's "Replace Original with Translation" — deliberately re-runs the exact
+  // same save-then-gate pattern saveTurn uses (see docSaveFailed above) rather than just
+  // calling setDraftDoc and trusting it. Without this, a translated document could show
+  // correctly in the preview while never having actually persisted, letting payment proceed
+  // against content the database never saw — precisely the bug class fixed earlier for the
+  // normal document-drafting path.
+  async function replaceDraftWithTranslation(translatedBody: string) {
+    if (!draftDoc) return
+    const newDoc = { ...draftDoc, body: translatedBody }
+    setDraftDoc(newDoc)
+    const caseInfo = await ensureCase()
+    if (!caseInfo) {
+      setDocSaveFailed(true)
+      setError("We couldn't save the translated document. Please try again before paying.")
+      return
+    }
+    const { error: docErr } = await supabase.from('cases').update({ document_body: translatedBody }).eq('id', caseInfo.id)
+    setDocSaveFailed(Boolean(docErr))
+    if (docErr) {
+      console.error('Failed to save translated document:', docErr)
+      setError("We couldn't save the translated document. Please try again before paying — your progress may not persist on refresh otherwise.")
+    }
+  }
+
   function handleClear() {
     setMessages([{ role: 'assistant', content: agent.starterMessage }])
     setError('')
@@ -689,6 +714,12 @@ export default function AgentChat({
                 {previewUrl && <iframe title="Document preview" src={previewUrl} className={styles.docFrame} />}
 
                 <AudioReader text={draftDoc.body} label="Listen to this document" />
+
+                {/* Translation is only offered pre-payment, on the client's own draft — once
+                    paid, the document is locked in for the mandatory lawyer-review gate
+                    (see app/api/update-case-status/route.ts), and silently swapping its text
+                    post-payment would bypass that review entirely. */}
+                {!paid && <TranslationPane originalText={draftDoc.body} onReplace={replaceDraftWithTranslation} />}
 
                 {paid && (
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '10px 0 0' }}>
