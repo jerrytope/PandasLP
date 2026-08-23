@@ -11,6 +11,7 @@ import { trackEvent } from '@/lib/analytics'
 import { X, Paperclip, Check } from 'lucide-react'
 import PaymentForm from './PaymentForm'
 import ExtractionConfirmModal, { type PendingExtraction } from './ExtractionConfirmModal'
+import VoiceRecorder from './VoiceRecorder'
 import styles from './AgentChat.module.css'
 
 export interface Message {
@@ -792,6 +793,10 @@ export default function AgentChat({
                 >
                   <Paperclip size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
+                <VoiceRecorder
+                  disabled={loading || extracting}
+                  onInsert={(text) => setInput((prev) => (prev ? `${prev} ${text}` : text))}
+                />
                 <textarea
                   className={styles.textarea}
                   aria-label="Type your message"

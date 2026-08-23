@@ -294,6 +294,7 @@
 }
 
 .inputRow {
+  position: relative; /* anchors VoiceRecorder.module.css's .panel, which floats above this row */
   flex-shrink: 0;
   display: flex;
   gap: 10px;
