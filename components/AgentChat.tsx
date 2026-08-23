@@ -12,6 +12,7 @@ import { X, Paperclip, Check } from 'lucide-react'
 import PaymentForm from './PaymentForm'
 import ExtractionConfirmModal, { type PendingExtraction } from './ExtractionConfirmModal'
 import VoiceRecorder from './VoiceRecorder'
+import AudioReader from './AudioReader'
 import styles from './AgentChat.module.css'
 
 export interface Message {
@@ -686,6 +687,8 @@ export default function AgentChat({
                 )}
 
                 {previewUrl && <iframe title="Document preview" src={previewUrl} className={styles.docFrame} />}
+
+                <AudioReader text={draftDoc.body} label="Listen to this document" />
 
                 {paid && (
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '10px 0 0' }}>

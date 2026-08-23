@@ -10,6 +10,7 @@ import type { AgentId } from '@/lib/agents'
 import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { downloadTextDocument } from '@/lib/pdfGenerator'
+import AudioReader from '@/components/AudioReader'
 import { Phone, AlertTriangle, Scale, Check, Clock } from 'lucide-react'
 
 interface AdminCaseRow {
@@ -537,6 +538,7 @@ function CaseCard({
             </div>
           )}
           {renderFormattedText(c.document_body)}
+          <AudioReader text={c.document_body} label="Listen to this letter" />
         </div>
       )}
     </div>
