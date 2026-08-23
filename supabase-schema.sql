@@ -110,6 +110,33 @@ CREATE TABLE IF NOT EXISTS public.case_status_history (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Records a WhatsApp (or future channel) service attempt — see app/api/admin/service-records
+-- and lib/whatsappService.ts. This is evidence a lawyer can attach to a REAL, personally-sworn
+-- affidavit of service — it is deliberately not itself styled as an affidavit (see the
+-- Feature 2 commit message for why auto-generating something that looks like a sworn legal
+-- instrument is a professional-liability risk this app does not take).
+-- status values: 'dispatched' (staff initiated the WhatsApp send — we cannot detect WhatsApp's
+-- own delivery/read receipts without a Business API account), 'link_opened' (the recipient
+-- actually opened the served-document link — set automatically, a real signal, not a guess),
+-- 'acknowledged' (staff manually recorded that the recipient responded/engaged).
+CREATE TABLE IF NOT EXISTS public.service_records (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id           UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  channel           TEXT        NOT NULL DEFAULT 'whatsapp',
+  recipient_phone   TEXT        NOT NULL,
+  message_text      TEXT        NOT NULL,
+  message_hash      TEXT        NOT NULL,
+  -- Unguessable per-record token — the public /serve/<token> page looks up by this, never by
+  -- case_id, so a recipient's link can't be walked/enumerated to reach any other case.
+  access_token      TEXT        NOT NULL UNIQUE,
+  status            TEXT        NOT NULL DEFAULT 'dispatched',
+  dispatched_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  link_opened_at    TIMESTAMPTZ,
+  acknowledged_at   TIMESTAMPTZ,
+  acknowledged_by   TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Indexes — every one of these columns is filtered/ordered on in app/api/admin/cases and
 -- app/api/cron/follow-ups; without them those queries are full sequential scans of `cases`.
 CREATE INDEX IF NOT EXISTS idx_cases_status     ON public.cases(status);
@@ -117,6 +144,8 @@ CREATE INDEX IF NOT EXISTS idx_cases_agent_id   ON public.cases(agent_id);
 CREATE INDEX IF NOT EXISTS idx_cases_created_at ON public.cases(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_cases_follow_up  ON public.cases(status, email_day7_sent, email_day14_sent)
   WHERE status = 'letter_served';
+CREATE INDEX IF NOT EXISTS idx_service_records_case_id      ON public.service_records(case_id);
+CREATE INDEX IF NOT EXISTS idx_service_records_access_token ON public.service_records(access_token);
 
 -- Row Level Security
 ALTER TABLE public.cases               ENABLE ROW LEVEL SECURITY;
@@ -124,7 +153,8 @@ ALTER TABLE public.messages            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.custom_claims       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.waitlist_signups    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.case_status_history ENABLE ROW LEVEL SECURITY;
--- No policies on custom_claims, waitlist_signups, or case_status_history: RLS with zero
+ALTER TABLE public.service_records     ENABLE ROW LEVEL SECURITY;
+-- No policies on custom_claims, waitlist_signups, case_status_history, or service_records: RLS with zero
 -- policies blocks anon/authenticated roles entirely, while the service-role client (used
 -- only server-side) always bypasses RLS.
 
@@ -228,6 +258,28 @@ CREATE TRIGGER cases_touch
 --     forget to migrate. Private bucket (public: false) — only ever read/written via
 --     supabaseAdmin (the service-role key bypasses Storage RLS same as it does for tables),
 --     never directly from the browser, so no Storage policies are needed either.
+--
+-- CREATE TABLE IF NOT EXISTS public.service_records (
+--   id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   case_id           UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+--   channel           TEXT        NOT NULL DEFAULT 'whatsapp',
+--   recipient_phone   TEXT        NOT NULL,
+--   message_text      TEXT        NOT NULL,
+--   message_hash      TEXT        NOT NULL,
+--   access_token      TEXT        NOT NULL UNIQUE,
+--   status            TEXT        NOT NULL DEFAULT 'dispatched',
+--   dispatched_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   link_opened_at    TIMESTAMPTZ,
+--   acknowledged_at   TIMESTAMPTZ,
+--   acknowledged_by   TEXT,
+--   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE public.service_records ENABLE ROW LEVEL SECURITY;
+-- CREATE INDEX IF NOT EXISTS idx_service_records_case_id      ON public.service_records(case_id);
+-- CREATE INDEX IF NOT EXISTS idx_service_records_access_token ON public.service_records(access_token);
+--   ^ REQUIRED for "Serve via WhatsApp" (see app/api/admin/service-records/route.ts) — this is
+--     a genuinely NEW table for an existing database, run the CREATE TABLE above (not just an
+--     ALTER TABLE) if you already ran this schema before this feature existed.
 --
 -- ============================================================
 -- ATTRIBUTION READOUT — run ad hoc in the SQL editor, not part of setup.

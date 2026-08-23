@@ -34,6 +34,17 @@ interface AdminCaseRow {
   source: string | null
 }
 
+interface ServiceRecordRow {
+  id: string
+  channel: string
+  recipient_phone: string
+  status: 'dispatched' | 'link_opened' | 'acknowledged'
+  dispatched_at: string
+  link_opened_at: string | null
+  acknowledged_at: string | null
+  acknowledged_by: string | null
+}
+
 interface CustomClaimRow {
   id: string
   name: string
@@ -184,6 +195,82 @@ function CaseCard({
     }
   }
 
+  // WhatsApp service — see app/api/admin/service-records/route.ts and lib/whatsappService.ts.
+  const [showServiceRecords, setShowServiceRecords] = useState(false)
+  const [serviceRecords, setServiceRecords] = useState<ServiceRecordRow[] | null>(null)
+  const [serviceRecordsLoading, setServiceRecordsLoading] = useState(false)
+  const [serviceRecordsError, setServiceRecordsError] = useState('')
+  const [dispatching, setDispatching] = useState(false)
+  const [ackingId, setAckingId] = useState<string | null>(null)
+
+  async function loadServiceRecords() {
+    setServiceRecordsLoading(true)
+    setServiceRecordsError('')
+    try {
+      const res = await authedFetch(`/api/admin/service-records?caseId=${c.id}`)
+      const data = await res.json()
+      if (!res.ok) { setServiceRecordsError(data.error || 'Failed to load service records.'); return }
+      setServiceRecords(data.records ?? [])
+    } catch {
+      setServiceRecordsError('Network error. Please try again.')
+    } finally {
+      setServiceRecordsLoading(false)
+    }
+  }
+
+  async function toggleServiceRecords() {
+    if (showServiceRecords) { setShowServiceRecords(false); return }
+    setShowServiceRecords(true)
+    await loadServiceRecords()
+  }
+
+  async function dispatchWhatsAppService() {
+    if (!c.client_phone) return
+    setDispatching(true)
+    setServiceRecordsError('')
+    try {
+      const res = await authedFetch('/api/admin/service-records', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId: c.id, phone: c.client_phone }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setServiceRecordsError(data.error || 'Failed to dispatch.')
+        return
+      }
+      // Opens WhatsApp with the message pre-filled — staff still has to press send there
+      // themselves; this app records the attempt, it can't press send on WhatsApp's behalf.
+      window.open(data.whatsappLink, '_blank', 'noopener,noreferrer')
+      await loadServiceRecords()
+    } catch {
+      setServiceRecordsError('Network error. Please try again.')
+    } finally {
+      setDispatching(false)
+    }
+  }
+
+  async function acknowledgeService(recordId: string) {
+    setAckingId(recordId)
+    try {
+      const res = await authedFetch('/api/admin/service-records', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ recordId }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setServiceRecordsError(data.error || 'Failed to update.')
+        return
+      }
+      await loadServiceRecords()
+    } catch {
+      setServiceRecordsError('Network error. Please try again.')
+    } finally {
+      setAckingId(null)
+    }
+  }
+
   async function toggleInterview() {
     if (showInterview) { setShowInterview(false); return }
     setShowInterview(true)
@@ -324,6 +411,16 @@ function CaseCard({
         <button type="button" className="btn btn-sm" onClick={toggleInterview}>
           {showInterview ? 'Hide Conversation' : 'View Conversation'}
         </button>
+        {/* Needs a phone number and an actual document to serve — same gating as the
+            "No contact number" warning shown above. */}
+        {c.client_phone && c.document_body && (
+          <button type="button" className="btn btn-sm" disabled={dispatching} onClick={dispatchWhatsAppService}>
+            {dispatching ? 'Opening…' : 'Serve via WhatsApp'}
+          </button>
+        )}
+        <button type="button" className="btn btn-sm" onClick={toggleServiceRecords}>
+          {showServiceRecords ? 'Hide Service Log' : 'Service Log'}
+        </button>
         {onDeleteAction && (
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
             {confirmDeleteId === c.id ? (
@@ -370,6 +467,52 @@ function CaseCard({
               <div style={{ whiteSpace: 'pre-wrap' }}>{renderFormattedText(m.content)}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showServiceRecords && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: '16px 18px',
+            borderRadius: 10,
+            background: 'var(--bg-1)',
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
+          {serviceRecordsLoading && <span style={{ color: 'var(--text-muted)' }}>Loading…</span>}
+          {serviceRecordsError && <span style={{ color: 'var(--danger)' }}>{serviceRecordsError}</span>}
+          {!serviceRecordsLoading && serviceRecords?.length === 0 && (
+            <span style={{ color: 'var(--text-muted)' }}>No service attempts recorded yet.</span>
+          )}
+          {!serviceRecordsLoading && serviceRecords?.map((r) => {
+            const STATUS_LABEL: Record<ServiceRecordRow['status'], string> = {
+              dispatched: 'Dispatched (staff sent — WhatsApp delivery not confirmed)',
+              link_opened: 'Document link opened by recipient',
+              acknowledged: 'Acknowledged by recipient',
+            }
+            return (
+              <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                <div>
+                  <div>{r.recipient_phone} <span style={{ color: 'var(--text-muted)' }}>· {STATUS_LABEL[r.status]}</span></div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    Dispatched {formatDate(r.dispatched_at)}
+                    {r.link_opened_at && ` · Opened ${formatDate(r.link_opened_at)}`}
+                    {r.acknowledged_at && ` · Acknowledged ${formatDate(r.acknowledged_at)} by ${r.acknowledged_by}`}
+                  </div>
+                </div>
+                {r.status !== 'acknowledged' && (
+                  <button type="button" className="btn btn-sm" disabled={ackingId === r.id} onClick={() => acknowledgeService(r.id)}>
+                    {ackingId === r.id ? '…' : 'Mark Acknowledged'}
+                  </button>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
