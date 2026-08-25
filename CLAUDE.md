@@ -101,7 +101,7 @@ NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-cons
 | Agent ID | Name | Price |
 |---|---|---|
 | `small-claims` | Small Claims Court Agent | ₦10,000 (self-serve) / ₦25,000 (Pandas serves) |
-| `recovery-of-premises` | Recovery of Premises Agent | ₦5,000 |
+| `recovery-of-premises` | Property Law Agent (recovery of premises, tenancy/lease agreements, deeds of assignment, title search reports) | ₦5,000 flat across all document types — flagged as likely needing tiering, see lib/agents.ts |
 | `contracts` | Contracts & Commercial Agent | ₦5,000 |
 | `cac-registration` | CAC Registration Agent | ₦15,000 |
 | `judgment-enforcement` | Judgment Enforcement Agent | ₦10,000 + 5% of judgment |
