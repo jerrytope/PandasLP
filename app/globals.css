@@ -503,6 +503,55 @@ h1, h2, h3, h4, h5, h6 {
 }
 .whatsapp-fab:active { transform: translateY(0) scale(0.96); }
 
+/* ── Install App prompt ── */
+.install-prompt {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 90;
+  max-width: 300px;
+  padding: 16px 36px 16px 16px;
+  border-radius: 14px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.install-prompt-text {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text-1);
+}
+.install-prompt-text:last-child { margin-bottom: 0; }
+.install-prompt-btn {
+  background: var(--accent);
+  color: var(--bg-0);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--anim-fast);
+}
+.install-prompt-btn:hover { background: var(--accent-hover); }
+.install-prompt-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--secondary);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+.install-prompt-close:hover { color: var(--text-1); }
+@media (max-width: 480px) {
+  .install-prompt { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+}
+
 /* ── Navbar ── */
 .navbar {
   position: fixed;

@@ -10,6 +10,7 @@ import CustomClaim from '@/components/CustomClaim'
 import EnforcementIntake from '@/components/EnforcementIntake'
 import AuthModal from '@/components/AuthModal'
 import WhatsAppFab from '@/components/WhatsAppFab'
+import InstallAppPrompt from '@/components/InstallAppPrompt'
 import { CUSTOM_CLAIM_FEE } from '@/lib/services'
 import { supabase } from '@/lib/supabaseClient'
 import { captureAttribution } from '@/lib/attribution'
@@ -196,6 +197,7 @@ export default function App() {
 
       <Footer />
       <WhatsAppFab />
+      <InstallAppPrompt />
     </>
   )
 }
