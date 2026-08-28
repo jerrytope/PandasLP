@@ -57,6 +57,12 @@ CREATE TABLE IF NOT EXISTS public.cases (
   parent_case_id   UUID        REFERENCES public.cases(id),
   -- enforcement specifics
   judgment_amount  INTEGER,
+  -- staff-only flag for a case that's just someone trying out an agent, not a real
+  -- client matter — set/unset via the "Mark as Test" button in app/admin/page.tsx (PATCH
+  -- app/api/admin/cases/route.ts). Excluded from the admin Queue and from the Cases tab's
+  -- default "Live" view so test conversations don't get counted alongside paying clients;
+  -- switch the Cases tab filter to "Test" or "All" to see them.
+  is_test          BOOLEAN     NOT NULL DEFAULT FALSE,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -237,6 +243,10 @@ CREATE TRIGGER cases_touch
 --     No client gets the clean/final document until this is set.
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_document_sent_at TIMESTAMPTZ;
 --   ^ Set only when staff explicitly send the reviewed copy — sendReviewedDocument action.
+--
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ "Mark as Test" flag — see app/api/admin/cases/route.ts (PATCH) and app/admin/page.tsx.
+--     Excluded from the admin Queue and the Cases tab's default view.
 --
 -- ALTER TABLE public.cases RENAME COLUMN email_day7_sent TO email_day14_sent;
 -- ALTER TABLE public.cases RENAME COLUMN email_day3_sent TO email_day7_sent;

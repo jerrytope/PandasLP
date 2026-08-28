@@ -34,6 +34,7 @@ interface AdminCaseRow {
   reviewed_by: string | null
   reviewed_document_sent_at: string | null
   source: string | null
+  is_test: boolean
 }
 
 interface ServiceRecordRow {
@@ -122,6 +123,8 @@ function CaseCard({
   onAction,
   onDeleteAction,
   onRegenerateDocument,
+  onToggleTest,
+  togglingTestId,
   accentColor,
   domId,
 }: {
@@ -133,6 +136,8 @@ function CaseCard({
   onAction: (caseId: string, action: CaseAction) => void
   onDeleteAction?: (caseId: string, action: 'request' | 'cancel' | 'confirm') => void
   onRegenerateDocument?: (caseId: string) => void
+  onToggleTest?: (caseId: string, isTest: boolean) => void
+  togglingTestId?: string | null
   accentColor?: string
   domId?: string
 }) {
@@ -302,7 +307,14 @@ function CaseCard({
             {c.userEmail || 'unknown client'} · {formatDate(c.created_at)}
           </div>
         </div>
-        <span className="badge">{STAGE_LABEL[c.status] ?? c.status}</span>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {c.is_test && (
+            <span className="badge" style={{ background: 'color-mix(in srgb, var(--secondary) 25%, transparent)', color: 'var(--secondary)' }}>
+              TEST
+            </span>
+          )}
+          <span className="badge">{STAGE_LABEL[c.status] ?? c.status}</span>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12, fontSize: 13, color: 'var(--text-2)' }}>
@@ -423,6 +435,16 @@ function CaseCard({
         <button type="button" className="btn btn-sm" onClick={toggleServiceRecords}>
           {showServiceRecords ? 'Hide Service Log' : 'Service Log'}
         </button>
+        {onToggleTest && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={togglingTestId === c.id}
+            onClick={() => onToggleTest(c.id, !c.is_test)}
+          >
+            {togglingTestId === c.id ? 'Updating…' : c.is_test ? 'Mark as Live' : 'Mark as Test'}
+          </button>
+        )}
         {onDeleteAction && (
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
             {confirmDeleteId === c.id ? (
@@ -584,6 +606,10 @@ function AdminPageInner() {
   // "Paid+" is still available in the dropdown for when a paid-only view is actually wanted.
   const [filterStatus, setFilterStatus] = useState('')
   const [filterAgent, setFilterAgent] = useState('')
+  // 'live' (default) hides cases flagged as just someone testing an agent — see the
+  // "Mark as Test" button on each CaseCard and app/api/admin/cases/route.ts's testFilter param.
+  const [filterTest, setFilterTest] = useState<'live' | 'test' | 'all'>('live')
+  const [togglingTestId, setTogglingTestId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -606,7 +632,7 @@ function AdminPageInner() {
     document.getElementById(`case-${deepLinkCaseId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [deepLinkCaseId, cases])
 
-  async function loadTab(which: Tab, overrideStatus?: string) {
+  async function loadTab(which: Tab, overrideStatus?: string, overrideTest?: 'live' | 'test' | 'all') {
     setLoading(true)
     setLoadError('')
     try {
@@ -631,6 +657,7 @@ function AdminPageInner() {
         if (filterEmail) params.set('email', filterEmail)
         if (statusToUse && !hasDocumentOnly) params.set('status', statusToUse)
         if (filterAgent) params.set('agentId', filterAgent)
+        params.set('testFilter', overrideTest !== undefined ? overrideTest : filterTest)
         const res = await authedFetch(`/api/admin/cases?${params.toString()}`)
         if (res.status === 403) { setAccessDenied(true); return }
         const data = await res.json()
@@ -711,6 +738,32 @@ function AdminPageInner() {
       } finally {
         setDeletingId(null)
       }
+    }
+  }
+
+  async function handleToggleTest(caseId: string, isTest: boolean) {
+    setTogglingTestId(caseId)
+    try {
+      const res = await authedFetch('/api/admin/cases', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, isTest }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLoadError(data.error || 'Could not update this case.')
+        return
+      }
+      // Flipping to "test" while viewing "Live" (or vice versa while viewing "Test") should
+      // drop the case out of the current list immediately, matching what a fresh reload would
+      // show — not leave a stale row sitting in a filtered view it no longer belongs in.
+      if (filterTest === 'live' && isTest) setCases((prev) => prev.filter((c) => c.id !== caseId))
+      else if (filterTest === 'test' && !isTest) setCases((prev) => prev.filter((c) => c.id !== caseId))
+      else setCases((prev) => prev.map((c) => (c.id === caseId ? { ...c, is_test: isTest } : c)))
+    } catch {
+      setLoadError('Network error. Please try again.')
+    } finally {
+      setTogglingTestId(null)
     }
   }
 
@@ -885,6 +938,8 @@ function AdminPageInner() {
                           onRegenerateDocument={handleRegenerateDocument}
                           onAction={handleStatusAction}
                           onDeleteAction={handleDeleteAction}
+                          onToggleTest={handleToggleTest}
+                          togglingTestId={togglingTestId}
                           accentColor={daysSincePaid >= 3 ? 'var(--danger)' : undefined}
                         />
                       )
@@ -898,7 +953,7 @@ function AdminPageInner() {
                   {deadlinePassed.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases past their response deadline.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
                     {deadlinePassed.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} accentColor="var(--warning)" />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} accentColor="var(--warning)" />
                     ))}
                   </div>
 
@@ -909,7 +964,7 @@ function AdminPageInner() {
                   {awaitingJudgment.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases waiting on a judgment.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {awaitingJudgment.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} />
                     ))}
                   </div>
                 </>
@@ -933,6 +988,21 @@ function AdminPageInner() {
               <select className="input" aria-label="Filter by agent" value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} style={{ maxWidth: 200, fontSize: 13 }}>
                 <option value="">All agents</option>
                 {Object.values(AGENTS).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+              </select>
+              <select
+                className="input"
+                aria-label="Filter by test/live"
+                value={filterTest}
+                onChange={(e) => {
+                  const next = e.target.value as 'live' | 'test' | 'all'
+                  setFilterTest(next)
+                  loadTab('cases', undefined, next)
+                }}
+                style={{ maxWidth: 160, fontSize: 13 }}
+              >
+                <option value="live">Live cases</option>
+                <option value="test">Test cases</option>
+                <option value="all">All cases</option>
               </select>
               <button type="button" className="btn btn-primary btn-sm" onClick={() => loadTab('cases')}>Apply Search</button>
             </div>
@@ -978,6 +1048,8 @@ function AdminPageInner() {
                   onAction={handleStatusAction}
                   onDeleteAction={handleDeleteAction}
                   onRegenerateDocument={handleRegenerateDocument}
+                  onToggleTest={handleToggleTest}
+                  togglingTestId={togglingTestId}
                   domId={`case-${c.id}`}
                   accentColor={c.id === deepLinkCaseId ? 'var(--accent)' : undefined}
                 />

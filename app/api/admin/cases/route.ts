@@ -23,6 +23,10 @@ export async function GET(req: Request) {
   const statusFilter = url.searchParams.get('status')
   const agentFilter = url.searchParams.get('agentId')
   const emailFilter = url.searchParams.get('email')?.trim().toLowerCase()
+  // 'live' (default) hides cases someone flagged as just a test run of an agent, so they
+  // don't get counted alongside real clients anywhere — the Queue tab and the Cases tab's
+  // default view both rely on this default. 'test' shows only flagged cases; 'all' shows both.
+  const testFilter = url.searchParams.get('testFilter') || 'live'
 
   // "paid_plus" isn't a real status — it's the post-launch default view (staff want real,
   // transacted customers by default, not every abandoned/incomplete interview), so it expands
@@ -33,6 +37,8 @@ export async function GET(req: Request) {
   if (statusFilter === 'paid_plus') query = query.in('status', PAID_PLUS_STATUSES)
   else if (statusFilter) query = query.eq('status', statusFilter)
   if (agentFilter) query = query.eq('agent_id', agentFilter)
+  if (testFilter === 'live') query = query.eq('is_test', false)
+  else if (testFilter === 'test') query = query.eq('is_test', true)
 
   const { data: cases, error: casesErr } = await query
   if (casesErr) {
@@ -98,6 +104,41 @@ export async function DELETE(req: Request) {
 
   if (deleteErr) {
     return Response.json({ error: 'Failed to delete case.' }, { status: 500 })
+  }
+
+  return Response.json({ ok: true })
+}
+
+// Toggles the is_test flag — the only mutable field this route exposes. Anything to do with
+// case *status* goes through app/api/update-case-status/route.ts's stricter transition rules;
+// this is just a staff-visibility flag, unrelated to where a case sits in its status lifecycle.
+export async function PATCH(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`admin-cases-patch:${getClientIp(req)}`, 60, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
+  const authResult = await requireAdmin(req)
+  if (authResult instanceof Response) return authResult
+
+  let body: { caseId?: string; isTest?: boolean }
+  try {
+    body = await req.json()
+  } catch {
+    return Response.json({ error: 'Invalid request body.' }, { status: 400 })
+  }
+
+  const { caseId, isTest } = body
+  if (!caseId || typeof isTest !== 'boolean') {
+    return Response.json({ error: 'Missing caseId or isTest.' }, { status: 400 })
+  }
+
+  const { error: updateErr } = await supabaseAdmin.from('cases').update({ is_test: isTest }).eq('id', caseId)
+  if (updateErr) {
+    return Response.json({ error: 'Failed to update case.' }, { status: 500 })
   }
 
   return Response.json({ ok: true })
