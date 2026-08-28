@@ -632,7 +632,7 @@ function AdminPageInner() {
     document.getElementById(`case-${deepLinkCaseId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [deepLinkCaseId, cases])
 
-  async function loadTab(which: Tab, overrideStatus?: string, overrideTest?: 'live' | 'test' | 'all') {
+  async function loadTab(which: Tab, overrideStatus?: string, overrideTest?: 'live' | 'test' | 'all', overrideAgent?: string) {
     setLoading(true)
     setLoadError('')
     try {
@@ -656,7 +656,8 @@ function AdminPageInner() {
         const params = new URLSearchParams()
         if (filterEmail) params.set('email', filterEmail)
         if (statusToUse && !hasDocumentOnly) params.set('status', statusToUse)
-        if (filterAgent) params.set('agentId', filterAgent)
+        const agentToUse = overrideAgent !== undefined ? overrideAgent : filterAgent
+        if (agentToUse) params.set('agentId', agentToUse)
         params.set('testFilter', overrideTest !== undefined ? overrideTest : filterTest)
         const res = await authedFetch(`/api/admin/cases?${params.toString()}`)
         if (res.status === 403) { setAccessDenied(true); return }
@@ -985,26 +986,53 @@ function AdminPageInner() {
                 onKeyDown={(e) => { if (e.key === 'Enter') loadTab('cases') }}
                 style={{ maxWidth: 240, fontSize: 13 }}
               />
-              <select className="input" aria-label="Filter by agent" value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} style={{ maxWidth: 200, fontSize: 13 }}>
-                <option value="">All agents</option>
-                {Object.values(AGENTS).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-              <select
-                className="input"
-                aria-label="Filter by test/live"
-                value={filterTest}
-                onChange={(e) => {
-                  const next = e.target.value as 'live' | 'test' | 'all'
-                  setFilterTest(next)
-                  loadTab('cases', undefined, next)
-                }}
-                style={{ maxWidth: 160, fontSize: 13 }}
-              >
-                <option value="live">Live cases</option>
-                <option value="test">Test cases</option>
-                <option value="all">All cases</option>
-              </select>
               <button type="button" className="btn btn-primary btn-sm" onClick={() => loadTab('cases')}>Apply Search</button>
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+              {[{ id: '', name: 'All agents' }, ...Object.values(AGENTS)].map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  className={`btn btn-sm ${filterAgent === a.id ? '' : 'btn-ghost'}`}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 12px',
+                    ...(filterAgent === a.id ? { background: 'var(--accent)', color: 'var(--bg)', borderColor: 'var(--accent)' } : {}),
+                  }}
+                  onClick={() => {
+                    setFilterAgent(a.id)
+                    loadTab('cases', undefined, undefined, a.id)
+                  }}
+                >
+                  {a.name}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+              {([
+                { value: 'live', label: 'Live cases' },
+                { value: 'test', label: 'Test cases' },
+                { value: 'all', label: 'All (live + test)' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`btn btn-sm ${filterTest === opt.value ? '' : 'btn-ghost'}`}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 12px',
+                    ...(filterTest === opt.value ? { background: 'var(--secondary)', color: 'var(--bg)', borderColor: 'var(--secondary)' } : {}),
+                  }}
+                  onClick={() => {
+                    setFilterTest(opt.value)
+                    loadTab('cases', undefined, opt.value)
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 24 }}>
