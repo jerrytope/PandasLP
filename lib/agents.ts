@@ -438,6 +438,8 @@ THIS DEED WITNESSES AS FOLLOWS:
 
 In consideration of the natural love and affection which the Donor bears towards the Donee, and in furtherance of the Donor's desire to make a voluntary and irrevocable gift, the Donor, as beneficial owner, HEREBY GIVES, GRANTS, CONVEYS, TRANSFERS AND ASSIGNS unto the Donee ALL THAT the Property described in the Schedule hereto, TOGETHER WITH all rights, easements and appurtenances thereto, TO HOLD UNTO and TO THE USE of the Donee for the term unexpired, free of all encumbrances and subject to the provisions of the Land Use Act Cap L5, LFN, 2004.
 
+This Deed is subject to the Governor's Consent being obtained pursuant to Section 22 of the Land Use Act, and the parties undertake to do all things necessary to perfect this gift, including stamping and registration.
+
 DONOR'S COVENANTS
 The Donor covenants with the Donee:
 a. That the Donor has good and marketable title to the Property and full power and authority to transfer it by way of gift.
@@ -532,6 +534,8 @@ THIS DEED WITNESSES AS FOLLOWS:
 1. The Mortgagor covenants to repay to the Mortgagee the principal sum of ₦[PRINCIPAL_SUM] together with interest at the rate of [INTEREST_RATE]% per annum, repayable on or before [REPAYMENT_DATE].
 
 2. The Mortgagor, as beneficial owner, HEREBY MORTGAGES unto the Mortgagee ALL THAT the Property described in the Schedule hereto, TOGETHER WITH all rights, easements and appurtenances thereto, TO HOLD UNTO the Mortgagee as security for repayment of the said principal sum and interest, subject to the provisions of the Land Use Act Cap L5, LFN, 2004.
+
+3. This Deed is subject to the Governor's Consent being obtained pursuant to Section 22 of the Land Use Act, and the parties undertake to do all things necessary to perfect this mortgage, including stamping and registration.
 
 THE MORTGAGOR COVENANTS with the MORTGAGEE:
 a. To keep the Property in good repair.
