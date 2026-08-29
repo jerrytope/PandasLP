@@ -4,12 +4,12 @@ import { Scale, FileText, Shield, Gavel, MessageSquare, Clock } from 'lucide-rea
 import { useCountUp } from '../lib/useCountUp'
 
 const BADGES = [
-  { icon: Scale, ring: 1, angle: 40, color: '#D6BB80' },
-  { icon: Gavel, ring: 1, angle: 220, color: '#8FAEC6' },
+  { icon: Scale, ring: 1, angle: 40, color: '#D4AF37' },
+  { icon: Gavel, ring: 1, angle: 220, color: '#93A6C9' },
   { icon: FileText, ring: 2, angle: 120, color: '#818CF8' },
   { icon: MessageSquare, ring: 2, angle: 305, color: '#38BDF8' },
-  { icon: Shield, ring: 3, angle: 15, color: '#D6BB80' },
-  { icon: Clock, ring: 3, angle: 195, color: '#8FAEC6' },
+  { icon: Shield, ring: 3, angle: 15, color: '#D4AF37' },
+  { icon: Clock, ring: 3, angle: 195, color: '#93A6C9' },
 ]
 
 export default function OrbitVisual() {

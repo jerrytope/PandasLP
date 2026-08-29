@@ -116,8 +116,8 @@ export default async function BlogPostPage({ params }: Props) {
           {/* CTA */}
           <div className="card" style={{
             marginTop: 56, padding: '32px',
-            background: 'linear-gradient(135deg,rgba(214, 187, 128, 0.12),rgba(31, 52, 70, 0.5))',
-            borderColor: 'rgba(214, 187, 128, 0.3)',
+            background: 'linear-gradient(135deg,rgba(212, 175, 55, 0.12),rgba(22, 33, 61, 0.5))',
+            borderColor: 'rgba(212, 175, 55, 0.3)',
             textAlign: 'center',
           }}>
             <h2 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 22 }}>

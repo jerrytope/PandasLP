@@ -1,28 +1,29 @@
 /* ─────────────────────────────────────────
-   PANDAS LP — NAVY & GOLD DESIGN SYSTEM
-   Brand palette: Yankees Blue (base), Burlywood + Dark Tan
-   (gold accent family), Deep Space Sparkle (secondary/cool
-   accent), Smoke (neutral text).
+   PANDAS LEGAL AI — OBSIDIAN & GOLD DESIGN SYSTEM
+   Obsidian black base, royal navy surfaces, brushed-gold
+   accent. Second rebrand this year (from the navy/burlywood
+   system before it) — if you see hardcoded #182A3A/#D6BB80,
+   that's leftover prior-palette drift, not intentional.
    ───────────────────────────────────────── */
 
 :root {
   /* Surfaces */
-  --bg-0: #182A3A;
-  --bg-1: #1F3446;
-  --bg-2: #28455A;
-  --border-subtle: #2C4759;
-  --border-focus: #3C5C71;
+  --bg-0: #05070C;
+  --bg-1: #0E172A;
+  --bg-2: #16213D;
+  --border-subtle: #223050;
+  --border-focus: #3A4E7A;
 
-  /* Accent */
-  --accent: #D6BB80;
-  --accent-glow: rgba(214, 187, 128, 0.3);
-  --accent-glow-soft: rgba(214, 187, 128, 0.06);
-  --accent-hover: #C7A968;
-  --accent-deep: #A08348;
+  /* Accent — brushed gold */
+  --accent: #D4AF37;
+  --accent-glow: rgba(212, 175, 55, 0.35);
+  --accent-glow-soft: rgba(212, 175, 55, 0.08);
+  --accent-hover: #E8C55A;
+  --accent-deep: #A8842A;
 
   /* Secondary / success */
-  --secondary: #8FAEC6;
-  --secondary-soft: rgba(66, 91, 111, 0.4);
+  --secondary: #93A6C9;
+  --secondary-soft: rgba(58, 78, 122, 0.4);
 
   /* Semantic */
   --danger: #EF4444;
@@ -30,10 +31,16 @@
   --info: #38BDF8;
 
   /* Text */
-  --text-1: #F3EFE3;
-  --text-2: #ABB1A2;
-  --text-3: #A0A696; /* lightened from #79806F — the old value was ~3.5:1 against --bg-0/--bg-1, below WCAG AA's 4.5:1 for normal text; this passes ~4.9:1+ against both */
-  --text-accent: #D6BB80;
+  --text-1: #F5F2E9;
+  --text-2: #A6ADC2;
+  --text-3: #8891A8; /* ~4.6:1 against --bg-0/--bg-1 — keep at or above this lightness for WCAG AA normal-text contrast */
+  --text-accent: #D4AF37;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(14, 23, 42, 0.55);
+  --glass-bg-strong: rgba(14, 23, 42, 0.78);
+  --glass-border: rgba(212, 175, 55, 0.18);
+  --glass-blur: 18px;
 
   /* ── Legacy aliases (keep old components working) ── */
   --bg: var(--bg-0);
@@ -277,13 +284,34 @@ h1, h2, h3, h4, h5, h6 {
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(214, 187, 128,0.4), rgba(15,22,18,0.05), rgba(143, 174, 198,0.2));
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.45), rgba(5, 7, 12, 0.05), rgba(147, 166, 201, 0.2));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   animation: border-shimmer 6s linear infinite;
   background-size: 200% 200%;
+}
+
+/* ── Glass panels — obsidian/gold glassmorphism, used by the agent roster, capabilities
+   drawer, comparison matrix, and redliner ── */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+}
+
+.glow-gold {
+  box-shadow: 0 0 60px -12px var(--accent-glow);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(120deg, var(--accent-hover) 0%, var(--accent) 45%, #F4E4B0 60%, var(--accent) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 /* ── Inputs ── */

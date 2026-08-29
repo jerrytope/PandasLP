@@ -15,7 +15,7 @@ export default async function Image() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#182A3A',
+          background: '#05070C',
           padding: '64px 72px',
           position: 'relative',
         }}
@@ -29,7 +29,7 @@ export default async function Image() {
             width: 560,
             height: 560,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(214,187,128,0.35) 0%, rgba(214,187,128,0) 70%)',
+            background: 'radial-gradient(circle, rgba(212,175,55,0.35) 0%, rgba(212,175,55,0) 70%)',
             display: 'flex',
           }}
         />
@@ -39,7 +39,7 @@ export default async function Image() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={PANDAS_LOGO_LIGHT_DATA_URI} width={97} height={64} alt="" />
           <span style={{ fontSize: 30, fontWeight: 700, color: '#F3EFE3', letterSpacing: '-0.02em' }}>
-            Pandas <span style={{ color: '#D6BB80' }}>LP</span>
+            Pandas <span style={{ color: '#D4AF37' }}>LP</span>
           </span>
         </div>
 
@@ -48,7 +48,7 @@ export default async function Image() {
           <span style={{ fontSize: 68, fontWeight: 700, color: '#F3EFE3', lineHeight: 1.08, letterSpacing: '-0.02em' }}>
             They owe you.
           </span>
-          <span style={{ fontSize: 68, fontWeight: 700, color: '#D6BB80', lineHeight: 1.08, letterSpacing: '-0.02em' }}>
+          <span style={{ fontSize: 68, fontWeight: 700, color: '#D4AF37', lineHeight: 1.08, letterSpacing: '-0.02em' }}>
             We go after it.
           </span>
           <span style={{ fontSize: 26, color: '#ABB1A2', marginTop: 8 }}>
@@ -58,7 +58,7 @@ export default async function Image() {
 
         {/* Footer strip */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 3, background: '#D6BB80', display: 'flex' }} />
+          <div style={{ width: 40, height: 3, background: '#D4AF37', display: 'flex' }} />
           <span style={{ fontSize: 20, color: '#ABB1A2', letterSpacing: '0.02em' }}>
             CAC BN 9646741 · A registered Lagos law firm
           </span>

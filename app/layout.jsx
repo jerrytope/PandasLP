@@ -1,5 +1,5 @@
 import Script from 'next/script'
-import { Instrument_Sans, Geist, Geist_Mono } from 'next/font/google'
+import { Playfair_Display, Inter, Geist_Mono } from 'next/font/google'
 import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
@@ -7,13 +7,13 @@ import './globals.css'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
-const display = Instrument_Sans({
+const display = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700'],
+  weight: ['500', '600', '700', '800'],
 })
 
-const sans = Geist({
+const sans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
   weight: ['400', '500', '600', '700'],
@@ -76,7 +76,7 @@ export const metadata = {
 // object in Next 14+) — this is what colors the Android status bar / task switcher when the
 // app is installed, matching the manifest's own theme_color.
 export const viewport = {
-  themeColor: '#182A3A',
+  themeColor: '#05070C',
 }
 
 const legalServiceJsonLd = {

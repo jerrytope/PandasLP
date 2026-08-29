@@ -27,7 +27,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#182A3A',
+          background: '#05070C',
           padding: '64px 72px',
           position: 'relative',
         }}
@@ -40,7 +40,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             width: 560,
             height: 560,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(214,187,128,0.3) 0%, rgba(214,187,128,0) 70%)',
+            background: 'radial-gradient(circle, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0) 70%)',
             display: 'flex',
           }}
         />
@@ -49,7 +49,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={PANDAS_LOGO_LIGHT_DATA_URI} width={81} height={53} alt="" />
           <span style={{ fontSize: 24, fontWeight: 700, color: '#F3EFE3', letterSpacing: '-0.02em' }}>
-            Pandas <span style={{ color: '#D6BB80' }}>LP</span>
+            Pandas <span style={{ color: '#D4AF37' }}>LP</span>
           </span>
         </div>
 
@@ -58,7 +58,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             style={{
               fontSize: 20,
               fontWeight: 600,
-              color: '#D6BB80',
+              color: '#D4AF37',
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
             }}
@@ -71,7 +71,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 3, background: '#D6BB80', display: 'flex' }} />
+          <div style={{ width: 40, height: 3, background: '#D4AF37', display: 'flex' }} />
           <span style={{ fontSize: 20, color: '#ABB1A2', letterSpacing: '0.02em' }}>
             pandaslp.com.ng
           </span>

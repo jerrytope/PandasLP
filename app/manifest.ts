@@ -9,8 +9,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "A licensed Lagos law firm that recovers what you're owed: demand letter today, court in 14 days if it's ignored.",
     start_url: '/',
     display: 'standalone',
-    background_color: '#182A3A',
-    theme_color: '#182A3A',
+    background_color: '#05070C',
+    theme_color: '#05070C',
     icons: [
       { src: '/icons/192', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icons/512', sizes: '512x512', type: 'image/png', purpose: 'any' },

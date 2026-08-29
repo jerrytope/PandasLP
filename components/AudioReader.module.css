@@ -89,7 +89,7 @@
 }
 
 .wordActive {
-  background: rgba(214, 187, 128, 0.35);
+  background: rgba(212, 175, 55, 0.35);
   color: var(--text);
   border-radius: 3px;
 }
