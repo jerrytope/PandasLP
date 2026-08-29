@@ -329,7 +329,7 @@ AND
 
 WHEREAS the Landlord is the owner/lawful occupier of the premises situate at [PROPERTY_ADDRESS] ("the Premises") and has agreed to let same to the Tenant on the terms set out below.
 
-NOW THIS AGREEMENT WITNESSETH AS FOLLOWS:
+THIS AGREEMENT WITNESSES AS FOLLOWS:
 
 1. TERM
 The Landlord lets and the Tenant takes the Premises for a term of **[TENANCY_TERM]** commencing on **[START_DATE]**.
@@ -358,14 +358,9 @@ If the Tenant breaches any term of this Agreement, including non-payment of rent
 9. DISPUTE RESOLUTION
 Any dispute arising from this Agreement shall first be referred to mediation before resort to litigation, without prejudice to either party's right to pursue statutory recovery-of-premises procedure.
 
-IN WITNESS WHEREOF the parties have executed this Agreement on the date first above written.
+IN WITNESS WHEREOF the parties have executed this Agreement on the day and year first above written.
 
-SIGNED by the Landlord:                    SIGNED by the Tenant:
-________________________                  ________________________
-[LANDLORD_NAME]                            [TENANT_NAME]
-
-WITNESS:                                   WITNESS:
-________________________                  ________________________
+[EXECUTION BLOCK — see EXECUTION BLOCKS in SHARED RULES below; pick the variant matching each party's type]
 ---TEMPLATE END---
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -596,12 +591,7 @@ SCHEDULE
 
 IN WITNESS WHEREOF the parties have executed this Agreement on the day and year first above written.
 
-SIGNED by the Vendor:                      SIGNED by the Purchaser:
-________________________                  ________________________
-[VENDOR_NAME]                              [PURCHASER_NAME]
-
-IN THE PRESENCE OF:                        IN THE PRESENCE OF:
-________________________                  ________________________
+[EXECUTION BLOCK — see EXECUTION BLOCKS in SHARED RULES below; pick the variant matching each party's type]
 ---TEMPLATE END---
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
