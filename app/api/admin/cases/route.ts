@@ -109,9 +109,10 @@ export async function DELETE(req: Request) {
   return Response.json({ ok: true })
 }
 
-// Toggles the is_test flag — the only mutable field this route exposes. Anything to do with
-// case *status* goes through app/api/update-case-status/route.ts's stricter transition rules;
-// this is just a staff-visibility flag, unrelated to where a case sits in its status lifecycle.
+// Toggles the is_test flag, or records an independent second reviewer's confirmation.
+// Anything to do with case *status* goes through app/api/update-case-status/route.ts's
+// stricter transition rules; this route is for staff-visibility/audit fields that don't move
+// the case through its status lifecycle.
 export async function PATCH(req: Request) {
   const { allowed, retryAfterSeconds } = checkRateLimit(`admin-cases-patch:${getClientIp(req)}`, 60, RATE_WINDOW_MS)
   if (!allowed) {
@@ -124,19 +125,32 @@ export async function PATCH(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  let body: { caseId?: string; isTest?: boolean }
+  let body: { caseId?: string; isTest?: boolean; secondReviewerEmail?: string }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { caseId, isTest } = body
-  if (!caseId || typeof isTest !== 'boolean') {
-    return Response.json({ error: 'Missing caseId or isTest.' }, { status: 400 })
+  const { caseId, isTest, secondReviewerEmail } = body
+  if (!caseId) {
+    return Response.json({ error: 'Missing caseId.' }, { status: 400 })
+  }
+  if (typeof isTest !== 'boolean' && !secondReviewerEmail) {
+    return Response.json({ error: 'Missing isTest or secondReviewerEmail.' }, { status: 400 })
   }
 
-  const { error: updateErr } = await supabaseAdmin.from('cases').update({ is_test: isTest }).eq('id', caseId)
+  const update: Record<string, unknown> = {}
+  if (typeof isTest === 'boolean') update.is_test = isTest
+  // Recommended, not enforced — see lib/reviewChecklists.ts's isHighRiskDocument(). A solo
+  // reviewer can still mark a case reviewed without this; it's a recorded confirmation for
+  // when a second lawyer is actually available to look at the four highest-risk document types.
+  if (secondReviewerEmail) {
+    update.second_reviewer_email = secondReviewerEmail
+    update.second_reviewed_at = new Date().toISOString()
+  }
+
+  const { error: updateErr } = await supabaseAdmin.from('cases').update(update).eq('id', caseId)
   if (updateErr) {
     return Response.json({ error: 'Failed to update case.' }, { status: 500 })
   }

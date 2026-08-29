@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
+import { getReviewChecklist, isHighRiskDocument } from '@/lib/reviewChecklists'
 import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { downloadTextDocument } from '@/lib/pdfGenerator'
@@ -35,6 +36,9 @@ interface AdminCaseRow {
   reviewed_document_sent_at: string | null
   source: string | null
   is_test: boolean
+  review_checklist: Record<string, boolean> | null
+  second_reviewer_email: string | null
+  second_reviewed_at: string | null
 }
 
 interface ServiceRecordRow {
@@ -125,6 +129,8 @@ function CaseCard({
   onRegenerateDocument,
   onToggleTest,
   togglingTestId,
+  onSecondReview,
+  secondReviewingId,
   accentColor,
   domId,
 }: {
@@ -133,17 +139,21 @@ function CaseCard({
   deletingId?: string | null
   confirmDeleteId?: string | null
   regeneratingId?: string | null
-  onAction: (caseId: string, action: CaseAction) => void
+  onAction: (caseId: string, action: CaseAction, reviewChecklist?: Record<string, boolean>) => void
   onDeleteAction?: (caseId: string, action: 'request' | 'cancel' | 'confirm') => void
   onRegenerateDocument?: (caseId: string) => void
   onToggleTest?: (caseId: string, isTest: boolean) => void
   togglingTestId?: string | null
+  onSecondReview?: (caseId: string, email: string) => void
+  secondReviewingId?: string | null
   accentColor?: string
   domId?: string
 }) {
   const agent = AGENTS[c.agent_id as AgentId]
   const next = nextActionFor(c)
   const [showLetter, setShowLetter] = useState(false)
+  const [checklistChecked, setChecklistChecked] = useState<Record<string, boolean>>(c.review_checklist ?? {})
+  const [secondReviewerEmail, setSecondReviewerEmail] = useState('')
   // Only a document that's actually been paid for AND reviewed by a lawyer is the real,
   // clean deliverable — everything before that (still drafting, paid-but-unreviewed) shows
   // the same watermarked version the client saw in their own preview, so staff never end up
@@ -333,8 +343,74 @@ function CaseCard({
         )}
       </div>
 
+      {next?.action === 'markReviewed' && (() => {
+        const checklist = getReviewChecklist(c.document_title)
+        const allChecked = checklist.every((item) => checklistChecked[item.id])
+        return (
+          <div style={{ marginTop: 14, padding: '12px 14px', border: '1px solid var(--border-subtle)', borderRadius: 8, background: 'var(--bg-1)' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+              Review checklist — confirm before marking reviewed
+            </div>
+            {checklist.map((item) => (
+              <label key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, marginBottom: 6, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={!!checklistChecked[item.id]}
+                  onChange={(e) => setChecklistChecked((prev) => ({ ...prev, [item.id]: e.target.checked }))}
+                  style={{ marginTop: 2 }}
+                />
+                <span>{item.label}</span>
+              </label>
+            ))}
+            <button
+              type="button"
+              className="btn btn-sm"
+              style={{ marginTop: 8 }}
+              disabled={updatingId === c.id || !allChecked}
+              onClick={() => onAction(c.id, 'markReviewed', checklistChecked)}
+            >
+              {updatingId === c.id ? 'Updating…' : 'Mark Reviewed'}
+            </button>
+          </div>
+        )
+      })()}
+
+      {isHighRiskDocument(c.document_title) && c.status !== 'draft' && (
+        <div style={{ marginTop: 10, padding: '10px 14px', border: '1px solid var(--border-subtle)', borderRadius: 8, background: 'var(--bg-1)' }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            High-risk document — independent second reviewer (recommended)
+          </div>
+          {c.second_reviewed_at ? (
+            <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
+              Confirmed by {c.second_reviewer_email} on {formatDate(c.second_reviewed_at)}
+            </div>
+          ) : onSecondReview ? (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <input
+                type="email"
+                className="input"
+                placeholder="Second reviewer's email"
+                value={secondReviewerEmail}
+                onChange={(e) => setSecondReviewerEmail(e.target.value)}
+                style={{ maxWidth: 220, fontSize: 13 }}
+              />
+              <button
+                type="button"
+                className="btn btn-sm"
+                disabled={secondReviewingId === c.id || !secondReviewerEmail.trim()}
+                onClick={() => onSecondReview(c.id, secondReviewerEmail.trim())}
+              >
+                {secondReviewingId === c.id ? 'Saving…' : 'Confirm Second Review'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: 'var(--danger)' }}>No second reviewer recorded.</div>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-        {next && (
+        {next && next.action !== 'markReviewed' && (
           <button
             type="button"
             className="btn btn-sm"
@@ -610,6 +686,7 @@ function AdminPageInner() {
   // "Mark as Test" button on each CaseCard and app/api/admin/cases/route.ts's testFilter param.
   const [filterTest, setFilterTest] = useState<'live' | 'test' | 'all'>('live')
   const [togglingTestId, setTogglingTestId] = useState<string | null>(null)
+  const [secondReviewingId, setSecondReviewingId] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -685,13 +762,13 @@ function AdminPageInner() {
     }
   }
 
-  async function handleStatusAction(caseId: string, action: CaseAction) {
+  async function handleStatusAction(caseId: string, action: CaseAction, reviewChecklist?: Record<string, boolean>) {
     setUpdatingId(caseId)
     try {
       const res = await authedFetch('/api/update-case-status', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ caseId, action }),
+        body: JSON.stringify({ caseId, action, reviewChecklist }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -765,6 +842,28 @@ function AdminPageInner() {
       setLoadError('Network error. Please try again.')
     } finally {
       setTogglingTestId(null)
+    }
+  }
+
+  async function handleSecondReview(caseId: string, email: string) {
+    setSecondReviewingId(caseId)
+    try {
+      const res = await authedFetch('/api/admin/cases', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, secondReviewerEmail: email }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLoadError(data.error || 'Could not record the second reviewer.')
+        return
+      }
+      const now = new Date().toISOString()
+      setCases((prev) => prev.map((c) => (c.id === caseId ? { ...c, second_reviewer_email: email, second_reviewed_at: now } : c)))
+    } catch {
+      setLoadError('Network error. Please try again.')
+    } finally {
+      setSecondReviewingId(null)
     }
   }
 
@@ -941,6 +1040,8 @@ function AdminPageInner() {
                           onDeleteAction={handleDeleteAction}
                           onToggleTest={handleToggleTest}
                           togglingTestId={togglingTestId}
+                          onSecondReview={handleSecondReview}
+                          secondReviewingId={secondReviewingId}
                           accentColor={daysSincePaid >= 3 ? 'var(--danger)' : undefined}
                         />
                       )
@@ -954,7 +1055,7 @@ function AdminPageInner() {
                   {deadlinePassed.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases past their response deadline.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
                     {deadlinePassed.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} accentColor="var(--warning)" />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} onSecondReview={handleSecondReview} secondReviewingId={secondReviewingId} accentColor="var(--warning)" />
                     ))}
                   </div>
 
@@ -965,7 +1066,7 @@ function AdminPageInner() {
                   {awaitingJudgment.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases waiting on a judgment.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {awaitingJudgment.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} onSecondReview={handleSecondReview} secondReviewingId={secondReviewingId} />
                     ))}
                   </div>
                 </>
@@ -1078,6 +1179,8 @@ function AdminPageInner() {
                   onRegenerateDocument={handleRegenerateDocument}
                   onToggleTest={handleToggleTest}
                   togglingTestId={togglingTestId}
+                  onSecondReview={handleSecondReview}
+                  secondReviewingId={secondReviewingId}
                   domId={`case-${c.id}`}
                   accentColor={c.id === deepLinkCaseId ? 'var(--accent)' : undefined}
                 />

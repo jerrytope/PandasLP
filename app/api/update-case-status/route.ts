@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { isAdminEmail } from '@/lib/adminAuth'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
+import { getReviewChecklist } from '@/lib/reviewChecklists'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -59,14 +60,14 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
   }
 
-  let body: { caseId?: string; action?: Action }
+  let body: { caseId?: string; action?: Action; reviewChecklist?: Record<string, boolean> }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { caseId, action } = body
+  const { caseId, action, reviewChecklist } = body
   if (!caseId || !action || !(action in REQUIRED_PRIOR_STATUS)) {
     return Response.json({ error: 'Missing or invalid caseId/action.' }, { status: 400 })
   }
@@ -109,10 +110,26 @@ export async function POST(req: Request) {
     return Response.json({ error: 'This document must be reviewed before it can be marked served.' }, { status: 409 })
   }
 
+  // reviewed_at used to be a single click with nothing substantive behind it — a claude-council
+  // review found this let a real defect (a missing Governor's Consent clause) ship silently.
+  // markReviewed now requires every checklist item for this document's type (see
+  // lib/reviewChecklists.ts) to come back checked, not just a boolean toggle.
+  if (action === 'markReviewed') {
+    const required = getReviewChecklist(caseData.document_title)
+    const missing = required.filter((item) => reviewChecklist?.[item.id] !== true)
+    if (missing.length > 0) {
+      return Response.json(
+        { error: `Complete the review checklist before marking reviewed. Missing: ${missing.map((m) => m.label).join('; ')}` },
+        { status: 400 },
+      )
+    }
+  }
+
   const update: Record<string, unknown> = { status: NEXT_STATUS[action] }
   if (action === 'markReviewed') {
     update.reviewed_at = new Date().toISOString()
     update.reviewed_by = callerData.user.email
+    update.review_checklist = reviewChecklist
   }
   // sendReviewedDocument does NOT set reviewed_document_sent_at here — that only happens
   // further down, after sendCaseEmail actually confirms success. Setting it here would

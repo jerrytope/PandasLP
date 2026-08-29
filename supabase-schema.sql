@@ -63,6 +63,15 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- default "Live" view so test conversations don't get counted alongside paying clients;
   -- switch the Cases tab filter to "Test" or "All" to see them.
   is_test          BOOLEAN     NOT NULL DEFAULT FALSE,
+  -- per-document-type substantive review, not just the reviewed_at click — records which
+  -- checklist items (see lib/reviewChecklists.ts) a reviewer confirmed before markReviewed
+  -- was allowed to proceed. Shape: { [itemId: string]: true }. NULL until first reviewed.
+  review_checklist JSONB,
+  -- recommended (not currently enforced) independent second reviewer for the highest-risk
+  -- conveyancing document types (Deed of Assignment/Gift/Mortgage, POA, Sale of Land) — see
+  -- lib/reviewChecklists.ts's isHighRiskDocument() and app/admin/page.tsx.
+  second_reviewer_email TEXT,
+  second_reviewed_at    TIMESTAMPTZ,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -247,6 +256,13 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE;
 --   ^ "Mark as Test" flag — see app/api/admin/cases/route.ts (PATCH) and app/admin/page.tsx.
 --     Excluded from the admin Queue and the Cases tab's default view.
+--
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS review_checklist JSONB;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS second_reviewer_email TEXT;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS second_reviewed_at TIMESTAMPTZ;
+--   ^ Per-document-type review checklist + recommended second reviewer for high-risk
+--     conveyancing documents — see lib/reviewChecklists.ts, app/api/update-case-status/route.ts
+--     (markReviewed now requires the checklist), and app/admin/page.tsx.
 --
 -- ALTER TABLE public.cases RENAME COLUMN email_day7_sent TO email_day14_sent;
 -- ALTER TABLE public.cases RENAME COLUMN email_day3_sent TO email_day7_sent;
