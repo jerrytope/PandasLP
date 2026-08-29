@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-// Decorative connector for the "How It Works" 3-step grid: the line draws itself in
-// once the section scrolls into view, then a small pulse travels along it on a loop —
-// visually reinforcing that the three steps are one continuous, automated handoff.
-// Desktop-only (matches .hiw-grid's 3-column breakpoint); hidden on the single-column
-// mobile layout via CSS since the path math assumes three equal-width columns.
-export default function HiwFlowLine() {
+// Decorative connector for the "How It Works" step grid: the line draws itself in once
+// the section scrolls into view, then a small pulse travels along it on a loop — visually
+// reinforcing that the steps are one continuous, automated handoff. Desktop-only (matches
+// .hiw-grid's multi-column breakpoint); hidden on the single-column mobile layout via CSS.
+// `steps` controls how many equal-width column centers the path connects — pass the same
+// number as the .hiw-grid's item count so the nodes line up with the cards above them.
+export default function HiwFlowLine({ steps = 3 }) {
   const ref = useRef(null)
   const [visible, setVisible] = useState(false)
 
@@ -27,6 +28,10 @@ export default function HiwFlowLine() {
     return () => observer.disconnect()
   }, [])
 
+  // Center of each of `steps` equal-width columns spanning 0-100.
+  const centers = Array.from({ length: steps }, (_, i) => (100 / steps) * (i + 0.5))
+  const pathD = `M ${centers.map((x) => `${x} 5`).join(' L ')}`
+
   return (
     <svg
       ref={ref}
@@ -36,7 +41,7 @@ export default function HiwFlowLine() {
       aria-hidden="true"
     >
       <path
-        d="M 16.66 5 L 50 5 L 83.33 5"
+        d={pathD}
         className={`hiw-flow-path ${visible ? 'hiw-flow-path-drawn' : ''}`}
       />
       {visible && <circle r="0.9" className="hiw-flow-pulse">
@@ -44,10 +49,10 @@ export default function HiwFlowLine() {
           dur="3.2s"
           repeatCount="indefinite"
           begin="0.9s"
-          path="M 16.66 5 L 50 5 L 83.33 5"
+          path={pathD}
         />
       </circle>}
-      {[16.66, 50, 83.33].map((x) => (
+      {centers.map((x) => (
         <circle key={x} cx={x} cy={5} r="1.6" className="hiw-flow-node" />
       ))}
     </svg>

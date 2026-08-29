@@ -12,6 +12,10 @@ export interface AgentCapabilities {
   availability: AgentAvailability
   highlights: string[]
   differentiator: string
+  // Short workflow-state labels the AgentPreview component cycles through to make the roster
+  // card feel like a working product rather than a static description — see components/AgentPreview.tsx.
+  // Purely illustrative of the kind of work each agent does; not a live process trace.
+  previewStates: string[]
 }
 
 export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
@@ -24,6 +28,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'Automatic Day 0 / 7 / 14 follow-up tracking, with escalation to court filing if ignored',
     ],
     differentiator: 'A traditional retainer for a demand letter typically takes days of back-and-forth to schedule and draft. This is a guided interview measured in minutes, reviewed by a licensed lawyer before it goes out.',
+    previewStates: ['Reading invoice…', 'Checking payment history…', 'Reviewing evidence…', 'Preparing legal workflow…'],
   },
   'recovery-of-premises': {
     availability: 'soon',
@@ -34,6 +39,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'Powers of Attorney, Agreements for Sale of Land, and property title search reports',
     ],
     differentiator: 'Covers nine distinct Nigerian property-law document types end to end, from a single guided conversation, instead of separate consultations for each.',
+    previewStates: ['Reading tenancy agreement…', 'Identifying relevant clauses…', 'Checking notice requirements…', 'Flagging potential issues…'],
   },
   contracts: {
     availability: 'soon',
@@ -44,6 +50,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'Clause set assembled from your actual answers, not a static template you edit yourself',
     ],
     differentiator: 'Most template sites hand you a generic document to edit alone. This asks about your specific deal first, then assembles the clauses that actually apply.',
+    previewStates: ['Reading your agreement…', 'Identifying the deal terms…', 'Assembling relevant clauses…', 'Drafting your document…'],
   },
   'cac-registration': {
     availability: 'soon',
@@ -53,6 +60,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'Explains the real difference between a Business Name and an RC company registration',
     ],
     differentiator: 'Registering a company in Nigeria usually means learning CAC\'s process from scratch. This turns it into a guided conversation.',
+    previewStates: ['Understanding your business…', 'Checking registration type…', 'Preparing document checklist…', 'Readying your filing…'],
   },
   'judgment-enforcement': {
     availability: 'testing',
@@ -62,6 +70,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'Priced as a base fee plus a percentage of the judgment, so cost scales with what\'s actually owed',
     ],
     differentiator: 'Winning a case is not the same as getting paid. This picks up exactly where a court judgment leaves off.',
+    previewStates: ['Reading your judgment…', 'Checking enforcement options…', 'Preparing filing…', 'Readying next steps…'],
   },
   'lawyer-consultation': {
     availability: 'testing',
@@ -71,5 +80,6 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'The honest option when a situation doesn\'t fit a template',
     ],
     differentiator: 'Not every legal problem should be templated. This is the option for when it genuinely needs a human lawyer\'s judgment.',
+    previewStates: ['Understanding your matter…', 'Matching you to a lawyer…', 'Preparing briefing notes…', 'Ready to book…'],
   },
 }

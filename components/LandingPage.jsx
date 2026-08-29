@@ -14,6 +14,7 @@ import TypewriterHeadline from './TypewriterHeadline'
 import OrbitVisual from './OrbitVisual'
 import TypingBeat from './TypingBeat'
 import AgentCapabilitiesModal from './AgentCapabilitiesModal'
+import AgentPreview from './AgentPreview'
 import ContractRedliner from './ContractRedliner'
 import { useCountUp } from '../lib/useCountUp'
 import { formatNaira } from '../lib/formatNaira'
@@ -132,15 +133,17 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           <div className="hero-copy">
             <div className="hero-eyebrow" style={{ animationDelay: '0s' }}>
               <span className="hero-eyebrow-rule" />
-              Introducing Pandas Legal AI
+              AI-native legal services, Lagos
             </div>
 
             <h1 className="hero-headline">
-              <TypewriterHeadline lines={['They owe you.', 'We go after it.']} accentFromLine={1} />
+              <TypewriterHeadline lines={['The fastest way to', 'get legal help in Nigeria.']} accentFromLine={1} />
             </h1>
 
             <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 1.4s both' }}>
-              A demand letter in minutes, not weeks — drafted by AI, served and followed through by a licensed Nigerian lawyer. The speed of software, the precision of a law firm.
+              Legal services powered by AI. Reviewed and delivered by lawyers.
+              Describe your problem, upload your documents, and let a Pandas LP AI agent
+              handle the first layer of work — a real lawyer takes over the moment it matters.
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 1.6s both' }}>
@@ -150,11 +153,11 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                   className="btn btn-primary btn-lg"
                   onClick={() => onOpenAgent('small-claims')}
                 >
-                  Recover your money →
+                  Get legal help →
                 </button>
               </span>
-              <a href="#how-it-works" className="hero-link">
-                See how it works
+              <a href="#services" className="hero-link">
+                Explore our AI agents
               </a>
             </div>
           </div>
@@ -175,44 +178,51 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         </div>
       </div>
 
-      {/* ══ HOW IT WORKS ══ */}
-      <section className="section hiw-section" id="how-it-works" aria-label="How it works">
+      {/* ══ THE PANDAS MODEL ══ */}
+      <section className="section hiw-section" id="how-it-works" aria-label="The Pandas Model">
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">Process</span>
-              <h2>From dispute to resolution<br />in 3 steps</h2>
-              <p>We handle the paperwork. Our lawyers handle the court. You just answer a few questions.</p>
+              <span className="label-mono">The Pandas Model</span>
+              <h2>Law, rebuilt around AI.</h2>
+              <p>AI speed. Lawyer accountability.</p>
             </div>
           </Reveal>
 
-          <HiwFlowLine />
+          <HiwFlowLine steps={4} />
 
-          <div className="hiw-grid">
+          <div className="hiw-grid hiw-grid-4">
             {[
               {
                 num: '01',
                 icon: <MessageSquare size={22} strokeWidth={1.5} aria-hidden="true" />,
-                title: 'Tell us what happened',
-                body: 'Answer a few questions about who owes you and how much. Upload invoices or contracts, we read them and skip the questions we already know the answers to.',
-                detail: 'Average interview: 7 minutes',
+                title: 'Tell your AI agent what happened',
+                body: 'Describe your problem in your own words and upload any documents you have. The right specialist agent — Small Claims, Property Law, and more coming — takes it from there.',
+                detail: 'Structured intake, any time of day',
               },
               {
                 num: '02',
                 icon: <FileText size={22} strokeWidth={1.5} aria-hidden="true" />,
-                title: 'Your demand letter, ready fast',
-                body: 'In under 10 minutes, we prepare a court-ready Letter of Demand on Pandas LP letterhead, citing the correct Nigerian legal provisions. You preview it before paying.',
-                detail: 'Free watermarked preview',
+                title: 'AI does the first layer',
+                body: 'Structured questions, document analysis, issue identification, and draft preparation — the work a paralegal or junior associate would normally spend hours on.',
+                detail: 'Minutes, not weeks',
               },
               {
                 num: '03',
                 icon: <Send size={22} strokeWidth={1.5} aria-hidden="true" />,
-                title: 'A licensed lawyer serves it and follows up',
-                body: 'A Pandas LP lawyer reviews the letter and serves it on the debtor, not an email bot. Escalating follow-up notices go out at Day 7 and Day 14 automatically. If the debtor ignores all three, that same lawyer files your claim in court.',
-                detail: 'Day 0 → Day 7 → Day 14 → Court',
+                title: 'A lawyer steps in',
+                body: 'When professional legal judgment, service, filing, or representation is required, a licensed Pandas LP lawyer reviews the work and takes responsibility for it — before anything reaches a client, debtor, or court.',
+                detail: 'Human judgment, every time',
+              },
+              {
+                num: '04',
+                icon: <Scale size={22} strokeWidth={1.5} aria-hidden="true" />,
+                title: 'Move the matter forward',
+                body: 'Documents get served, filings get made, deadlines get tracked automatically. You get real progress, not just a drafted PDF.',
+                detail: 'Tracked to resolution',
               },
             ].map((step, i) => (
-              <Reveal key={step.num} delay={i * 100}>
+              <Reveal key={step.num} delay={i * 90}>
                 <div className="hiw-step-card">
                   <div className="hiw-step-num">{step.num}</div>
                   <div className="hiw-icon">{step.icon}</div>
@@ -225,6 +235,83 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ══ TRUST SECTION ══ */}
+      <section className="section" style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }} aria-label="How AI and lawyers share the work">
+        <div className="container">
+          <Reveal>
+            <div className="section-header center">
+              <span className="label-mono" style={{ color: 'var(--accent)' }}>AI-powered doesn't mean lawyer-free</span>
+              <h2>We didn't build AI to replace lawyers.<br />We built it to redesign how legal work gets done.</h2>
+            </div>
+          </Reveal>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 48 }}>
+            <Reveal delay={60}>
+              <div className="card glass-panel" style={{ padding: '28px 30px', height: '100%' }}>
+                <div className="label-mono" style={{ color: 'var(--secondary)', marginBottom: 14 }}>What AI handles</div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {['Legal intake', 'Document analysis', 'Structured questioning', 'Issue identification', 'Draft preparation', 'Workflow automation', '24/7 availability'].map((item) => (
+                    <li key={item} style={{ fontSize: 14.5, color: 'var(--text-1)', display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--secondary)', flexShrink: 0 }} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+            <Reveal delay={120}>
+              <div className="card glass-panel" style={{ padding: '28px 30px', height: '100%', borderColor: 'var(--accent-glow)' }}>
+                <div className="label-mono" style={{ color: 'var(--accent)', marginBottom: 14 }}>What Pandas LP lawyers handle</div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {['Legal review', 'Professional judgment', 'Filing', 'Service', 'Representation', 'Escalation', 'Human legal responsibility'].map((item) => (
+                    <li key={item} style={{ fontSize: 14.5, color: 'var(--text-1)', display: 'flex', gap: 10, alignItems: 'center' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0 }} />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ══ TECHNOLOGY / PIPELINE ══ */}
+      <section className="section" aria-label="How a matter moves through Pandas LP">
+        <div className="container">
+          <Reveal>
+            <div className="section-header center">
+              <span className="label-mono">How It Actually Works</span>
+              <h2>From your problem to a real outcome</h2>
+            </div>
+          </Reveal>
+
+          <Reveal delay={60}>
+            <div style={{
+              display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center',
+              gap: 8, marginTop: 48,
+            }}>
+              {['Client', 'AI Legal Agent', 'Case Understanding', 'Document / Legal Work', 'Lawyer Review', 'Outcome'].map((step, i, arr) => (
+                <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{
+                    padding: '12px 18px', borderRadius: 'var(--radius-pill)',
+                    background: i === arr.length - 1 ? 'var(--accent)' : 'var(--bg-1)',
+                    border: `1px solid ${i === arr.length - 1 ? 'var(--accent)' : 'var(--border-subtle)'}`,
+                    color: i === arr.length - 1 ? '#05070C' : 'var(--text-1)',
+                    fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
+                  }}>
+                    {step}
+                  </div>
+                  {i < arr.length - 1 && (
+                    <span style={{ color: 'var(--text-3)', fontSize: 16 }} aria-hidden="true">→</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -434,6 +521,10 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       {agent.description}
                     </p>
 
+                    <div style={{ marginBottom: 16 }}>
+                      <AgentPreview states={caps.previewStates} color={agent.color} />
+                    </div>
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>
                         {payment.amount ? formatNaira(payment.amount) : 'Ask us'}
@@ -533,6 +624,46 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             <div style={{ marginTop: 40 }}>
               <ContractRedliner />
             </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ══ SERVICE UNIVERSE ══ */}
+      <section className="section" aria-label="The full range of legal matters Pandas can help with">
+        <div className="container">
+          <Reveal>
+            <div className="section-header center">
+              <span className="label-mono">Beyond the two live agents</span>
+              <h2>Built for the legal problems Nigerians actually face</h2>
+            </div>
+          </Reveal>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, marginTop: 48 }}>
+            {[
+              { category: 'Money & Disputes', items: ['Debt Recovery', 'Small Claims', 'Judgment Enforcement'] },
+              { category: 'Property', items: ['Tenancy', 'Recovery of Premises', 'Property Documents', 'Property Disputes'] },
+              { category: 'Business', items: ['Contracts', 'NDAs', 'Partnership Agreements', 'CAC Registration', 'Business Operationalisation'] },
+              { category: 'Legal Documents', items: ['Demand Letters', 'Notices', 'Contract Review', 'Legal Correspondence'] },
+            ].map((group, i) => (
+              <Reveal key={group.category} delay={i * 70}>
+                <div className="card" style={{ padding: '22px 24px', height: '100%' }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--accent)', marginBottom: 14 }}>
+                    {group.category}
+                  </h3>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
+                    {group.items.map((item) => (
+                      <li key={item} style={{ fontSize: 13.5, color: 'var(--text-2)' }}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <Reveal delay={280}>
+            <p style={{ textAlign: 'center', marginTop: 36, color: 'var(--text-3)', fontSize: 13.5, fontFamily: 'var(--font-mono)' }}>
+              More legal agents are coming.
+            </p>
           </Reveal>
         </div>
       </section>
@@ -658,8 +789,88 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         </div>
       </section>
 
+      {/* ══ PRICING ══ */}
+      <section className="section" id="pricing" aria-label="Pricing by agent">
+        <div className="container">
+          <Reveal>
+            <div className="section-header center">
+              <span className="label-mono">Pricing</span>
+              <h2>Transparent, per-agent pricing</h2>
+              <p>No hourly billing, no surprise invoices. See exactly what you'll pay before you start.</p>
+            </div>
+          </Reveal>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginTop: 48 }}>
+            {AGENT_ROSTER_ORDER.map((id, i) => {
+              const agent = AGENTS[id]
+              const caps = AGENT_CAPABILITIES[id]
+              const payment = getAgentPayment(id)
+              const isOpen = caps.availability !== 'soon'
+              return (
+                <Reveal key={id} delay={i * 60}>
+                  <div className="card" style={{ padding: '24px 26px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 6, color: 'var(--text-1)' }}>
+                      {agent.name}
+                    </h3>
+                    <p style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 16 }}>
+                      {caps.highlights[0]}
+                    </p>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      {caps.highlights.slice(0, 3).map((h) => (
+                        <li key={h} style={{ fontSize: 13, color: 'var(--text-2)', display: 'flex', gap: 8 }}>
+                          <CheckCircle size={13} strokeWidth={2} style={{ color: 'var(--secondary)', flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--accent)', marginBottom: 14 }}>
+                      {payment.amount ? formatNaira(payment.amount) : 'Placeholder — ask us'}
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block"
+                      disabled={!isOpen}
+                      onClick={() => isOpen && onOpenAgent(id)}
+                    >
+                      {isOpen ? 'Get legal help →' : 'Coming soon'}
+                    </button>
+                  </div>
+                </Reveal>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ══ LAWYER ACCESS ══ */}
+      <section className="section" style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }} aria-label="Speak to a lawyer">
+        <div className="container">
+          <Reveal>
+            <div style={{
+              maxWidth: 640, margin: '0 auto', textAlign: 'center',
+              background: 'var(--bg-0)', border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)', padding: 'clamp(32px,5vw,56px)',
+            }}>
+              <span className="label-mono" style={{ color: 'var(--accent)' }}>Lawyer Access</span>
+              <h2 style={{ margin: '10px 0 14px' }}>Sometimes you need a lawyer.</h2>
+              <p style={{ color: 'var(--text-2)', fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
+                Not every matter fits a template. When professional legal judgment is required, the AI
+                workflow connects you directly to a real, licensed Pandas LP lawyer.
+              </p>
+              <button
+                type="button"
+                className="btn btn-primary btn-lg"
+                onClick={onStartLawyerConsult}
+              >
+                Speak to a lawyer →
+              </button>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ══ COMPARISON TABLE ══ */}
-      <section className="section" style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }} aria-label="Comparison">
+      <section className="section" aria-label="Comparison">
         <div className="container">
           <Reveal>
             <div className="section-header center">
