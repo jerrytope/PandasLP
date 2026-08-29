@@ -621,7 +621,9 @@ export default function AgentChat({
           </div>
         </div>
 
-        <div className={styles.disclaimer}>This agent prepares legal documents, not legal advice.</div>
+        <div className={styles.disclaimer}>
+          This agent uses AI to draft your document from your answers; a licensed Pandas LP lawyer reviews it before it's sent to you. It prepares legal documents, not legal advice.
+        </div>
 
         {payOpen && !paid ? (
           <div className={styles.payWrap}>
