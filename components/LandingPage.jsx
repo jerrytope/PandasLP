@@ -13,48 +13,26 @@ import HiwFlowLine from './HiwFlowLine'
 import TypewriterHeadline from './TypewriterHeadline'
 import OrbitVisual from './OrbitVisual'
 import TypingBeat from './TypingBeat'
+import AgentCapabilitiesModal from './AgentCapabilitiesModal'
+import ContractRedliner from './ContractRedliner'
 import { useCountUp } from '../lib/useCountUp'
 import { formatNaira } from '../lib/formatNaira'
+import { AGENTS } from '../lib/agents'
+import { AGENT_CAPABILITIES } from '../lib/agentCapabilities'
+import { getAgentPayment } from '../lib/agentServiceMap'
 
 /* ── Services config ── */
-const TESTING_SERVICES = [
-  {
-    id: 'judgment-enforcement',
-    icon: <Gavel size={20} strokeWidth={1.5} aria-hidden="true" />,
-    name: 'Judgment Enforcement',
-    shortName: 'Enforce a judgment',
-    description: 'Already won in court but the debtor won\'t pay? We file a Garnishee Order or Writ of Execution to compel payment.',
-    price: '₦10,000 + 5% of judgment',
-  },
-  {
-    id: 'lawyer-consultation',
-    icon: <CalendarCheck size={20} strokeWidth={1.5} aria-hidden="true" />,
-    name: 'Lawyer Consultation',
-    shortName: 'Speak to a lawyer',
-    description: 'Book a 45-minute session with a licensed Nigerian lawyer. Get real legal advice, one-on-one.',
-    price: '₦15,000 per session',
-  },
-]
-
-const COMING_SOON_SERVICES = [
-  {
-    id: 'recovery-of-premises',
-    icon: <Building2 size={20} strokeWidth={1.5} aria-hidden="true" />,
-    name: 'Recovery of Premises',
-    description: 'Tenant won\'t leave after notice? We prepare your eviction letter and file at the Rent Tribunal.',
-  },
-  {
-    id: 'contracts',
-    icon: <Briefcase size={20} strokeWidth={1.5} aria-hidden="true" />,
-    name: 'Contracts & Commercial',
-    description: 'Draft or review business agreements, NDAs, service contracts, and partnership deeds.',
-  },
-  {
-    id: 'cac-registration',
-    icon: <Shield size={20} strokeWidth={1.5} aria-hidden="true" />,
-    name: 'CAC Registration',
-    description: 'Register your business with the Corporate Affairs Commission. Business name or full incorporation.',
-  },
+// Display order for the "Meet Our AI Legal Agents" roster — real agents from lib/agents.ts,
+// availability per lib/agentCapabilities.ts (matches the deliberate staged-rollout state: only
+// small-claims is fully public; judgment-enforcement/lawyer-consultation are open for testing;
+// recovery-of-premises/contracts/cac-registration aren't linked to chat from here yet).
+const AGENT_ROSTER_ORDER = [
+  'small-claims',
+  'judgment-enforcement',
+  'lawyer-consultation',
+  'recovery-of-premises',
+  'contracts',
+  'cac-registration',
 ]
 
 /* ── Trust badges marquee items ── */
@@ -100,6 +78,7 @@ const LAWYER_EQUIV = 80000
 /* ── Comparison rows ── */
 const COMPARE = [
   { label: 'Time to start',       pandas: '10 minutes',           trad: '2-4 weeks',       diy: 'Weeks of research' },
+  { label: 'Pricing',             pandas: '✓ Flat, upfront',      trad: 'Hourly retainer',  diy: '✗ Hidden mistakes' },
   { label: 'Legal expertise',     pandas: '✓ Licensed lawyers',   trad: '✓ Lawyers only',  diy: '✗ None' },
   { label: 'Automated follow-up', pandas: '✓ Day 0, 7, 14',       trad: 'Manual',          diy: 'You chase them' },
   { label: 'Court filing',        pandas: '✓ Handled by us',      trad: '✓ Handled',       diy: '✗ Figure it out' },
@@ -115,6 +94,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
   // Notify me state: { [serviceId]: 'idle' | 'open' | 'submitting' | 'done' }
   const [notifyState, setNotifyState] = useState({})
   const [notifyEmails, setNotifyEmails] = useState({})
+  const [capabilitiesAgentId, setCapabilitiesAgentId] = useState(null)
 
   async function handleNotifySubmit(serviceId, serviceName) {
     const email = notifyEmails[serviceId] || ''
@@ -152,7 +132,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           <div className="hero-copy">
             <div className="hero-eyebrow" style={{ animationDelay: '0s' }}>
               <span className="hero-eyebrow-rule" />
-              Nigeria's fastest way to recover what you're owed
+              Introducing Pandas Legal AI
             </div>
 
             <h1 className="hero-headline">
@@ -160,8 +140,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </h1>
 
             <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 1.4s both' }}>
-              Demand letter ready today. A licensed lawyer serves it and,
-              if needed, takes it to court in 14 days.
+              A demand letter in minutes, not weeks — drafted by AI, served and followed through by a licensed Nigerian lawyer. The speed of software, the precision of a law firm.
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 1.6s both' }}>
@@ -412,153 +391,147 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         </div>
       </section>
 
-      {/* ══ OTHER SERVICES ══ */}
-      <section className="section" id="services" aria-label="Other services">
+      {/* ══ MEET OUR AI LEGAL AGENTS ══ */}
+      <section className="section" id="services" aria-label="Our AI legal agents">
         <div className="container">
           <Reveal>
-            <div className="section-header">
-              <h2>More ways we can help</h2>
-              <p>Debt recovery is our flagship. Here's what else is live and what's coming.</p>
+            <div className="section-header center">
+              <span className="label-mono" style={{ color: 'var(--accent)' }}>Pandas Legal AI</span>
+              <h2>Meet Our AI Legal Agents</h2>
+              <p>Each agent is a specialist, guided by the same licensed lawyers who review everything it drafts.</p>
             </div>
           </Reveal>
 
-          {/* Available for Testing */}
-          <Reveal delay={80}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <span className="label-mono">Available for Testing</span>
-              <span className="badge badge-accent">BETA</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, marginBottom: 48 }}>
-              {TESTING_SERVICES.map((svc, i) => (
-                <Reveal key={svc.id} delay={i * 70}>
-                  <div
-                    className="card card-interactive"
-                    style={{ position: 'relative', overflow: 'hidden', padding: '24px 26px', cursor: 'pointer' }}
-                    onClick={() => onOpenAgent(svc.id)}
-                    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') onOpenAgent(svc.id) }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Start ${svc.name}`}
-                  >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18, marginTop: 48 }}>
+            {AGENT_ROSTER_ORDER.map((id, i) => {
+              const agent = AGENTS[id]
+              const caps = AGENT_CAPABILITIES[id]
+              const payment = getAgentPayment(id)
+              const ns = notifyState[id] || 'idle'
+              const email = notifyEmails[id] || ''
+              const isOpen = caps.availability !== 'soon'
+
+              return (
+                <Reveal key={id} delay={i * 60}>
+                  <div className="card glass-panel card-gradient" style={{ position: 'relative', overflow: 'hidden', padding: '24px 26px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                       <div style={{
-                        width: 40, height: 40, borderRadius: 10,
-                        background: 'var(--bg-2)', border: '1px solid var(--border-subtle)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--accent)',
+                        width: 42, height: 42, borderRadius: 11,
+                        background: 'var(--bg-2)', border: `1px solid ${agent.color}55`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
                       }}>
-                        {svc.icon}
+                        {agent.icon}
                       </div>
-                      <span className="badge badge-accent badge-sm">BETA</span>
+                      <span className={`badge badge-sm ${caps.availability === 'live' ? 'badge-accent' : caps.availability === 'testing' ? 'badge-accent' : 'badge-muted'}`}>
+                        {caps.availability === 'live' ? 'LIVE' : caps.availability === 'testing' ? 'TESTING' : 'SOON'}
+                      </span>
                     </div>
 
-                    <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-mono)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      {svc.shortName}
-                    </div>
                     <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 8, color: 'var(--text-1)' }}>
-                      {svc.name}
+                      {agent.name}
                     </h3>
-                    <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 16 }}>
-                      {svc.description}
+                    <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 16, flex: 1 }}>
+                      {agent.description}
                     </p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>{svc.price}</span>
-                      <span style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600 }}>Try it →</span>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>
+                        {payment.amount ? formatNaira(payment.amount) : 'Ask us'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCapabilitiesAgentId(id)}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--secondary)', fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                      >
+                        Check Capabilities →
+                      </button>
                     </div>
+
+                    {isOpen ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-block"
+                        onClick={() => onOpenAgent(id)}
+                      >
+                        Engage Agent
+                      </button>
+                    ) : ns === 'done' ? (
+                      <div style={{ fontSize: 13, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <CheckCircle size={14} strokeWidth={2} aria-hidden="true" />
+                        We'll let you know when it's live.
+                      </div>
+                    ) : ns === 'open' || ns === 'submitting' || ns === 'error' ? (
+                      <div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input
+                            type="email"
+                            className="input"
+                            placeholder="your@email.com"
+                            value={email}
+                            autoFocus
+                            onChange={e => setNotifyEmails(s => ({ ...s, [id]: e.target.value }))}
+                            onKeyDown={e => { if (e.key === 'Enter') handleNotifySubmit(id, agent.name) }}
+                            style={{ flex: 1, fontSize: 13, padding: '9px 12px' }}
+                            aria-label={`Email to be notified about ${agent.name}`}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={!email || ns === 'submitting'}
+                            onClick={() => handleNotifySubmit(id, agent.name)}
+                          >
+                            {ns === 'submitting' ? '…' : ns === 'error' ? 'Retry' : 'Notify'}
+                          </button>
+                        </div>
+                        {ns === 'error' && (
+                          <p style={{ color: 'var(--danger)', fontSize: 12, margin: '6px 0 0' }}>
+                            Something went wrong. Please try again.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className="notify-btn"
+                        onClick={() => setNotifyState(s => ({ ...s, [id]: 'open' }))}
+                      >
+                        <Bell size={13} strokeWidth={1.5} aria-hidden="true" />
+                        Notify me when live
+                      </button>
+                    )}
                   </div>
                 </Reveal>
-              ))}
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {capabilitiesAgentId && (
+        <AgentCapabilitiesModal
+          agent={AGENTS[capabilitiesAgentId]}
+          onClose={() => setCapabilitiesAgentId(null)}
+          onEngage={() => {
+            const id = capabilitiesAgentId
+            setCapabilitiesAgentId(null)
+            onOpenAgent(id)
+          }}
+        />
+      )}
+
+      {/* ══ CONTRACT REDLINER ══ */}
+      <section className="section" style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }} aria-label="Contract risk analyzer demo">
+        <div className="container">
+          <Reveal>
+            <div className="section-header center">
+              <span className="label-mono" style={{ color: 'var(--accent)' }}>Try It Live</span>
+              <h2>AI Contract Redliner &amp; Risk Analyzer</h2>
+              <p>Paste a real clause and see what our AI flags — free, no sign-up. This live demo isn't reviewed by a lawyer; documents Pandas LP actually prepares for you always are.</p>
             </div>
           </Reveal>
-
-          {/* Coming Soon */}
-          <Reveal delay={120}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <span className="label-mono">Coming Soon</span>
-              <span className="badge badge-muted">SOON</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-              {COMING_SOON_SERVICES.map((svc, i) => {
-                const ns    = notifyState[svc.id] || 'idle'
-                const email = notifyEmails[svc.id] || ''
-                return (
-                  <Reveal key={svc.id} delay={i * 60}>
-                    <div style={{
-                      background: 'var(--bg-1)',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: '24px 26px',
-                      position: 'relative', overflow: 'hidden',
-                      opacity: 0.7,
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                        <div style={{
-                          width: 40, height: 40, borderRadius: 10,
-                          background: 'var(--bg-2)', border: '1px solid var(--border-subtle)',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          color: 'var(--text-3)',
-                        }}>
-                          {svc.icon}
-                        </div>
-                        <span className="badge badge-muted badge-sm">SOON</span>
-                      </div>
-
-                      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 8, color: 'var(--text-2)' }}>
-                        {svc.name}
-                      </h3>
-                      <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.65, marginBottom: 16 }}>
-                        {svc.description}
-                      </p>
-
-                      {/* Notify me flow */}
-                      {ns === 'done' ? (
-                        <div style={{ fontSize: 13, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <CheckCircle size={14} strokeWidth={2} aria-hidden="true" />
-                          We'll let you know when it's live.
-                        </div>
-                      ) : ns === 'open' || ns === 'submitting' || ns === 'error' ? (
-                        <div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <input
-                              type="email"
-                              className="input"
-                              placeholder="your@email.com"
-                              value={email}
-                              autoFocus
-                              onChange={e => setNotifyEmails(s => ({ ...s, [svc.id]: e.target.value }))}
-                              onKeyDown={e => { if (e.key === 'Enter') handleNotifySubmit(svc.id, svc.name) }}
-                              style={{ flex: 1, fontSize: 13, padding: '9px 12px' }}
-                              aria-label={`Email to be notified about ${svc.name}`}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-primary btn-sm"
-                              disabled={!email || ns === 'submitting'}
-                              onClick={() => handleNotifySubmit(svc.id, svc.name)}
-                            >
-                              {ns === 'submitting' ? '…' : ns === 'error' ? 'Retry' : 'Notify me'}
-                            </button>
-                          </div>
-                          {ns === 'error' && (
-                            <p style={{ color: 'var(--danger)', fontSize: 12, margin: '6px 0 0' }}>
-                              Something went wrong. Please try again.
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className="notify-btn"
-                          onClick={() => setNotifyState(s => ({ ...s, [svc.id]: 'open' }))}
-                        >
-                          <Bell size={13} strokeWidth={1.5} aria-hidden="true" />
-                          Notify me when live
-                        </button>
-                      )}
-                    </div>
-                  </Reveal>
-                )
-              })}
+          <Reveal delay={80}>
+            <div style={{ marginTop: 40 }}>
+              <ContractRedliner />
             </div>
           </Reveal>
         </div>
@@ -690,6 +663,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
+              <span className="label-mono" style={{ color: 'var(--accent)' }}>Pandas Legal AI vs. The Alternatives</span>
               <h2>The fastest path to getting paid</h2>
             </div>
           </Reveal>
@@ -700,8 +674,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 <thead>
                   <tr>
                     <th style={{ width: '28%', background: 'var(--bg-0)' }}></th>
-                    <th className="comparison-col-pandas" style={{ textAlign: 'center' }}>Pandas LP</th>
-                    <th style={{ textAlign: 'center', background: 'var(--bg-0)' }}>Traditional Lawyer</th>
+                    <th className="comparison-col-pandas" style={{ textAlign: 'center' }}>Pandas Legal AI</th>
+                    <th style={{ textAlign: 'center', background: 'var(--bg-0)' }}>Traditional Law Firm</th>
                     <th style={{ textAlign: 'center', background: 'var(--bg-0)' }}>Do It Yourself</th>
                   </tr>
                 </thead>

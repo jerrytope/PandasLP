@@ -398,6 +398,9 @@ h1, h2, h3, h4, h5, h6 {
 .notify-btn:hover { border-color: var(--border-focus); color: var(--text-1); }
 
 /* ── Animations ── */
+.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 @keyframes border-shimmer {
   0%   { background-position: 0%   50%; }
   100% { background-position: 200% 50%; }
