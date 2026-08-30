@@ -6,7 +6,7 @@ import {
   MessageSquare, FileText, Send, Scale, Shield, Clock,
   TrendingUp, ChevronDown, CheckCircle, ArrowUpRight,
   Sparkles, Users, Zap, Gavel, Building2, Briefcase,
-  CalendarCheck, Bell, Brain, Eye, Heart
+  Brain, Eye, Heart
 } from 'lucide-react'
 import Reveal from './Reveal'
 import HiwFlowLine from './HiwFlowLine'
@@ -104,26 +104,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
   const [faqTab, setFaqTab]       = useState('Getting Started')
   const [demandFeeCount, priceRowRef] = useCountUp(DEMAND_FEE, { duration: 1000, startDelay: 200 })
 
-  // Notify me state: { [serviceId]: 'idle' | 'open' | 'submitting' | 'done' }
-  const [notifyState, setNotifyState] = useState({})
-  const [notifyEmails, setNotifyEmails] = useState({})
   const [capabilitiesAgentId, setCapabilitiesAgentId] = useState(null)
-
-  async function handleNotifySubmit(serviceId, serviceName) {
-    const email = notifyEmails[serviceId] || ''
-    if (!email) return
-    setNotifyState(s => ({ ...s, [serviceId]: 'submitting' }))
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ service: serviceName, email }),
-      })
-      setNotifyState(s => ({ ...s, [serviceId]: res.ok ? 'done' : 'error' }))
-    } catch {
-      setNotifyState(s => ({ ...s, [serviceId]: 'error' }))
-    }
-  }
 
   const hasAmount = amount.replace(/[^0-9]/g, '').length > 0
   const savings   = LAWYER_EQUIV - DEMAND_FEE
@@ -452,29 +433,29 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         </div>
       </section>
 
-      {/* ══ MEET OUR AI LEGAL AGENTS ══ */}
-      <section className="section" id="services" aria-label="Our AI legal agents">
+      {/* ══ MEET OUR AI LEGAL AGENTS + PRICING (merged) ══ */}
+      <section className="section" id="services" aria-label="Our AI legal agents and pricing">
         <div className="container">
           <Reveal>
             <div className="section-header center">
               <SectionLabel>Pandas Legal AI</SectionLabel>
               <h2>Meet Our AI Legal Agents</h2>
-              <p>Each agent is a specialist, guided by the same licensed lawyers who review everything it drafts.</p>
+              <p>
+                Each agent is a specialist, guided by the same licensed lawyers who review everything it drafts.
+                Transparent, per-agent pricing — no hourly billing, no surprise invoices, see exactly what you'll pay before you start.
+              </p>
             </div>
           </Reveal>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 18, marginTop: 48 }}>
-            {AGENT_ROSTER_ORDER.map((id, i) => {
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 420px))', gap: 20, marginTop: 48, justifyContent: 'center' }}>
+            {AGENT_ROSTER_ORDER.filter((id) => AGENT_CAPABILITIES[id].availability === 'live').map((id, i) => {
               const agent = AGENTS[id]
               const caps = AGENT_CAPABILITIES[id]
               const payment = getAgentPayment(id)
-              const ns = notifyState[id] || 'idle'
-              const email = notifyEmails[id] || ''
-              const isOpen = caps.availability !== 'soon'
 
               return (
                 <Reveal key={id} delay={i * 60}>
-                  <div className="card glass-panel card-gradient" style={{ position: 'relative', overflow: 'hidden', padding: '24px 26px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <div className="card glass-panel card-gradient" style={{ position: 'relative', overflow: 'hidden', padding: '26px 28px', height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
                       <div style={{
                         width: 42, height: 42, borderRadius: 11,
@@ -483,26 +464,29 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       }}>
                         {agent.icon}
                       </div>
-                      <span className={`badge badge-sm ${caps.availability === 'live' ? 'badge-accent' : 'badge-muted'}`}>
-                        {caps.availability === 'live' ? '🟢 LIVE' : '🔒 Coming Soon'}
-                      </span>
+                      <span className="badge badge-sm badge-accent">🟢 LIVE</span>
                     </div>
 
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 8, color: 'var(--text-1)' }}>
+                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 8, color: 'var(--text-1)' }}>
                       {agent.name}
                     </h3>
-                    <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 16, flex: 1 }}>
+                    <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65, marginBottom: 18 }}>
                       {agent.description}
                     </p>
 
-                    <p style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 16, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
-                      {caps.highlights[0]}
-                    </p>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                      {caps.highlights.slice(0, 3).map((h) => (
+                        <li key={h} style={{ fontSize: 13, color: 'var(--text-2)', display: 'flex', gap: 8 }}>
+                          <CheckCircle size={13} strokeWidth={2} style={{ color: 'var(--secondary)', flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--accent)' }}>
                         {payment.amount ? formatNaira(payment.amount) : 'Ask us'}
-                      </span>
+                      </div>
                       <button
                         type="button"
                         onClick={() => setCapabilitiesAgentId(id)}
@@ -512,58 +496,13 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       </button>
                     </div>
 
-                    {isOpen ? (
-                      <button
-                        type="button"
-                        className="btn btn-primary btn-block"
-                        onClick={() => onOpenAgent(id)}
-                      >
-                        Engage Agent
-                      </button>
-                    ) : ns === 'done' ? (
-                      <div style={{ fontSize: 13, color: 'var(--secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <CheckCircle size={14} strokeWidth={2} aria-hidden="true" />
-                        We'll let you know when it's live.
-                      </div>
-                    ) : ns === 'open' || ns === 'submitting' || ns === 'error' ? (
-                      <div>
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <input
-                            type="email"
-                            className="input"
-                            placeholder="your@email.com"
-                            value={email}
-                            autoFocus
-                            onChange={e => setNotifyEmails(s => ({ ...s, [id]: e.target.value }))}
-                            onKeyDown={e => { if (e.key === 'Enter') handleNotifySubmit(id, agent.name) }}
-                            style={{ flex: 1, fontSize: 13, padding: '9px 12px' }}
-                            aria-label={`Email to be notified about ${agent.name}`}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-primary btn-sm"
-                            disabled={!email || ns === 'submitting'}
-                            onClick={() => handleNotifySubmit(id, agent.name)}
-                          >
-                            {ns === 'submitting' ? '…' : ns === 'error' ? 'Retry' : 'Notify'}
-                          </button>
-                        </div>
-                        {ns === 'error' && (
-                          <p style={{ color: 'var(--danger)', fontSize: 12, margin: '6px 0 0' }}>
-                            Something went wrong. Please try again.
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        className="notify-btn"
-                        onClick={() => setNotifyState(s => ({ ...s, [id]: 'open' }))}
-                      >
-                        <Bell size={13} strokeWidth={1.5} aria-hidden="true" />
-                        Notify me when live
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-block"
+                      onClick={() => onOpenAgent(id)}
+                    >
+                      Engage Agent
+                    </button>
                   </div>
                 </Reveal>
               )
@@ -742,59 +681,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               </button>
             </div>
           </Reveal>
-        </div>
-      </section>
-
-      {/* ══ PRICING ══ */}
-      <section className="section" id="agent-pricing" aria-label="Pricing by agent">
-        <div className="container">
-          <Reveal>
-            <div className="section-header center">
-              <SectionLabel>Pricing</SectionLabel>
-              <h2>Transparent, per-agent pricing</h2>
-              <p>No hourly billing, no surprise invoices. See exactly what you'll pay before you start.</p>
-            </div>
-          </Reveal>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, marginTop: 48 }}>
-            {AGENT_ROSTER_ORDER.map((id, i) => {
-              const agent = AGENTS[id]
-              const caps = AGENT_CAPABILITIES[id]
-              const payment = getAgentPayment(id)
-              const isOpen = caps.availability !== 'soon'
-              return (
-                <Reveal key={id} delay={i * 60}>
-                  <div className="card" style={{ padding: '24px 26px', height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, marginBottom: 6, color: 'var(--text-1)' }}>
-                      {agent.name}
-                    </h3>
-                    <p style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 16 }}>
-                      {caps.highlights[0]}
-                    </p>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
-                      {caps.highlights.slice(0, 3).map((h) => (
-                        <li key={h} style={{ fontSize: 13, color: 'var(--text-2)', display: 'flex', gap: 8 }}>
-                          <CheckCircle size={13} strokeWidth={2} style={{ color: 'var(--secondary)', flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
-                          {h}
-                        </li>
-                      ))}
-                    </ul>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, color: 'var(--accent)', marginBottom: 14 }}>
-                      {payment.amount ? formatNaira(payment.amount) : 'Placeholder — ask us'}
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary btn-block"
-                      disabled={!isOpen}
-                      onClick={() => isOpen && onOpenAgent(id)}
-                    >
-                      {isOpen ? 'Get legal help →' : 'Coming soon'}
-                    </button>
-                  </div>
-                </Reveal>
-              )
-            })}
-          </div>
         </div>
       </section>
 
