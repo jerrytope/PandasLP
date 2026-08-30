@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
-import { PANDAS_LOGO_LIGHT_DATA_URI } from '@/lib/logoDataLight'
+import { PANDAS_LOGO_DATA_URI } from '@/lib/logoData'
 
 export const alt = 'Pandas LP: Legal Resources'
 export const size = { width: 1200, height: 630 }
@@ -27,7 +27,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#05070C',
+          background: '#FAFAF8',
           padding: '64px 72px',
           position: 'relative',
         }}
@@ -40,16 +40,16 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             width: 560,
             height: 560,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(212,175,55,0.3) 0%, rgba(212,175,55,0) 70%)',
+            background: 'radial-gradient(circle, rgba(184,134,11,0.15) 0%, rgba(184,134,11,0) 70%)',
             display: 'flex',
           }}
         />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={PANDAS_LOGO_LIGHT_DATA_URI} width={81} height={53} alt="" />
-          <span style={{ fontSize: 24, fontWeight: 700, color: '#F3EFE3', letterSpacing: '-0.02em' }}>
-            Pandas <span style={{ color: '#D4AF37' }}>LP</span>
+          <img src={PANDAS_LOGO_DATA_URI} width={81} height={53} alt="" />
+          <span style={{ fontSize: 24, fontWeight: 700, color: '#1A1A1A', letterSpacing: '-0.01em' }}>
+            Pandas <span style={{ color: '#B8860B' }}>LP</span>
           </span>
         </div>
 
@@ -58,21 +58,21 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             style={{
               fontSize: 20,
               fontWeight: 600,
-              color: '#D4AF37',
-              letterSpacing: '0.08em',
+              color: '#B8860B',
+              letterSpacing: '0.15em',
               textTransform: 'uppercase',
             }}
           >
             {category}
           </span>
-          <span style={{ fontSize: 54, fontWeight: 700, color: '#F3EFE3', lineHeight: 1.15, letterSpacing: '-0.02em' }}>
+          <span style={{ fontSize: 54, fontWeight: 500, color: '#1A1A1A', lineHeight: 1.15, letterSpacing: '-0.01em' }}>
             {title}
           </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 40, height: 3, background: '#D4AF37', display: 'flex' }} />
-          <span style={{ fontSize: 20, color: '#ABB1A2', letterSpacing: '0.02em' }}>
+          <div style={{ width: 40, height: 1, background: '#B8860B', display: 'flex' }} />
+          <span style={{ fontSize: 20, color: '#6B6B6B', letterSpacing: '0.02em' }}>
             pandaslp.com.ng
           </span>
         </div>

@@ -13,6 +13,7 @@ import HiwFlowLine from './HiwFlowLine'
 import TypewriterHeadline from './TypewriterHeadline'
 import OrbitVisual from './OrbitVisual'
 import TypingBeat from './TypingBeat'
+import SectionLabel from './SectionLabel'
 import AgentCapabilitiesModal from './AgentCapabilitiesModal'
 import AgentPreview from './AgentPreview'
 import { useCountUp } from '../lib/useCountUp'
@@ -159,11 +160,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 1.6s both' }}>
-              <span className="btn-border-glow">
-                <a href="#services" className="btn btn-primary btn-lg">
-                  Explore Our AI Agents →
-                </a>
-              </span>
+              <a href="#services" className="btn btn-primary btn-lg">
+                Explore Our AI Agents →
+              </a>
               <button
                 type="button"
                 className="hero-link"
@@ -195,7 +194,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">The Pandas Model</span>
+              <SectionLabel>The Pandas Model</SectionLabel>
               <h2>Law, rebuilt around AI.</h2>
               <p>AI speed. Lawyer accountability.</p>
             </div>
@@ -255,7 +254,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>AI-powered doesn't mean lawyer-free</span>
+              <SectionLabel>AI-powered doesn't mean lawyer-free</SectionLabel>
               <h2>We didn't build AI to replace lawyers.<br />We built it to redesign how legal work gets done.</h2>
             </div>
           </Reveal>
@@ -459,7 +458,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>Pandas Legal AI</span>
+              <SectionLabel>Pandas Legal AI</SectionLabel>
               <h2>Meet Our AI Legal Agents</h2>
               <p>Each agent is a specialist, guided by the same licensed lawyers who review everything it drafts.</p>
             </div>
@@ -591,7 +590,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">Beyond the two live agents</span>
+              <SectionLabel>Beyond the two live agents</SectionLabel>
               <h2>Built for the legal problems Nigerians actually face</h2>
             </div>
           </Reveal>
@@ -678,7 +677,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">Pricing</span>
+              <SectionLabel>Pricing</SectionLabel>
               <h2>Know the cost before you start</h2>
               <p>Enter the amount you're owed and see an instant breakdown, no surprises.</p>
             </div>
@@ -748,11 +747,11 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
       </section>
 
       {/* ══ PRICING ══ */}
-      <section className="section" id="pricing" aria-label="Pricing by agent">
+      <section className="section" id="agent-pricing" aria-label="Pricing by agent">
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono">Pricing</span>
+              <SectionLabel>Pricing</SectionLabel>
               <h2>Transparent, per-agent pricing</h2>
               <p>No hourly billing, no surprise invoices. See exactly what you'll pay before you start.</p>
             </div>
@@ -809,7 +808,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               background: 'var(--bg-0)', border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-lg)', padding: 'clamp(32px,5vw,56px)',
             }}>
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>Lawyer Access</span>
+              <SectionLabel>Lawyer Access</SectionLabel>
               <h2 style={{ margin: '10px 0 14px' }}>Sometimes you need a lawyer.</h2>
               <p style={{ color: 'var(--text-2)', fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
                 Not every matter fits a template. When professional legal judgment is required, the AI
@@ -832,7 +831,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
         <div className="container">
           <Reveal>
             <div className="section-header center">
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>Pandas Legal AI vs. The Alternatives</span>
+              <SectionLabel>Pandas Legal AI vs. The Alternatives</SectionLabel>
               <h2>The fastest path to getting paid</h2>
             </div>
           </Reveal>
@@ -894,7 +893,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                 pointerEvents: 'none',
               }} />
 
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>Founding Access</span>
+              <SectionLabel>Founding Access</SectionLabel>
 
               <h2 style={{
                 fontFamily: 'var(--font-display)', fontWeight: 800,
@@ -967,7 +966,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               background: 'var(--bg-0)', border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-lg)', padding: 'clamp(32px,5vw,56px)',
             }}>
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>Refer a Friend</span>
+              <SectionLabel>Refer a Friend</SectionLabel>
               <h2 style={{ margin: '10px 0 14px' }}>Know someone who needs this?</h2>
               <p style={{ color: 'var(--text-2)', fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
                 Share your link with a friend or colleague. We track every referral —

@@ -3,13 +3,15 @@
 import { Scale, FileText, Shield, Gavel, MessageSquare, Clock } from 'lucide-react'
 import { useCountUp } from '../lib/useCountUp'
 
+// Monochrome + single accent, per the editorial design system — no rainbow of hues, just
+// gold (the one accent) alternating with the rich-black foreground tone.
 const BADGES = [
-  { icon: Scale, ring: 1, angle: 40, color: '#D4AF37' },
-  { icon: Gavel, ring: 1, angle: 220, color: '#93A6C9' },
-  { icon: FileText, ring: 2, angle: 120, color: '#818CF8' },
-  { icon: MessageSquare, ring: 2, angle: 305, color: '#38BDF8' },
-  { icon: Shield, ring: 3, angle: 15, color: '#D4AF37' },
-  { icon: Clock, ring: 3, angle: 195, color: '#93A6C9' },
+  { icon: Scale, ring: 1, angle: 40, color: '#B8860B' },
+  { icon: Gavel, ring: 1, angle: 220, color: '#1A1A1A' },
+  { icon: FileText, ring: 2, angle: 120, color: '#B8860B' },
+  { icon: MessageSquare, ring: 2, angle: 305, color: '#1A1A1A' },
+  { icon: Shield, ring: 3, angle: 15, color: '#B8860B' },
+  { icon: Clock, ring: 3, angle: 195, color: '#1A1A1A' },
 ]
 
 export default function OrbitVisual() {

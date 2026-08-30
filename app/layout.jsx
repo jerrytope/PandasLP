@@ -1,5 +1,5 @@
 import Script from 'next/script'
-import { Playfair_Display, Inter, Geist_Mono } from 'next/font/google'
+import { Playfair_Display, Source_Sans_3, IBM_Plex_Mono } from 'next/font/google'
 import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
@@ -13,13 +13,13 @@ const display = Playfair_Display({
   weight: ['500', '600', '700', '800'],
 })
 
-const sans = Inter({
+const sans = Source_Sans_3({
   subsets: ['latin'],
   variable: '--font-sans',
   weight: ['400', '500', '600', '700'],
 })
 
-const mono = Geist_Mono({
+const mono = IBM_Plex_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500'],
@@ -76,7 +76,7 @@ export const metadata = {
 // object in Next 14+) — this is what colors the Android status bar / task switcher when the
 // app is installed, matching the manifest's own theme_color.
 export const viewport = {
-  themeColor: '#05070C',
+  themeColor: '#FAFAF8',
 }
 
 const legalServiceJsonLd = {

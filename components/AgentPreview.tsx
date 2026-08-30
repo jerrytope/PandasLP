@@ -30,7 +30,7 @@ export default function AgentPreview({ states, color }: { states: string[]; colo
         gap: 8,
         padding: '8px 12px',
         borderRadius: 'var(--radius-md)',
-        background: 'rgba(5, 7, 12, 0.35)',
+        background: 'var(--bg-1)',
         border: '1px solid var(--border-subtle)',
         fontSize: 12.5,
         fontFamily: 'var(--font-mono)',
