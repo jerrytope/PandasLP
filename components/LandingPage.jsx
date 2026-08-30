@@ -15,7 +15,6 @@ import OrbitVisual from './OrbitVisual'
 import TypingBeat from './TypingBeat'
 import SectionLabel from './SectionLabel'
 import AgentCapabilitiesModal from './AgentCapabilitiesModal'
-import AgentPreview from './AgentPreview'
 import { useCountUp } from '../lib/useCountUp'
 import { formatNaira } from '../lib/formatNaira'
 import { AGENTS } from '../lib/agents'
@@ -496,9 +495,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       {agent.description}
                     </p>
 
-                    <div style={{ marginBottom: 16 }}>
-                      <AgentPreview states={caps.previewStates} color={agent.color} />
-                    </div>
+                    <p style={{ fontSize: 12.5, color: 'var(--text-3)', lineHeight: 1.6, marginBottom: 16, paddingTop: 12, borderTop: '1px solid var(--border-subtle)' }}>
+                      {caps.highlights[0]}
+                    </p>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent)' }}>

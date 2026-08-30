@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, ShieldCheck } from 'lucide-react'
 import type { Agent } from '@/lib/agents'
 import { AGENT_CAPABILITIES } from '@/lib/agentCapabilities'
 import { getAgentPayment } from '@/lib/agentServiceMap'
@@ -126,6 +126,20 @@ export default function AgentCapabilitiesModal({
           }}>
             {caps.differentiator}
           </div>
+        )}
+
+        {caps?.safeguards && caps.safeguards.length > 0 && (
+          <>
+            <div className="label-mono" style={{ marginBottom: 10 }}>Safeguards</div>
+            <ul style={{ listStyle: 'none', margin: '0 0 24px', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {caps.safeguards.map((s) => (
+                <li key={s} style={{ display: 'flex', gap: 10, fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.6 }}>
+                  <ShieldCheck size={15} strokeWidth={1.5} style={{ color: 'var(--text-3)', flexShrink: 0, marginTop: 2 }} aria-hidden="true" />
+                  {s}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>

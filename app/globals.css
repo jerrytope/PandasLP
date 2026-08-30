@@ -412,13 +412,6 @@ h1, h2, h3, h4, h5, h6 {
 .notify-btn:hover { border-color: var(--border-focus); color: var(--text-1); }
 
 /* ── Animations ── */
-.spin { animation: spin 0.9s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-@keyframes agent-preview-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.75); }
-}
 
 
 @keyframes marquee-left  { from { transform: translateX(0);    } to { transform: translateX(-50%); } }
