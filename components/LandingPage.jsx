@@ -15,7 +15,6 @@ import OrbitVisual from './OrbitVisual'
 import TypingBeat from './TypingBeat'
 import AgentCapabilitiesModal from './AgentCapabilitiesModal'
 import AgentPreview from './AgentPreview'
-import ContractRedliner from './ContractRedliner'
 import { useCountUp } from '../lib/useCountUp'
 import { formatNaira } from '../lib/formatNaira'
 import { AGENTS } from '../lib/agents'
@@ -24,16 +23,16 @@ import { getAgentPayment } from '../lib/agentServiceMap'
 
 /* ── Services config ── */
 // Display order for the "Meet Our AI Legal Agents" roster — real agents from lib/agents.ts,
-// availability per lib/agentCapabilities.ts (matches the deliberate staged-rollout state: only
-// small-claims is fully public; judgment-enforcement/lawyer-consultation are open for testing;
-// recovery-of-premises/contracts/cac-registration aren't linked to chat from here yet).
+// availability per lib/agentCapabilities.ts. Only Small Claims and Property Law are live/
+// interactive from the homepage; the rest are Coming Soon (notify-me only) — see that file's
+// `availability` field, the single source of truth this maps over.
 const AGENT_ROSTER_ORDER = [
   'small-claims',
-  'judgment-enforcement',
-  'lawyer-consultation',
   'recovery-of-premises',
   'contracts',
   'cac-registration',
+  'judgment-enforcement',
+  'lawyer-consultation',
 ]
 
 /* ── Trust badges marquee items ── */
@@ -86,7 +85,20 @@ const COMPARE = [
   { label: 'Available',           pandas: '✓ 24 / 7',             trad: 'Office hours',    diy: 'When you can' },
 ]
 
-export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStartCustomClaim }) {
+export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStartCustomClaim, user, onRequestAuth }) {
+  const [referralCopied, setReferralCopied] = useState(false)
+  const referralCode = user?.id ? user.id.slice(0, 8) : null
+  const referralLink = referralCode && typeof window !== 'undefined'
+    ? `${window.location.origin}/?ref=${referralCode}`
+    : ''
+
+  function copyReferralLink() {
+    if (!referralLink) return
+    navigator.clipboard?.writeText(referralLink).then(() => {
+      setReferralCopied(true)
+      setTimeout(() => setReferralCopied(false), 2000)
+    })
+  }
   const [amount, setAmount]       = useState('')
   const [openFaq, setOpenFaq]     = useState(null)
   const [faqTab, setFaqTab]       = useState('Getting Started')
@@ -141,24 +153,24 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
             </h1>
 
             <p className="hero-sub" style={{ animation: 'fade-in-up 0.6s ease 1.4s both' }}>
-              Legal services powered by AI. Reviewed and delivered by lawyers.
-              Describe your problem, upload your documents, and let a Pandas LP AI agent
-              handle the first layer of work — a real lawyer takes over the moment it matters.
+              AI-native legal services: fast, effortless, and dependable. Describe your problem,
+              upload your documents, and a specialist agent handles the first layer of work —
+              a licensed lawyer reviews and delivers everything before it reaches you.
             </p>
 
             <div className="hero-actions" style={{ animation: 'fade-in-up 0.6s ease 1.6s both' }}>
               <span className="btn-border-glow">
-                <button
-                  type="button"
-                  className="btn btn-primary btn-lg"
-                  onClick={() => onOpenAgent('small-claims')}
-                >
-                  Get legal help →
-                </button>
+                <a href="#services" className="btn btn-primary btn-lg">
+                  Explore Our AI Agents →
+                </a>
               </span>
-              <a href="#services" className="hero-link">
-                Explore our AI agents
-              </a>
+              <button
+                type="button"
+                className="hero-link"
+                onClick={() => onOpenAgent('small-claims')}
+              >
+                Get legal help now
+              </button>
             </div>
           </div>
 
@@ -276,42 +288,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               </div>
             </Reveal>
           </div>
-        </div>
-      </section>
-
-      {/* ══ TECHNOLOGY / PIPELINE ══ */}
-      <section className="section" aria-label="How a matter moves through Pandas LP">
-        <div className="container">
-          <Reveal>
-            <div className="section-header center">
-              <span className="label-mono">How It Actually Works</span>
-              <h2>From your problem to a real outcome</h2>
-            </div>
-          </Reveal>
-
-          <Reveal delay={60}>
-            <div style={{
-              display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center',
-              gap: 8, marginTop: 48,
-            }}>
-              {['Client', 'AI Legal Agent', 'Case Understanding', 'Document / Legal Work', 'Lawyer Review', 'Outcome'].map((step, i, arr) => (
-                <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{
-                    padding: '12px 18px', borderRadius: 'var(--radius-pill)',
-                    background: i === arr.length - 1 ? 'var(--accent)' : 'var(--bg-1)',
-                    border: `1px solid ${i === arr.length - 1 ? 'var(--accent)' : 'var(--border-subtle)'}`,
-                    color: i === arr.length - 1 ? '#05070C' : 'var(--text-1)',
-                    fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap',
-                  }}>
-                    {step}
-                  </div>
-                  {i < arr.length - 1 && (
-                    <span style={{ color: 'var(--text-3)', fontSize: 16 }} aria-hidden="true">→</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </Reveal>
         </div>
       </section>
 
@@ -509,8 +485,8 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
                       }}>
                         {agent.icon}
                       </div>
-                      <span className={`badge badge-sm ${caps.availability === 'live' ? 'badge-accent' : caps.availability === 'testing' ? 'badge-accent' : 'badge-muted'}`}>
-                        {caps.availability === 'live' ? 'LIVE' : caps.availability === 'testing' ? 'TESTING' : 'SOON'}
+                      <span className={`badge badge-sm ${caps.availability === 'live' ? 'badge-accent' : 'badge-muted'}`}>
+                        {caps.availability === 'live' ? '🟢 LIVE' : '🔒 Coming Soon'}
                       </span>
                     </div>
 
@@ -609,24 +585,6 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
           }}
         />
       )}
-
-      {/* ══ CONTRACT REDLINER ══ */}
-      <section className="section" style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }} aria-label="Contract risk analyzer demo">
-        <div className="container">
-          <Reveal>
-            <div className="section-header center">
-              <span className="label-mono" style={{ color: 'var(--accent)' }}>Try It Live</span>
-              <h2>AI Contract Redliner &amp; Risk Analyzer</h2>
-              <p>Paste a real clause and see what our AI flags — free, no sign-up. This live demo isn't reviewed by a lawyer; documents Pandas LP actually prepares for you always are.</p>
-            </div>
-          </Reveal>
-          <Reveal delay={80}>
-            <div style={{ marginTop: 40 }}>
-              <ContractRedliner />
-            </div>
-          </Reveal>
-        </div>
-      </section>
 
       {/* ══ SERVICE UNIVERSE ══ */}
       <section className="section" aria-label="The full range of legal matters Pandas can help with">
@@ -995,6 +953,63 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
               <p style={{ marginTop: 14, fontSize: 12, color: 'var(--text-3)' }}>
                 Free preview · No commitment until you pay
               </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ══ REFERRAL / INVITE ══ */}
+      <section className="section" style={{ background: 'var(--bg-1)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }} aria-label="Refer a friend">
+        <div className="container">
+          <Reveal>
+            <div style={{
+              maxWidth: 640, margin: '0 auto', textAlign: 'center',
+              background: 'var(--bg-0)', border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)', padding: 'clamp(32px,5vw,56px)',
+            }}>
+              <span className="label-mono" style={{ color: 'var(--accent)' }}>Refer a Friend</span>
+              <h2 style={{ margin: '10px 0 14px' }}>Know someone who needs this?</h2>
+              <p style={{ color: 'var(--text-2)', fontSize: 15, lineHeight: 1.7, marginBottom: 28 }}>
+                Share your link with a friend or colleague. We track every referral —
+                reward details are launching soon, but your invites count from day one.
+              </p>
+
+              {user ? (
+                <div>
+                  <div style={{
+                    display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center',
+                    background: 'var(--bg-1)', border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-md)', padding: '10px 14px', marginBottom: 16,
+                  }}>
+                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-1)', overflowWrap: 'anywhere' }}>
+                      {referralLink}
+                    </code>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <button type="button" className="btn btn-primary" onClick={copyReferralLink}>
+                      {referralCopied ? 'Copied!' : 'Copy Your Link'}
+                    </button>
+                    <a
+                      className="btn"
+                      href={`https://wa.me/?text=${encodeURIComponent(`Check out Pandas LP for fast, affordable legal help: ${referralLink}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Share on WhatsApp
+                    </a>
+                    <a
+                      className="btn"
+                      href={`mailto:?subject=${encodeURIComponent('Try Pandas LP')}&body=${encodeURIComponent(`I've been using Pandas LP for legal help — thought you'd find it useful: ${referralLink}`)}`}
+                    >
+                      Invite by Email
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" className="btn btn-primary btn-lg" onClick={onRequestAuth}>
+                  Sign in to get your referral link →
+                </button>
+              )}
             </div>
           </Reveal>
         </div>

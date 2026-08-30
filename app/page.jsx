@@ -147,6 +147,8 @@ export default function App() {
             onOpenAgent={openAgent}
             onStartLawyerConsult={() => openAgent('lawyer-consultation')}
             onStartCustomClaim={handleStartCustomClaim}
+            user={user}
+            onRequestAuth={() => setAuthOpen(true)}
           />
         )}
 

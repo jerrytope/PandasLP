@@ -31,7 +31,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
     previewStates: ['Reading invoice…', 'Checking payment history…', 'Reviewing evidence…', 'Preparing legal workflow…'],
   },
   'recovery-of-premises': {
-    availability: 'soon',
+    availability: 'live',
     highlights: [
       'Notices to Quit and Seven-Day Notices, with the correct statutory notice period for the tenancy type',
       'Tenancy and lease agreements',
@@ -63,7 +63,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
     previewStates: ['Understanding your business…', 'Checking registration type…', 'Preparing document checklist…', 'Readying your filing…'],
   },
   'judgment-enforcement': {
-    availability: 'testing',
+    availability: 'soon',
     highlights: [
       'For when a debtor has lost in court but still hasn\'t paid',
       'Prepares Garnishee Order or Writ of Execution filings',
@@ -73,7 +73,7 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
     previewStates: ['Reading your judgment…', 'Checking enforcement options…', 'Preparing filing…', 'Readying next steps…'],
   },
   'lawyer-consultation': {
-    availability: 'testing',
+    availability: 'soon',
     highlights: [
       'Book real time with a licensed Nigerian lawyer',
       'For matters that need judgment and conversation, not just a document',
