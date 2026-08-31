@@ -2,6 +2,7 @@ import { getAgent } from '@/lib/agents'
 import { capHistory, type ChatMessage } from '@/lib/chatHistory'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { buildCurrentDateContext } from '@/lib/currentDateContext'
 
 // Node runtime (not edge) — this route now needs supabaseAdmin for the auth check below,
 // and CLAUDE.md documents that Supabase admin calls require Node's runtime. This route
@@ -73,6 +74,10 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Computed fresh per request from the server's actual clock — never hardcoded, never
+    // client-supplied, so it can't be spoofed or go stale. See lib/currentDateContext.ts.
+    const currentDateContext = buildCurrentDateContext(new Date())
+
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -84,6 +89,8 @@ export async function POST(req: Request) {
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: `${agent.systemPrompt}
+
+${currentDateContext}
 
 DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`,
         messages: capHistory(messages).map((m) => ({ role: m.role, content: m.content })),
