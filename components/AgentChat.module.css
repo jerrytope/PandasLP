@@ -197,7 +197,7 @@
 
 .bubbleUser {
   background: var(--accent);
-  color: #080C0A;
+  color: var(--text-1);
   border-radius: 14px 14px 4px 14px;
 }
 

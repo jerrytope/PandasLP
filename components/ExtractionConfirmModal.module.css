@@ -190,7 +190,7 @@
 }
 
 .diffAdded {
-  background: rgba(62, 207, 142, 0.22);
+  background: rgba(184, 134, 11, 0.16);
   color: var(--text-1);
   border-radius: 3px;
 }

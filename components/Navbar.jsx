@@ -35,9 +35,15 @@ export default function Navbar({ onLogoClick, onNavServices, onStartLawyerConsul
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             aria-label="Pandas LP home"
           >
-            <PandasLogoMark size={32} />
-            <span className="nav-logo-text">
-              Pandas <span style={{ color: 'var(--accent)' }}>LP</span>
+            <PandasLogoMark size={28} />
+            <span aria-hidden="true" style={{ width: 1, height: 25, background: 'var(--border-focus)' }} />
+            <span style={{ display: 'block', textAlign: 'left' }}>
+              <span style={{ display: 'block', fontFamily: 'var(--font-display), Georgia, serif', fontSize: 16, fontWeight: 600, letterSpacing: '0.08em', lineHeight: 1, color: 'var(--text-1)' }}>
+                PANDAS
+              </span>
+              <span style={{ display: 'block', fontFamily: 'var(--font-mono), monospace', fontSize: 7, letterSpacing: '0.3em', color: 'var(--text-3)', marginTop: 3 }}>
+                LEGAL PRACTITIONERS
+              </span>
             </span>
           </button>
 
@@ -45,15 +51,15 @@ export default function Navbar({ onLogoClick, onNavServices, onStartLawyerConsul
           <nav aria-label="Main navigation">
             <ul className="nav-links">
               <li><a href="#how-it-works" onClick={closeMenu}>How It Works</a></li>
-              <li><a href="#pricing"      onClick={closeMenu}>Pricing</a></li>
+              <li><a href="#pricing"      onClick={closeMenu}>Fees</a></li>
               <li><Link href="/blog"      onClick={closeMenu}>Resources</Link></li>
               <li>
                 <button
                   type="button"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 14px', fontSize: 14, fontWeight: 500, color: 'var(--text-2)', borderRadius: 8 }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 14px', fontSize: 14, fontWeight: 600, color: 'var(--text-1)', borderRadius: 8 }}
                   onClick={() => { onNavServices?.(); closeMenu(); }}
                 >
-                  Services
+                  Legal Agents
                 </button>
               </li>
             </ul>
@@ -105,7 +111,7 @@ export default function Navbar({ onLogoClick, onNavServices, onStartLawyerConsul
           style={{ background: 'none', border: 'none', fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-2)', padding: '12px 24px', cursor: 'pointer' }}
           onClick={() => { onNavServices?.(); closeMenu(); }}
         >
-          Services
+          Legal Agents
         </button>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 32, padding: '0 24px', width: '100%', maxWidth: 280 }}>

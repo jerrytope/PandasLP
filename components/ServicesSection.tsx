@@ -41,7 +41,7 @@ export default function ServicesSection({ onOpenAgent }: ServicesSectionProps) {
           <span style={{
             position: 'absolute', top: 0, left: 0,
             width: '100%', height: 3,
-            background: 'linear-gradient(90deg, #D6BB80, #A08348)',
+            background: 'linear-gradient(90deg, #B8860B, #8B6508)',
           }} />
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 40, alignItems: 'flex-start', justifyContent: 'space-between' }}>
