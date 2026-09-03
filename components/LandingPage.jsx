@@ -98,18 +98,18 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
     <>
       {/* ══ HERO ══ */}
       <section className="lp-section lp-container" style={{ paddingTop: 104 }} aria-label="Pandas LP">
-        <div className="lp-eyebrow">An AI-native law firm &nbsp;·&nbsp; Lagos, Nigeria</div>
+        <div className="lp-eyebrow">Debt recovery and property law &nbsp;·&nbsp; Lagos, Nigeria</div>
 
         <h1 className="lp-h1">
-          AI does the legal work.<br />
-          <span style={{ fontStyle: 'italic', fontWeight: 400 }}>A lawyer is still answerable for it.</span>
+          Tell us what happened.<br />
+          <span style={{ fontStyle: 'italic', fontWeight: 400 }}>We take it from there.</span>
         </h1>
 
         <div className="lp-hero-grid">
           <div>
             <p className="lp-lede" style={{ maxWidth: 620 }}>
-              An agent grounded in Nigerian law drafts your matter. A practitioner reviews it, signs it,
-              and the firm takes it to court.
+              Court-ready documents, signed by a licensed practitioner, from ₦5,000.
+              Most people finish in under ten minutes.
             </p>
           </div>
 
@@ -136,10 +136,11 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, onStart
       {/* ══ CREDENTIALS ══ */}
       <div className="lp-container" style={{ paddingBottom: 44 }}>
         <div className="lp-credentials">
-          <span>CAC BN 9646741</span>
-          <span>NBA notified</span>
-          <span>Two agents live</span>
+          <span>From ₦5,000</span>
+          <span>No retainer, no hourly billing</span>
+          <span>Signed by a licensed practitioner</span>
           <span>You read the draft before you pay</span>
+          <span>CAC BN 9646741</span>
         </div>
       </div>
 
