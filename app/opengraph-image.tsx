@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og'
 import { PANDAS_LOGO_DATA_URI } from '@/lib/logoData'
 
-export const alt = 'Pandas LP: They owe you. We go after it.'
+export const alt = 'Pandas LP: debt recovery and property law in Lagos'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -46,13 +46,13 @@ export default async function Image() {
         {/* Headline */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 980 }}>
           <span style={{ fontSize: 68, fontWeight: 500, color: '#1A1A1A', lineHeight: 1.08, letterSpacing: '-0.01em' }}>
-            They owe you.
+            Tell us what happened.
           </span>
           <span style={{ fontSize: 68, fontWeight: 500, color: '#B8860B', lineHeight: 1.08, letterSpacing: '-0.01em' }}>
-            We go after it.
+            We take it from there.
           </span>
           <span style={{ fontSize: 26, color: '#6B6B6B', marginTop: 8 }}>
-            Demand letter today. Court in 14 days if they ignore it.
+            Debt recovery and property law. From N5,000, signed by a licensed practitioner.
           </span>
         </div>
 

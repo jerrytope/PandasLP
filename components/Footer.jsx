@@ -29,8 +29,8 @@ export default function Footer() {
               </span>
             </div>
             <p className="footer-brand-tagline">
-              They owe you. We go after it: demand letter today,
-              real lawyers take it to court.
+              Debt recovery and property law in Lagos. Every document is signed by a
+              licensed practitioner before it is served or filed.
             </p>
             <div style={{ marginTop: 20 }}>
               <p className="field-label" style={{ marginBottom: 8 }}>Legal tips for Nigerian businesses</p>
