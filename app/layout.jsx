@@ -26,19 +26,30 @@ const mono = IBM_Plex_Mono({
 })
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
-const TITLE = 'Pandas LP | They owe you. We go after it.'
-const DESCRIPTION = 'A licensed Lagos law firm that recovers what you\'re owed: demand letter today, court in 14 days if it\'s ignored.'
+// Both practice areas, in the order they matter for search. The old title
+// ("They owe you. We go after it.") was debt-recovery only and carried no
+// property terms at all, so tenancy and conveyancing searches had nothing to
+// match on. Brand stays first to protect branded search.
+const TITLE = 'Pandas LP | Debt recovery and property law in Lagos'
+const DESCRIPTION = 'A licensed Lagos law firm. Demand letters, quit notices, tenancies and deeds from ₦5,000, each signed by a practitioner before it is served or filed.'
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: TITLE, template: '%s | Pandas LP' },
   description: DESCRIPTION,
+  // The debt terms are kept exactly as they were so existing ranking signals
+  // are not disturbed; the property terms are additions, not replacements.
   keywords: [
     'debt recovery Nigeria',
     'letter of demand Nigeria',
     'small claims court Lagos',
     'fast debt recovery Nigeria',
     'recover unpaid invoice Nigeria',
+    'notice to quit Lagos',
+    'recovery of premises Lagos',
+    'tenancy agreement Nigeria',
+    'deed of assignment Nigeria',
+    'property lawyer Lagos',
   ],
   icons: {
     icon: '/favicon.png',
