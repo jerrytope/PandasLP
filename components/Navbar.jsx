@@ -2,9 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { PandasLogoMark } from './PandasLogo'
 
-export default function Navbar({ onLogoClick, onNavServices, onStartLawyerConsult, user, onAuthClick }) {
+/* Every prop is optional. The homepage passes real handlers; other pages get
+   navigation defaults so nothing in the bar is dead. */
+export default function Navbar({
+  onLogoClick = null,
+  onNavServices = null,
+  onStartLawyerConsult = null,
+  user = null,
+  onAuthClick = null,
+}) {
+  const router = useRouter()
+  onLogoClick = onLogoClick || (() => router.push('/'))
+  onNavServices = onNavServices || (() => router.push('/agents'))
+  onStartLawyerConsult = onStartLawyerConsult || (() => router.push('/agent/lawyer-consultation'))
+  onAuthClick = onAuthClick || (() => router.push('/?signin=1'))
   const [scrolled, setScrolled]   = useState(false)
   const [menuOpen, setMenuOpen]   = useState(false)
 
@@ -53,15 +67,7 @@ export default function Navbar({ onLogoClick, onNavServices, onStartLawyerConsul
               <li><a href="#how-it-works" onClick={closeMenu}>How It Works</a></li>
               <li><a href="#pricing"      onClick={closeMenu}>Fees</a></li>
               <li><Link href="/blog"      onClick={closeMenu}>Resources</Link></li>
-              <li>
-                <button
-                  type="button"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px 14px', fontSize: 14, fontWeight: 600, color: 'var(--text-1)', borderRadius: 8 }}
-                  onClick={() => { onNavServices?.(); closeMenu(); }}
-                >
-                  Legal Agents
-                </button>
-              </li>
+              <li><Link href="/agents" onClick={closeMenu}>Legal Agents</Link></li>
             </ul>
           </nav>
 
@@ -104,15 +110,9 @@ export default function Navbar({ onLogoClick, onNavServices, onStartLawyerConsul
         aria-hidden={!menuOpen}
       >
         <a href="#how-it-works" onClick={closeMenu}>How It Works</a>
-        <a href="#pricing"      onClick={closeMenu}>Pricing</a>
+        <a href="#pricing"      onClick={closeMenu}>Fees</a>
         <Link href="/blog"      onClick={closeMenu}>Resources</Link>
-        <button
-          type="button"
-          style={{ background: 'none', border: 'none', fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-2)', padding: '12px 24px', cursor: 'pointer' }}
-          onClick={() => { onNavServices?.(); closeMenu(); }}
-        >
-          Legal Agents
-        </button>
+        <Link href="/agents" onClick={closeMenu}>Legal Agents</Link>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 32, padding: '0 24px', width: '100%', maxWidth: 280 }}>
           {user ? (

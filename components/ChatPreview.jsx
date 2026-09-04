@@ -47,12 +47,18 @@ const PREVIEWS = {
   },
 }
 
-export default function ChatPreview({ onOpenAgent }) {
-  const [key, setKey] = useState('debt')
+/**
+ * onOpenAgent  where the button routes
+ * only         'debt' | 'property' to pin it to one agent and hide the tabs,
+ *              which is what the individual agent pages want
+ */
+export default function ChatPreview({ onOpenAgent, only }) {
+  const [key, setKey] = useState(only || 'debt')
   const p = PREVIEWS[key]
 
   return (
     <div className="lp-preview">
+      {!only && (
       <div className="lp-preview-tabs" role="tablist" aria-label="Choose your matter">
         {Object.entries(PREVIEWS).map(([k, v]) => (
           <button
@@ -66,6 +72,7 @@ export default function ChatPreview({ onOpenAgent }) {
           </button>
         ))}
       </div>
+      )}
 
       <div className="lp-preview-frame">
         <div className={chat.header}>

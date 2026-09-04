@@ -35,6 +35,17 @@ export default function App() {
     captureAttribution()
   }, [])
 
+  // Sign In from a page that does not own the modal (an agent page) sends the
+  // visitor here with ?signin=1. Open it for them rather than dumping them on
+  // the homepage with nothing happening.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('signin') === '1') {
+      setAuthOpen(true)
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   // Initialise auth listener once
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

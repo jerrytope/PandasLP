@@ -2046,3 +2046,76 @@ h1, h2, h3, h4, h5, h6 {
   .lp-preview-turn { animation: none; opacity: 1; }
   .lp-cta:hover { transform: none; }
 }
+
+/* ─────────────────────────────────────────
+   AGENT PAGES  (/agents and /agents/[slug])
+   Reuses the homepage .lp- system; .ap- only adds what those pages
+   need that the homepage does not.
+   ───────────────────────────────────────── */
+
+.ap-crumb {
+  padding-top: 18px; padding-bottom: 18px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ap-crumb a { color: var(--text-3); }
+.ap-crumb a:hover { color: var(--text-1); }
+.ap-crumb .is-here { color: var(--text-1); }
+
+/* directory cards are whole-card links */
+.ap-card { text-decoration: none; color: inherit; transition: border-color var(--anim-fast); }
+.ap-card:hover { border-color: var(--text-1); }
+.ap-card h2 { font-family: var(--font-display), Georgia, serif; font-size: 23px; font-weight: 500; letter-spacing: -0.02em; }
+.ap-card-go { font-size: 14.5px; font-weight: 600; color: var(--accent-deep); }
+
+/* nine property instruments */
+.ap-docs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+.ap-doc { background: var(--bg-2); border: 1px solid var(--border-subtle); padding: 18px 20px; }
+.ap-doc-k { margin-bottom: 10px; color: var(--accent); }
+.ap-doc h3 { font-size: 17px; letter-spacing: -0.015em; margin-bottom: 6px; }
+.ap-doc p { font-size: 14px; line-height: 1.55; color: var(--text-2); }
+
+.ap-rule-head { font-family: var(--font-display), Georgia, serif; font-size: 26px; font-weight: 500; letter-spacing: -0.02em; margin: 44px 0 20px; }
+
+/* statutory notice ladder */
+.ap-ladder { display: flex; flex-wrap: wrap; border: 1px solid var(--border-focus); background: var(--bg-2); }
+.ap-ladder-cell { flex: 1 1 200px; padding: 14px 18px; border-right: 1px solid var(--border-subtle); }
+.ap-ladder-cell:last-child { border-right: none; }
+.ap-ladder-cell.is-on { background: var(--text-1); }
+.ap-ladder-cell.is-on .lp-eyebrow { color: var(--accent-hover); }
+.ap-ladder-v { font-family: var(--font-display), Georgia, serif; font-size: 21px; margin-top: 4px; }
+.ap-ladder-cell.is-on .ap-ladder-v { color: var(--bg-0); }
+
+/* the film */
+.ap-film { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 52px; align-items: center; }
+.ap-video { width: 100%; display: block; border: 1px solid rgba(250, 250, 248, 0.22); background: #000; }
+
+/* what it will not do */
+.ap-limits-note { margin-top: 12px; margin-bottom: 30px; }
+.ap-limits { display: grid; grid-template-columns: 1fr 1fr; gap: 0 48px; }
+.ap-limit { padding: 20px 0; border-top: 1px solid var(--border-subtle); }
+.ap-limit.is-first { border-top: 2px solid var(--text-1); }
+.ap-limit h3 { font-size: 18px; letter-spacing: -0.015em; margin-bottom: 7px; }
+.ap-limit p { font-size: 15px; line-height: 1.6; color: var(--text-2); }
+
+/* not open yet */
+.ap-next { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 48px; }
+.ap-next-item { padding: 18px 0; border-top: 1px solid var(--border-subtle); }
+.ap-next-item h3 { font-size: 18px; letter-spacing: -0.015em; margin-bottom: 5px; color: var(--text-2); }
+.ap-next-item p { font-size: 14.5px; line-height: 1.55; color: var(--text-3); }
+
+/* closing row */
+.ap-close { display: flex; align-items: center; justify-content: space-between; gap: 40px; flex-wrap: wrap; margin-top: 40px; }
+.ap-close-line { font-family: var(--font-display), Georgia, serif; font-size: 28px; letter-spacing: -0.025em; }
+
+@media (max-width: 1080px) {
+  .ap-docs { grid-template-columns: 1fr 1fr; }
+  .ap-film { grid-template-columns: 1fr; gap: 28px; }
+  .ap-limits, .ap-next { grid-template-columns: 1fr; }
+  .ap-limit.is-first:nth-child(2) { border-top: 1px solid var(--border-subtle); }
+}
+@media (max-width: 640px) {
+  .ap-docs { grid-template-columns: 1fr; }
+  .ap-rule-head { font-size: 22px; }
+}
