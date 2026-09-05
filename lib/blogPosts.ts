@@ -7,6 +7,11 @@ export interface BlogPost {
   category: string
   author: string
   content: string // HTML string
+  /* Optional. When present, the post renders a visible FAQ block AND emits FAQPage
+     structured data for it. Google requires the two to match, so they are driven from
+     this one array rather than being written twice. Questions should be phrased the way
+     someone actually searches, not the way a lawyer would title a clause. */
+  faqs?: { question: string; answer: string }[]
 }
 
 // Every post is reviewed by a licensed member of the Pandas LP team before publishing, see
@@ -15,6 +20,129 @@ export interface BlogPost {
 export const DEFAULT_AUTHOR = 'Adebayo Sobayo & Adeyemo Adedeji, Legal Practitioner'
 
 export const BLOG_POSTS: BlogPost[] = [
+  {
+    slug: 'how-to-evict-a-tenant-legally-in-lagos',
+    title: 'How to Evict a Tenant Legally in Lagos: Notice Periods and the Two Notices You Must Serve',
+    description: 'How much notice a Lagos landlord must give, why a short notice is void, and the second notice most landlords never serve before going to court.',
+    date: '2026-09-05',
+    readTime: '8 min read',
+    category: 'Property Law',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'How much notice must I give my tenant in Nigeria?',
+        answer: 'It depends on how the tenancy runs, not on how long the tenant has lived there. A weekly tenancy needs one week, a monthly tenancy one month, a quarterly or half-yearly tenancy three months, and a yearly tenancy six months. A fixed-term lease follows the term agreed in the lease itself. Notice periods vary between states, so the tenancy must be checked against the law of the state where the property is.',
+      },
+      {
+        question: 'Can I change the locks or throw my tenant out if they have not paid rent?',
+        answer: 'No. Removing a tenant, changing the locks, cutting off power or water, or putting their belongings outside without a court order is unlawful in Nigeria regardless of how much rent is owed. It exposes the landlord to a claim from the tenant and can undermine the recovery case. Possession is recovered by serving the correct notices and then applying to court.',
+      },
+      {
+        question: 'Is one notice enough to take my tenant to court?',
+        answer: 'No. Two separate notices are required, served one after the other. The Notice to Quit ends the tenancy on a future date. If the tenant is still in the property after that date, a second notice, the seven days Notice of Owner’s Intention to Apply to Recover Possession, must then be served before court proceedings can be filed. They are two distinct documents and cannot be combined into one.',
+      },
+      {
+        question: 'What happens if I give my tenant less notice than the law requires?',
+        answer: 'The notice is void. It has no legal effect, the tenancy has not been validly ended, and the court can dismiss the recovery action on that ground alone. The landlord then starts again from the beginning with a fresh notice and a fresh notice period, having lost the months already spent. This is the most common and most expensive mistake in a recovery of premises.',
+      },
+      {
+        question: 'Can I claim the unpaid rent as well as recover the property?',
+        answer: 'Yes. Rent that fell due before the tenancy ended is claimed as arrears, and the sum charged for the period the tenant stays on after the tenancy has ended is claimed as mesne profits. Both should be stated as specific calculated figures, not as a general reference to outstanding rent.',
+      },
+    ],
+    content: `
+<p>Most recovery of premises cases in Lagos are not lost in court. They are lost before the case is ever filed, on a notice that was served too short, served in the wrong order, or served as one document when the law requires two.</p>
+
+<p>This guide sets out how long the notice must be, the two notices a landlord has to serve, and the mistakes that send a landlord back to the beginning after months of waiting.</p>
+
+<h2>First, the word "eviction" is the wrong one</h2>
+
+<p>Nigerian law does not give a landlord a power of eviction. It gives a procedure for <strong>recovery of possession</strong>, and that procedure runs through a court. The distinction matters because it decides what a landlord is allowed to do while the tenant is still in the property.</p>
+
+<p>A landlord may not remove a tenant, change the locks, remove the roof or doors, cut off electricity or water, or put the tenant's belongings outside. None of that becomes lawful because the rent is unpaid, because the tenancy has expired, or because the tenant has stopped responding. Self-help of that kind exposes the landlord to a claim from the tenant, and it can damage the recovery case the landlord is trying to bring.</p>
+
+<p>The lawful route is narrow and it is the same every time: serve the correct notice, wait out the notice period, serve the second notice, then apply to court.</p>
+
+<h2>How much notice the law requires</h2>
+
+<p>The single most common question, and the single most common mistake. The notice period is fixed by <strong>how the tenancy runs</strong>, which usually means how the rent is paid. It is not fixed by how long the tenant has been in the property, and it is not fixed by how much rent is owed.</p>
+
+<div class="table-scroll">
+<table>
+  <thead>
+    <tr><th>Type of tenancy</th><th>Notice required</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Weekly tenancy, tenant at will, or licensee</td><td>1 week</td></tr>
+    <tr><td>Monthly tenancy</td><td>1 month</td></tr>
+    <tr><td>Quarterly tenancy</td><td>3 months</td></tr>
+    <tr><td>Half-yearly tenancy</td><td>3 months</td></tr>
+    <tr><td>Yearly tenancy</td><td>6 months</td></tr>
+    <tr><td>Fixed-term tenancy</td><td>As stated in the lease, or as the law of the state requires if the lease is silent</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>A yearly tenant therefore gets six months, not the one month a landlord has often already sent by text message. Tenancy in Lagos is governed by the Lagos State Tenancy Law, and other states have their own legislation, so the tenancy always has to be checked against the law of the state where the property actually sits before a notice is drafted.</p>
+
+<h2>A short notice is void, not merely weak</h2>
+
+<p>This is worth stating plainly because landlords routinely assume a short notice is better than nothing. It is not. A notice shorter than the period the law requires has no legal effect at all. The tenancy has not been ended. The court can dismiss the recovery action on that ground alone, without ever reaching the question of unpaid rent.</p>
+
+<p>The practical cost is not the filing fee. It is time. A landlord who serves one month on a yearly tenant, waits, and files, can lose the better part of a year and then have to start again with a fresh six month notice. The tenant remains in the property throughout.</p>
+
+<h2>The second notice most landlords never serve</h2>
+
+<p>Even landlords who get the notice period right often stop at one document. The law requires two, served in sequence, and they cannot be combined.</p>
+
+<h3>1. The Notice to Quit</h3>
+<p>This ends the tenancy on a future date. It must give the full statutory period set out in the table above, and it must expire correctly against the tenancy's own cycle. Until this notice has been served and has expired, the tenancy is still alive and the tenant is not a trespasser.</p>
+
+<h3>2. The seven days Notice of Owner's Intention to Apply to Recover Possession</h3>
+<p>This is a separate statutory notice, and it is served only <strong>after</strong> the Notice to Quit has expired and the tenant has stayed on. It tells the tenant the landlord is now going to court. It cannot be served at the same time as the Notice to Quit, it cannot be folded into the same document, and proceedings cannot properly be filed until it has been served and its seven days have run.</p>
+
+<p>Drafting both as one letter is one of the fastest ways to have a recovery case thrown out.</p>
+
+<h2>Claiming the money as well as the property</h2>
+
+<p>Two different sums arise, and they are claimed differently:</p>
+
+<ul>
+  <li><strong>Arrears of rent</strong> are the sums that fell due while the tenancy was still running.</li>
+  <li><strong>Mesne profits</strong> are what the tenant is charged for occupying the property after the tenancy has ended.</li>
+</ul>
+
+<p>Both should appear as specific figures, calculated from the rent and the number of unpaid periods, rather than as a general reference to outstanding rent. A notice that states a precise sum is materially stronger than one that gestures at a debt, and a vague figure invites a dispute the landlord has to answer later.</p>
+
+<h2>What a landlord should have ready</h2>
+
+<p>Before a notice can be drafted properly, these need to be settled:</p>
+
+<ul>
+  <li>The property address and the state it is in</li>
+  <li>The tenancy type and how the rent is paid, since this fixes the notice period</li>
+  <li>The rent, and the date rent was last paid</li>
+  <li>When the tenancy started</li>
+  <li>The grounds on which possession is being sought</li>
+  <li>Any notice already served on this tenant, and when</li>
+  <li>The tenant's full name and address, as they should appear on the notice</li>
+</ul>
+
+<p>That last point catches people out. A notice addressed to "the occupant" or to a first name is open to challenge, and a notice served on the wrong name may not be a valid notice at all.</p>
+
+<h2>Getting the notice drafted</h2>
+
+<p>Pandas LP's <a href="/agents/property-law">Property Law Agent</a> takes this as a conversation. You describe the tenancy in ordinary words, and it works out which instrument the situation calls for, applies the statutory notice period for that tenancy type, and drafts the notice. A licensed practitioner reviews and signs it before it is served, because an unsigned notice is not a notice.</p>
+
+<p>It also handles the sequence rather than a single document, so the seven days notice is drafted when the Notice to Quit has expired instead of being forgotten. Tenancy and lease documents, including notices to quit and recovery of possession, are <strong>₦25,000</strong>.</p>
+
+<p>It will not advise self-help eviction, and it will not invent a figure or an identifier you have not supplied. Where the matter is contested, where ownership is disputed, or where there is live litigation over the property, it escalates to a practitioner rather than drafting.</p>
+
+<p>If your situation is a sale or transfer rather than a tenancy, the same agent covers deeds of assignment, deeds of gift, mortgages, powers of attorney and property searches. The full list is on the <a href="/agents/property-law">Property Law Agent page</a>.</p>
+
+<p><em>This article is general information about Nigerian property law and is not legal advice on your specific matter. Notice periods and procedure vary between states, and the facts of a particular tenancy can change the position.</em></p>
+`,
+  },
   {
     slug: 'how-to-recover-debt-lagos-small-claims-court',
     title: 'How to Recover Debt Through the Lagos Small Claims Court',

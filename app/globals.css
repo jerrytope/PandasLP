@@ -1643,6 +1643,16 @@ h1, h2, h3, h4, h5, h6 {
 .blog-content li  { margin-bottom: 8px; }
 .blog-content strong { color: var(--text-1); font-weight: 600; }
 .blog-content a   { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(184, 134, 11,0.4); }
+.blog-content h3 { font-family: var(--font-display), sans-serif; font-size: 18px; font-weight: 600; color: var(--text-1); letter-spacing: -0.01em; margin: 26px 0 8px; }
+/* Tables carry the notice-period ladder, which is the one thing on the page most
+   likely to be lifted into a search result, so it is real tabular markup rather
+   than a styled list. Scrolls inside its own container on narrow screens so the
+   article body never scrolls sideways. */
+.blog-content .table-scroll { overflow-x: auto; margin: 0 0 22px; }
+.blog-content table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.blog-content th { text-align: left; font-weight: 600; color: var(--text-1); padding: 10px 14px 10px 0; border-bottom: 2px solid var(--text-1); white-space: nowrap; }
+.blog-content td { padding: 11px 14px 11px 0; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+.blog-content td:last-child, .blog-content th:last-child { padding-right: 0; }
 
 /* Banner */
 .banner {

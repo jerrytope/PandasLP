@@ -66,12 +66,33 @@ export default async function BlogPostPage({ params }: Props) {
     mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE_URL}/blog/${post.slug}` },
   }
 
+  // Emitted only for posts that actually carry FAQs, and always alongside the visible
+  // block rendered further down from the same array. Structured data describing content
+  // a reader cannot see on the page is a manual-action risk, so the two never diverge.
+  const faqJsonLd = post.faqs?.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: post.faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.question,
+          acceptedAnswer: { '@type': 'Answer', text: f.answer },
+        })),
+      }
+    : null
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(articleJsonLd) }}
       />
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }}
+        />
+      )}
       <header className="navbar" role="banner">
         <div className="container navbar-inner">
           <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
@@ -112,6 +133,20 @@ export default async function BlogPostPage({ params }: Props) {
             className="blog-content"
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
+
+          {/* The visible half of the FAQPage structured data above. Rendered from the same
+              array, so what a search engine is told and what a reader sees cannot drift. */}
+          {post.faqs?.length ? (
+            <section className="blog-content" aria-labelledby="faq-heading" style={{ marginTop: 40 }}>
+              <h2 id="faq-heading">Common questions</h2>
+              {post.faqs.map((f) => (
+                <div key={f.question} style={{ marginBottom: 20 }}>
+                  <h3 style={{ marginBottom: 6 }}>{f.question}</h3>
+                  <p style={{ margin: 0 }}>{f.answer}</p>
+                </div>
+              ))}
+            </section>
+          ) : null}
 
           {/* CTA */}
           <div className="card" style={{
