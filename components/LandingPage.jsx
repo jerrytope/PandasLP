@@ -2,6 +2,7 @@
 
 import Reveal from './Reveal'
 import ChatPreview from './ChatPreview'
+import RecoveredCounter from './RecoveredCounter'
 
 /* ─────────────────────────────────────────────────────────────
    Homepage.
@@ -165,6 +166,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
           </div>
         </div>
       </section>
+
+      {/* ══ RECOVERED ══ renders nothing until there is a real confirmed total */}
+      <RecoveredCounter />
 
       {/* ══ FEES ══ */}
       <section className="lp-section lp-container" id="pricing" aria-label="Fees">

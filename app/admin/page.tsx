@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
+import RecoveryPanel from '@/components/RecoveryPanel'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { getReviewChecklist, isHighRiskDocument } from '@/lib/reviewChecklists'
@@ -536,6 +537,15 @@ function CaseCard({
           </div>
         )}
       </div>
+
+      {/* Recording money actually recovered. Only offered on the money agents — there is
+          nothing to recover on a deed of assignment or a tenancy agreement. What is
+          confirmed here feeds the public total on the homepage. */}
+      {(c.agent_id === 'small-claims' || c.agent_id === 'judgment-enforcement') && (
+        <div style={{ marginTop: 12 }}>
+          <RecoveryPanel caseId={c.id} expectedAmount={c.expected_amount} />
+        </div>
+      )}
 
       {showInterview && (
         <div

@@ -2119,3 +2119,31 @@ h1, h2, h3, h4, h5, h6 {
   .ap-docs { grid-template-columns: 1fr; }
   .ap-rule-head { font-size: 22px; }
 }
+
+/* ── Recovered for clients ──────────────────────────────────────────────────
+   components/RecoveredCounter.jsx. Dark band, because the one number on this
+   page that is a factual claim about outcomes should read as deliberate
+   rather than decorative. The section is not rendered at all until the
+   confirmed total is above zero, so there is no empty or zero state to style. */
+.lp-recovered { background: #141414; color: var(--bg-0); }
+.lp-recovered-inner { text-align: center; }
+.lp-recovered .lp-eyebrow { color: rgba(250, 250, 248, 0.5); }
+
+.lp-recovered-figure {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(44px, 7vw, 88px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-weight: 500;
+  color: var(--accent);
+  margin: 14px 0 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-recovered-note {
+  max-width: 48ch;
+  margin: 0 auto;
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: rgba(250, 250, 248, 0.62);
+}
