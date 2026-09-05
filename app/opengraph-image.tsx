@@ -52,7 +52,7 @@ export default async function Image() {
             We take it from there.
           </span>
           <span style={{ fontSize: 26, color: '#6B6B6B', marginTop: 8 }}>
-            Debt recovery and property law. From N5,000, signed by a licensed practitioner.
+            Debt recovery and property law. Every document signed by a licensed practitioner.
           </span>
         </div>
 

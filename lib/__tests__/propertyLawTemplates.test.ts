@@ -32,12 +32,14 @@ const ALL_TEMPLATE_NAMES = [
   'POWER OF ATTORNEY',
   'DEED OF LEGAL MORTGAGE',
   'AGREEMENT FOR SALE OF LAND',
-  'PROPERTY SEARCH REPORT',
+  // Renamed from PROPERTY SEARCH REPORT: the agent no longer writes a report, it takes an
+  // instruction for the team to go and search. See the PROPERTY SEARCHES section of the prompt.
+  'PROPERTY SEARCH INSTRUCTION',
 ]
 
 // Documents that transfer or charge an interest in land under a right of occupancy — these
 // require Governor's Consent under Land Use Act s.22. Notices, tenancy agreements, POAs, and
-// search reports do not transfer/charge title themselves, so they're correctly excluded.
+// search instructions do not transfer/charge title themselves, so they're correctly excluded.
 const REQUIRES_GOVERNORS_CONSENT_CLAUSE = ['DEED OF ASSIGNMENT', 'DEED OF GIFT', 'DEED OF LEGAL MORTGAGE']
 
 const DEED_TEMPLATES_NEEDING_EXECUTION_BLOCK = [

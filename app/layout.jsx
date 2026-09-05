@@ -31,7 +31,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 // property terms at all, so tenancy and conveyancing searches had nothing to
 // match on. Brand stays first to protect branded search.
 const TITLE = 'Pandas LP | Debt recovery and property law in Lagos'
-const DESCRIPTION = 'A licensed Lagos law firm. Demand letters, quit notices, tenancies and deeds from ₦5,000, each signed by a practitioner before it is served or filed.'
+const DESCRIPTION = 'A licensed Lagos law firm. Demand letters from ₦10,000, tenancy documents from ₦25,000, each signed by a practitioner before it is served.'
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),

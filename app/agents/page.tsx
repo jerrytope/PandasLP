@@ -27,7 +27,7 @@ const LIVE = [
     href: '/agents/property-law',
     name: 'Property Law',
     price: 'From ₦5,000',
-    line: 'Nine Nigerian property instruments, from one conversation.',
+    line: 'Tenancy documents at ₦25,000, transfer deeds at 2.5% of the consideration, searches carried out by the firm.',
     img: '/img/img-property.jpg',
     alt: 'A folded land survey plan, a rolled deed and two keys',
   },

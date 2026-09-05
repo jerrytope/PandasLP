@@ -40,7 +40,8 @@ export const AGENT_CAPABILITIES: Record<AgentId, AgentCapabilities> = {
       'Notices to Quit and Seven-Day Notices, with the correct statutory notice period for the tenancy type',
       'Tenancy and lease agreements',
       'Deeds of Assignment, Gift, and Legal Mortgage, with Governor\'s Consent handling under the Land Use Act',
-      'Powers of Attorney, Agreements for Sale of Land, and property title search reports',
+      'Powers of Attorney and Agreements for Sale of Land',
+      'Property searches: the agent takes the instruction, the firm carries out the search and writes the report',
     ],
     differentiator: 'Covers nine distinct Nigerian property-law document types end to end, from a single guided conversation, instead of separate consultations for each.',
     safeguards: [

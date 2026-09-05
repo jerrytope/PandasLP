@@ -46,8 +46,8 @@ const AGENTS_LIVE = [
     price: 'From ₦5,000',
     img: '/img/img-property.jpg',
     alt: 'A folded land survey plan, a rolled deed and two keys',
-    line: 'Nine Nigerian property instruments, from one conversation.',
-    outputs: ['NOTICE TO QUIT', 'TENANCY / LEASE', 'DEED OF ASSIGNMENT', 'TITLE SEARCH'],
+    line: 'Tenancy documents at ₦25,000. Transfer deeds at 2.5% of the consideration.',
+    outputs: ['NOTICE TO QUIT', 'TENANCY / LEASE', 'DEED OF ASSIGNMENT', 'PROPERTY SEARCH'],
     cta: 'Start a property matter',
   },
 ]
@@ -60,7 +60,8 @@ const CLOCK = [
 ]
 
 const FEES = [
-  { label: 'Any property document', value: '₦5,000' },
+  { label: 'Tenancy and lease documents', value: '₦25,000' },
+  { label: 'Deeds transferring title', value: '2.5% of the consideration' },
   { label: 'Letter of demand, yours to serve', value: '₦10,000' },
   { label: 'The same letter, served by us', value: '₦25,000' },
   { label: 'Day 7 and Day 14 follow-ups', value: 'Included', accent: true },

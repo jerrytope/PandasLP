@@ -75,7 +75,7 @@ export const AGENT_PAGES = {
       { k: 'TRANSFER', t: 'Contract for Sale of Land', b: 'The pre-completion agreement, kept distinct from the deed.' },
       { k: 'SECURITY', t: 'Deed of Mortgage', b: 'Legal charge over property, with the perfection steps stated.' },
       { k: 'AUTHORITY', t: 'Power of Attorney', b: 'Specific powers written out one by one, not a blanket authority.' },
-      { k: 'DUE DILIGENCE', t: 'Title search report', b: 'What the register actually says before you pay for the land.' },
+      { k: 'DUE DILIGENCE', t: 'Property search', b: 'The firm searches the registry in person. The agent takes the instruction, it does not write the report.' },
     ],
     ruleTitle: 'How long the notice must be.',
     ladder: [
@@ -92,7 +92,11 @@ export const AGENT_PAGES = {
       { t: 'It stands down on contested matters', b: 'Live litigation, disputed ownership, squatters, or skipping Governor’s Consent go to a practitioner before any drafting.' },
     ],
     fees: [
-      { label: 'Any property document, drafted and lawyer-reviewed', value: '₦5,000' },
+      { label: 'Tenancy and lease documents, including notices to quit and recovery of possession', value: '₦25,000' },
+      { label: 'Deeds transferring title, drafted with no separate drafting fee', value: '2.5% of the consideration', accent: true },
+      { label: 'Deeds of gift, powers of attorney, mortgages and sale contracts', value: '₦5,000' },
+      { label: 'Standard property search, carried out by the firm', value: 'Quoted before we search', muted: true },
+      { label: 'Comprehensive search and due diligence, set by a lawyer', value: 'From ₦100,000', muted: true },
       { label: 'Court filing fees, where a matter goes that far', value: 'Set by the court', muted: true },
     ],
     close: 'Describe the property. We work out the instrument.',
