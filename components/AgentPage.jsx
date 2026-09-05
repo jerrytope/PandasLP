@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ChatPreview from './ChatPreview'
+import Timeline from './Timeline'
+import DocumentStack from './DocumentStack'
 
 /* ─────────────────────────────────────────────────────────────
    One template for every agent page.
@@ -144,32 +146,12 @@ export default function AgentPage({ slug }) {
             </div>
           )}
 
-          {a.docs && (
-            <div className="ap-docs">
-              {a.docs.map((d) => (
-                <div key={d.t} className="ap-doc">
-                  <div className="lp-eyebrow ap-doc-k">{d.k}</div>
-                  <h3>{d.t}</h3>
-                  <p>{d.b}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          {a.docs && <DocumentStack docs={a.docs} />}
 
           {/* the rule this agent enforces */}
           <h3 className="ap-rule-head">{a.ruleTitle}</h3>
 
-          {a.rail && (
-            <div className="lp-rail">
-              {a.rail.map((c) => (
-                <div key={c.d} className={c.on ? 'lp-rail-cell is-on' : 'lp-rail-cell'}>
-                  <div className="lp-rail-n">{c.d}</div>
-                  <div className="lp-eyebrow">Day</div>
-                  <div className="lp-rail-t">{c.t}</div>
-                </div>
-              ))}
-            </div>
-          )}
+          {a.rail && <Timeline cells={a.rail} />}
 
           {a.ladder && (
             <>

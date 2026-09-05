@@ -3,6 +3,8 @@
 import Reveal from './Reveal'
 import ChatPreview from './ChatPreview'
 import RecoveredCounter from './RecoveredCounter'
+import HowItWorks from './HowItWorks'
+import Timeline from './Timeline'
 
 /* ─────────────────────────────────────────────────────────────
    Homepage.
@@ -22,12 +24,6 @@ import RecoveredCounter from './RecoveredCounter'
 
 const PROPERTY_AGENT = 'recovery-of-premises'
 const DEBT_AGENT = 'small-claims'
-
-const STEPS = [
-  { n: '1', t: 'You describe it', b: 'In your own words, at any hour. No forms, no legal vocabulary.' },
-  { n: '2', t: 'We draft it', b: 'From the firm’s own template for that exact document, not from scratch.' },
-  { n: '3', t: 'A lawyer signs it', b: 'Nothing reaches a debtor, a tenant or a court unsigned.', on: true },
-]
 
 const AGENTS_LIVE = [
   {
@@ -59,12 +55,20 @@ const CLOCK = [
   { d: '15', t: 'We file', on: true },
 ]
 
+/* The cheapest thing anyone can actually buy, pulled out of the list and given
+   the weight. It used to be the third row of six, which meant the single most
+   persuasive number on the page was the one nobody could find. */
+const FEE_LEAD = {
+  value: '₦10,000',
+  label: 'Letter of demand, yours to serve',
+  note: 'Drafted from the firm’s template, reviewed and signed by a licensed practitioner before it goes anywhere.',
+}
+
 const FEES = [
-  { label: 'Tenancy and lease documents', value: '₦25,000' },
-  { label: 'Deeds transferring title, invoiced by the firm', value: '2.5% of the consideration' },
-  { label: 'Letter of demand, yours to serve', value: '₦10,000' },
   { label: 'The same letter, served by us', value: '₦25,000' },
   { label: 'Day 7 and Day 14 follow-ups', value: 'Included', accent: true },
+  { label: 'Tenancy and lease documents', value: '₦25,000' },
+  { label: 'Deeds transferring title, invoiced by the firm', value: '2.5% of the consideration' },
   { label: 'Court filing fees', value: 'Set by the court', muted: true },
 ]
 
@@ -101,15 +105,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
         <div className="lp-container">
           <h2 className="lp-h2 lp-section-head">Three steps, and one of them is a person.</h2>
 
-          <div className="lp-steps">
-            {STEPS.map((s) => (
-              <div key={s.n} className={s.on ? 'lp-step is-on' : 'lp-step'}>
-                <div className="lp-step-n">{s.n}</div>
-                <h3>{s.t}</h3>
-                <p>{s.b}</p>
-              </div>
-            ))}
-          </div>
+          <HowItWorks />
 
           <div className="lp-trust">
             <span>Signed by a licensed practitioner</span>
@@ -156,15 +152,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
       <section className="lp-section lp-muted" aria-label="After the letter goes out">
         <div className="lp-container">
           <h2 className="lp-h2 lp-section-head">After it goes out, the chasing is ours.</h2>
-          <div className="lp-rail">
-            {CLOCK.map((c) => (
-              <div key={c.d} className={c.on ? 'lp-rail-cell is-on' : 'lp-rail-cell'}>
-                <div className="lp-rail-n">{c.d}</div>
-                <div className="lp-eyebrow">Day</div>
-                <div className="lp-rail-t">{c.t}</div>
-              </div>
-            ))}
-          </div>
+          <Timeline cells={CLOCK} />
         </div>
       </section>
 
@@ -174,6 +162,16 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
       {/* ══ FEES ══ */}
       <section className="lp-section lp-container" id="pricing" aria-label="Fees">
         <h2 className="lp-h2 lp-section-head">No retainer. No hourly rate.</h2>
+
+        <div className="lp-fee-lead">
+          <div className="lp-fee-figure">
+            <span className="lp-fee-from">Where it starts</span>
+            <span className="lp-fee-amount">{FEE_LEAD.value}</span>
+            <span className="lp-fee-what">{FEE_LEAD.label}</span>
+          </div>
+          <p className="lp-fee-note">{FEE_LEAD.note}</p>
+        </div>
+
         <div className="lp-fees">
           {FEES.map((f, i) => (
             <div key={f.label} className={`lp-row${i === 0 ? ' lp-row-first' : ''}`}>

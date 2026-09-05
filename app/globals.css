@@ -1976,15 +1976,6 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Three steps. Deliberately not three identical cards: the third
       carries the trust claim and is weighted for it. ── */
-.lp-steps { display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 16px; }
-.lp-step { background: var(--bg-2); border: 1px solid var(--border-subtle); padding: 24px 24px 26px; }
-.lp-step.is-on { background: var(--text-1); border-color: var(--text-1); }
-.lp-step-n { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--accent); margin-bottom: 16px; }
-.lp-step.is-on .lp-step-n { color: var(--accent-hover); }
-.lp-step h3 { font-size: 20px; letter-spacing: -0.015em; margin-bottom: 8px; }
-.lp-step.is-on h3 { color: var(--bg-0); }
-.lp-step p { font-size: 14.5px; line-height: 1.55; color: var(--text-2); }
-.lp-step.is-on p { color: rgba(250, 250, 248, 0.66); }
 
 .lp-trust {
   display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px; padding-top: 18px;
@@ -2030,7 +2021,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (max-width: 1080px) {
   .lp-hero-grid { grid-template-columns: 1fr; gap: 36px; }
-  .lp-steps, .lp-agents { grid-template-columns: 1fr; }
+  .lp-agents { grid-template-columns: 1fr; }
   .lp-rail { grid-template-columns: 1fr 1fr; }
   .lp-rail-cell { padding-right: 20px; padding-bottom: 20px; }
   .lp-section { padding: 48px 0; }
@@ -2070,11 +2061,6 @@ h1, h2, h3, h4, h5, h6 {
 .ap-card-go { font-size: 14.5px; font-weight: 600; color: var(--accent-deep); }
 
 /* nine property instruments */
-.ap-docs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
-.ap-doc { background: var(--bg-2); border: 1px solid var(--border-subtle); padding: 18px 20px; }
-.ap-doc-k { margin-bottom: 10px; color: var(--accent); }
-.ap-doc h3 { font-size: 17px; letter-spacing: -0.015em; margin-bottom: 6px; }
-.ap-doc p { font-size: 14px; line-height: 1.55; color: var(--text-2); }
 
 .ap-rule-head { font-family: var(--font-display), Georgia, serif; font-size: 26px; font-weight: 500; letter-spacing: -0.02em; margin: 44px 0 20px; }
 
@@ -2110,13 +2096,11 @@ h1, h2, h3, h4, h5, h6 {
 .ap-close-line { font-family: var(--font-display), Georgia, serif; font-size: 28px; letter-spacing: -0.025em; }
 
 @media (max-width: 1080px) {
-  .ap-docs { grid-template-columns: 1fr 1fr; }
   .ap-film { grid-template-columns: 1fr; gap: 28px; }
   .ap-limits, .ap-next { grid-template-columns: 1fr; }
   .ap-limit.is-first:nth-child(2) { border-top: 1px solid var(--border-subtle); }
 }
 @media (max-width: 640px) {
-  .ap-docs { grid-template-columns: 1fr; }
   .ap-rule-head { font-size: 22px; }
 }
 
@@ -2146,4 +2130,340 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 14.5px;
   line-height: 1.62;
   color: rgba(250, 250, 248, 0.62);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HOW IT WORKS — the three steps, told visually (components/HowItWorks.jsx)
+
+   Every stage below is built from type, rules and one SVG stroke, in the
+   existing ivory/gold tokens. No new colour, no new radius, no gradient.
+   The whole section is one composition, so the visuals share a fixed stage
+   height and sit on the same baseline across the three columns.
+
+   All motion is gated behind .is-live, which the component sets once when
+   the section is first scrolled into view, and behind a reduced-motion
+   guard at the bottom of this block.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.hiw { display: grid; grid-template-columns: 1fr 1fr 1.15fr; gap: 16px; }
+
+.hiw-step {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+}
+.hiw-step.is-on { background: var(--text-1); border-color: var(--text-1); }
+
+/* Fixed stage height keeps the three body blocks on one baseline, which is
+   what stops this reading as three unrelated cards. */
+.hiw-stage {
+  height: 176px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+  overflow: hidden;
+  position: relative;
+}
+.hiw-step.is-on .hiw-stage { border-bottom-color: rgba(250, 250, 248, 0.14); }
+
+.hiw-body { padding: 22px 24px 26px; }
+.hiw-n {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px; letter-spacing: 0.2em;
+  color: var(--accent); margin-bottom: 14px;
+}
+.hiw-step.is-on .hiw-n { color: var(--accent-hover); }
+.hiw-body h3 { font-size: 20px; letter-spacing: -0.015em; margin-bottom: 8px; }
+.hiw-step.is-on .hiw-body h3 { color: var(--bg-0); }
+.hiw-body p { font-size: 14.5px; line-height: 1.55; color: var(--text-2); }
+.hiw-step.is-on .hiw-body p { color: rgba(250, 250, 248, 0.66); }
+
+/* ── Stage 1: the client's own words ── */
+.hiw-chat { display: flex; flex-direction: column; gap: 8px; }
+.hiw-bubble {
+  font-size: 12.5px; line-height: 1.45;
+  padding: 9px 12px; max-width: 88%;
+  border: 1px solid var(--border-subtle);
+  opacity: 0; transform: translateY(6px);
+}
+.hiw-bubble-a { background: var(--bg-1); color: var(--text-2); align-self: flex-start; }
+.hiw-bubble-u { background: var(--text-1); color: var(--bg-0); border-color: var(--text-1); align-self: flex-end; }
+.hiw-typing { display: flex; gap: 4px; padding-left: 4px; opacity: 0; }
+.hiw-typing span {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--text-3);
+}
+.is-live .hiw-bubble       { animation: hiwRise 0.5s var(--ease-out, cubic-bezier(0.16,1,0.3,1)) forwards; }
+.is-live .hiw-bubble-a     { animation-delay: 0.05s; }
+.is-live .hiw-bubble-u     { animation-delay: 0.45s; }
+.is-live .hiw-typing       { animation: hiwFade 0.4s ease forwards 1.0s; }
+.is-live .hiw-typing span  { animation: hiwDot 1.2s ease-in-out infinite; }
+.is-live .hiw-typing span:nth-child(2) { animation-delay: 0.15s; }
+.is-live .hiw-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+/* ── Stage 2: structured matter, then the draft ── */
+.hiw-draft { display: flex; flex-direction: column; gap: 12px; }
+.hiw-fields { display: flex; flex-direction: column; gap: 5px; }
+.hiw-field {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px; letter-spacing: 0.02em;
+  color: var(--text-2);
+  padding: 5px 9px;
+  background: var(--bg-1);
+  border-left: 2px solid var(--accent);
+  opacity: 0; transform: translateX(-6px);
+}
+.hiw-field b { color: var(--text-1); font-weight: 600; margin-right: 8px; }
+.is-live .hiw-field { animation: hiwSlide 0.45s var(--ease-out, cubic-bezier(0.16,1,0.3,1)) forwards; }
+.is-live .hiw-field:nth-child(1) { animation-delay: 0.10s; }
+.is-live .hiw-field:nth-child(2) { animation-delay: 0.28s; }
+.is-live .hiw-field:nth-child(3) { animation-delay: 0.46s; }
+
+.hiw-paper { display: flex; flex-direction: column; gap: 7px; }
+.hiw-rule {
+  height: 2px; width: 100%;
+  background: var(--border-focus);
+  transform: scaleX(0); transform-origin: left;
+}
+.hiw-rule-head { height: 3px; width: 46%; background: var(--text-1); }
+.hiw-rule-short { width: 62%; }
+.is-live .hiw-rule { animation: hiwDrawRule 0.5s var(--ease-out, cubic-bezier(0.16,1,0.3,1)) forwards; }
+.is-live .hiw-rule:nth-child(1) { animation-delay: 0.66s; }
+.is-live .hiw-rule:nth-child(2) { animation-delay: 0.78s; }
+.is-live .hiw-rule:nth-child(3) { animation-delay: 0.88s; }
+.is-live .hiw-rule:nth-child(4) { animation-delay: 0.98s; }
+
+/* ── Stage 3: the signature ── */
+.hiw-sign { position: relative; height: 100%; }
+.hiw-paper-lift { gap: 9px; opacity: 0.32; }
+.hiw-step.is-on .hiw-rule { background: rgba(250, 250, 248, 0.35); }
+.hiw-ink {
+  position: absolute; left: -4px; top: 34px;
+  width: 208px; height: 60px;
+  color: var(--accent-hover);
+}
+.hiw-ink-path {
+  stroke-dasharray: 420; stroke-dashoffset: 420;
+}
+.is-live .hiw-ink-path { animation: hiwSignature 1.5s cubic-bezier(0.5, 0, 0.2, 1) forwards 0.75s; }
+
+.hiw-seal { position: absolute; left: 0; right: 24px; bottom: 6px; opacity: 0; }
+.hiw-seal-line { display: block; height: 1px; background: rgba(250, 250, 248, 0.28); margin-bottom: 7px; }
+.hiw-seal-text {
+  font-family: var(--font-mono), monospace;
+  font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: rgba(250, 250, 248, 0.6);
+}
+.is-live .hiw-seal { animation: hiwFade 0.6s ease forwards 2.1s; }
+
+@keyframes hiwRise      { to { opacity: 1; transform: none; } }
+@keyframes hiwSlide     { to { opacity: 1; transform: none; } }
+@keyframes hiwFade      { to { opacity: 1; } }
+@keyframes hiwDrawRule  { to { transform: scaleX(1); } }
+@keyframes hiwSignature { to { stroke-dashoffset: 0; } }
+@keyframes hiwDot       { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+
+@media (max-width: 1080px) {
+  .hiw { grid-template-columns: 1fr; }
+  /* The stage is the point of this section, so it survives on mobile rather
+     than being hidden. It only loses height, and the signature scales with it. */
+  .hiw-stage { height: 152px; }
+  .hiw-ink { width: 178px; top: 28px; }
+}
+
+/* Nothing here is load-bearing for comprehension, so reduced motion gets the
+   finished state of every stage instantly: bubbles present, fields present,
+   rules drawn, signature complete, seal visible. */
+@media (prefers-reduced-motion: reduce) {
+  .hiw-bubble, .hiw-typing, .hiw-field, .hiw-seal { opacity: 1; transform: none; }
+  .hiw-rule { transform: scaleX(1); }
+  .hiw-ink-path { stroke-dashoffset: 0; }
+  .is-live .hiw-bubble, .is-live .hiw-typing, .is-live .hiw-typing span,
+  .is-live .hiw-field, .is-live .hiw-rule, .is-live .hiw-ink-path, .is-live .hiw-seal {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THE CLOCK — the debt recovery timeline as an actual timeline
+
+   Four numbers in four boxes did not read as a sequence, which is a problem
+   when the sequence is the entire promise of the service. The cells now sit
+   on a single drawn track: the line runs left to right through the markers,
+   and the last marker fills gold because filing is the point the whole thing
+   is aimed at.
+
+   Motion is justified as storytelling: the track drawing left to right is
+   the passage of the fourteen days, which is the one thing a visitor needs
+   to understand here without reading a word.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.lp-rail-wrap { position: relative; padding-top: 30px; }
+
+/* The track. A scaleX sweep rather than an animated width, so it composites
+   on the GPU and never triggers layout. */
+.lp-rail-track {
+  position: absolute; top: 5px; left: 0; right: 0; height: 1px;
+  background: var(--border-focus);
+  transform: scaleX(0); transform-origin: left;
+}
+.lp-rail-wrap.is-live .lp-rail-track {
+  animation: hiwDrawRule 1.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.lp-rail-mark {
+  position: absolute; top: 0; width: 11px; height: 11px;
+  border: 1px solid var(--text-1);
+  background: var(--bg-1);
+  transform: scale(0);
+}
+.lp-rail-mark.is-on { background: var(--accent); border-color: var(--accent); }
+.lp-rail-wrap.is-live .lp-rail-mark { animation: hiwPop 0.4s var(--ease-out, cubic-bezier(0.16,1,0.3,1)) forwards; }
+
+.lp-rail { border-top: none; }
+.lp-rail-cell { border-right: none; padding-right: 28px; }
+
+@keyframes hiwPop { to { transform: scale(1); } }
+
+@media (max-width: 1080px) {
+  /* The horizontal track is meaningless once the cells stack, so it goes and
+     the cells carry their own left rule instead. */
+  .lp-rail-track, .lp-rail-mark { display: none; }
+  .lp-rail-wrap { padding-top: 0; }
+  .lp-rail-cell { border-left: 1px solid var(--border-focus); padding-left: 18px; }
+  .lp-rail-cell.is-on { border-left-color: var(--accent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-rail-track { transform: scaleX(1); }
+  .lp-rail-mark  { transform: scale(1); }
+  .lp-rail-wrap.is-live .lp-rail-track,
+  .lp-rail-wrap.is-live .lp-rail-mark { animation: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FEES — one number with weight, then the rest
+
+   The entry price was the third of six identical rows, so the most
+   persuasive number on the page was the hardest to find. It is now the
+   lead, set in display type at the scale the headline uses, with the
+   remaining fees kept as the same quiet rows they were. Deliberately not
+   a three-card pricing table: the firm has one price list, not tiers, and
+   pretending otherwise would be a SaaS costume.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.lp-fee-lead {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  gap: 44px;
+  align-items: end;
+  padding-bottom: 30px;
+  margin-bottom: 4px;
+}
+.lp-fee-figure { display: flex; flex-direction: column; }
+.lp-fee-from {
+  font-family: var(--font-mono), monospace;
+  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-3); margin-bottom: 10px;
+}
+.lp-fee-amount {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(58px, 9vw, 96px);
+  line-height: 0.92; letter-spacing: -0.04em;
+  color: var(--text-1);
+}
+.lp-fee-what { font-size: 15.5px; color: var(--text-2); margin-top: 14px; max-width: 30ch; }
+.lp-fee-note {
+  font-size: 16px; line-height: 1.62; color: var(--text-2);
+  max-width: 46ch; padding-bottom: 6px;
+  border-left: 2px solid var(--accent); padding-left: 20px;
+}
+
+@media (max-width: 1080px) {
+  .lp-fee-lead { grid-template-columns: 1fr; gap: 24px; align-items: start; }
+  .lp-fee-note { padding-bottom: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DOCUMENT STACK — the nine property instruments (components/DocumentStack.jsx)
+
+   A split: the nine names always visible on the left, the selected one
+   rendered as a sheet on the right. The sheet is given real paper weight
+   (white on the muted ground, a hairline, a signature rule at the foot)
+   because the thing being chosen is a physical legal document.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.ds { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 28px; }
+
+.ds-list { display: flex; flex-direction: column; }
+.ds-item {
+  display: flex; flex-direction: column; gap: 3px;
+  text-align: left; width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none; border-left: 2px solid var(--border-subtle);
+  font-family: inherit; cursor: pointer;
+  transition: background var(--anim-fast, 160ms ease), border-color var(--anim-fast, 160ms ease);
+}
+.ds-item:hover { background: var(--bg-2); }
+.ds-item.is-on { background: var(--bg-2); border-left-color: var(--accent); }
+.ds-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ds-item-k {
+  font-family: var(--font-mono), monospace;
+  font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--text-3);
+}
+.ds-item.is-on .ds-item-k { color: var(--accent); }
+.ds-item-t { font-size: 15.5px; color: var(--text-2); letter-spacing: -0.01em; }
+.ds-item.is-on .ds-item-t { color: var(--text-1); font-weight: 600; }
+
+.ds-sheet {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  padding: 34px 36px 28px;
+  display: flex; flex-direction: column;
+  animation: dsSheetIn 0.34s var(--ease-out, cubic-bezier(0.16,1,0.3,1));
+}
+.ds-sheet-head { border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 18px; }
+.ds-sheet-k {
+  display: block;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 9px;
+}
+.ds-sheet-t { font-size: 27px; letter-spacing: -0.02em; line-height: 1.15; }
+.ds-sheet-b { font-size: 16.5px; line-height: 1.65; color: var(--text-2); max-width: 52ch; }
+
+/* Rule lines standing in for the body of the instrument. They are the reason
+   this reads as a document rather than a card, and they carry no information,
+   so they are aria-hidden in the markup. */
+.ds-sheet-rules { display: flex; flex-direction: column; gap: 9px; margin: 26px 0 auto; padding-top: 4px; }
+.ds-sheet-rules span { height: 1px; background: var(--border-subtle); }
+.ds-sheet-rules span:nth-child(1) { width: 100%; }
+.ds-sheet-rules span:nth-child(2) { width: 94%; }
+.ds-sheet-rules span:nth-child(3) { width: 97%; }
+.ds-sheet-rules span:nth-child(4) { width: 58%; }
+
+.ds-sheet-foot { margin-top: 30px; }
+.ds-sheet-sig { display: block; width: 148px; height: 1px; background: var(--text-1); margin-bottom: 8px; }
+.ds-sheet-note {
+  font-family: var(--font-mono), monospace;
+  font-size: 9.5px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--text-3);
+}
+
+@keyframes dsSheetIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+@media (max-width: 1080px) {
+  /* Stacked, with the sheet under the list. The list stays scrollable in place
+     rather than collapsing, so all nine names are still reachable without the
+     panel pushing them off screen. */
+  .ds { grid-template-columns: 1fr; gap: 20px; }
+  .ds-sheet { padding: 26px 22px 22px; }
+  .ds-sheet-t { font-size: 23px; }
+  .ds-sheet-rules { margin: 20px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-sheet { animation: none; }
 }
