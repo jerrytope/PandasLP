@@ -910,7 +910,10 @@ function AdminPageInner() {
           <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
             Pandas <span className="accent">LP</span> <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>Admin</span>
           </Link>
-          <Link href="/dashboard" className="btn" style={{ fontSize: 13 }}>My Dashboard</Link>
+          <div style={{ display: "flex", gap: 8 }}>
+            <Link href="/admin/health" className="btn" style={{ fontSize: 13 }}>System Health</Link>
+            <Link href="/dashboard" className="btn" style={{ fontSize: 13 }}>My Dashboard</Link>
+          </div>
         </div>
       </header>
 
