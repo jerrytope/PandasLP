@@ -7,7 +7,8 @@
 
      TENANCY      a flat fee, charged in app at approval
      TRANSFER     no drafting fee, 2.5% of the consideration
-     SEARCH_STD   information gathering only; the team quotes the fee
+     FLAT         gift and mortgage, each its own flat fee
+     SEARCH_STD   a flat fee, but it buys the firm's time, not a document
      SEARCH_COMP  a floor, not a price; a lawyer quotes the real one
 
    This module is the ONE place these live. The agent's system prompt
@@ -35,15 +36,27 @@ export const PROPERTY_PRICING = {
      figure it invented. */
   transferFeeRate: 0.025,
 
-  /* The Deed of Gift, Power of Attorney, Deed of Legal Mortgage and Agreement for Sale
-     of Land. This is the firm's PRE-EXISTING flat document fee, carried forward unchanged
-     because no new price was given for them. It is not an endorsement of the figure: a gift
-     deed and a legal mortgage are not obviously the same amount of work, and this is on the
-     list of open pricing questions. Left as it was rather than invented anew. */
+  /* A standard property search. NOT a document the agent writes: the client pays this,
+     and a member of the firm then goes to the registry and produces the report. The agent
+     only takes the instruction. */
+  standardSearch: 50_000,
+
+  /* Deliberately NOT on the transfer percentage. A gift has no consideration, so 2.5% of
+     it is nothing. Priced as its own flat fee instead. */
+  deedOfGift: 30_000,
+
+  /* A charge over property rather than a transfer of it, so likewise a flat fee rather
+     than a percentage of the principal. */
+  legalMortgage: 30_000,
+
+  /* Power of Attorney and Agreement for Sale of Land. Still the firm's PRE-EXISTING flat
+     fee: no new price has been agreed for these two, so the old figure is carried forward
+     rather than a new one invented. Both are open pricing questions. */
   otherDocument: 5_000,
 } as const
 
 export const TENANCY_FEE_LABEL = '₦25,000'
+export const STANDARD_SEARCH_LABEL = '₦50,000'
 export const TRANSFER_FEE_LABEL = '2.5% of the consideration'
 
 /* The comprehensive search has a floor, never a fixed price: the real figure
