@@ -1,14 +1,16 @@
-import { getFollowUpEmail, getPaymentConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, type FollowUpEmailData } from './emailTemplates'
+import { getFollowUpEmail, getPaymentConfirmedEmail, getRecoveryConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, type FollowUpEmailData } from './emailTemplates'
 import { supabaseAdmin } from './supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from './mailer'
 import { buildTextDocumentBuffer } from './pdfGenerator.js'
 import { TERMS_OF_USE_TITLE, TERMS_OF_USE_TEXT } from './legalDocs'
+import { buildRecoveryOffers } from './recoveryOffers'
 
 export type SendCaseEmailOptions =
   | { type: 'payment_confirmed' }
   | { type: 'follow_up'; day: 0 | 7 | 14 }
   | { type: 'resolution' }
   | { type: 'reviewed_document' }
+  | { type: 'recovery_confirmed'; recoveryId: string }
 
 export type SendCaseEmailResult = { ok: true } | { ok: false; error: string; status: number }
 
@@ -100,6 +102,35 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       siteUrl,
     }
     ;({ subject, html, text } = getFollowUpEmail(emailData))
+  } else if (options.type === 'recovery_confirmed') {
+    // The amounts and the shortfall reason are read back from the recovery row rather than
+    // passed in by the caller, so what the client is told is exactly what was recorded and
+    // evidenced. There is no path where this email can state a figure the firm did not confirm.
+    const { data: recovery, error: recoveryErr } = await supabaseAdmin
+      .from('recoveries')
+      .select('amount_recovered, is_full, shortfall_reason')
+      .eq('id', options.recoveryId)
+      .eq('case_id', caseId)
+      .single()
+
+    if (recoveryErr || !recovery) {
+      return { ok: false, error: 'Recovery record not found.', status: 404 }
+    }
+
+    ;({ subject, html, text } = getRecoveryConfirmedEmail({
+      recipientName,
+      caseTitle: caseData.document_title ?? 'your case',
+      amountRecovered: recovery.amount_recovered,
+      isFull: recovery.is_full,
+      shortfallReason: recovery.shortfall_reason ?? undefined,
+      siteUrl,
+      // Same rule as the resolution email: unset means no review ask at all rather than a
+      // link to a Google profile that does not exist. getRecoveryConfirmedEmail additionally
+      // suppresses it on a partial recovery.
+      reviewUrl: process.env.GOOGLE_REVIEW_URL || undefined,
+      // Only agents that are actually live, with hand-written copy. See lib/recoveryOffers.ts.
+      offers: buildRecoveryOffers(siteUrl, caseData.agent_id),
+    }))
   } else {
     ;({ subject, html, text } = getResolutionEmail({
       recipientName,
@@ -128,6 +159,13 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       .from('cases')
       .update({ resolution_email_sent: true })
       .eq('id', caseId)
+  } else if (options.type === 'recovery_confirmed') {
+    // Stamped only after sendMail resolves, so the admin UI's "client notified" state means
+    // the message actually left, not that we intended to send one.
+    await supabaseAdmin
+      .from('recoveries')
+      .update({ client_notified_at: new Date().toISOString() })
+      .eq('id', options.recoveryId)
   }
 
   return { ok: true }

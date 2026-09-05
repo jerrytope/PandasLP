@@ -384,3 +384,158 @@ Pandas LP`,
     `),
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Recovery confirmed.
+
+   Sent when a member of the firm confirms money has actually reached a
+   client. It is the only email we send at a genuinely good moment, so it
+   is also the one place a repeat instruction or a review is worth asking
+   for. Two tones, chosen by isFull:
+
+   Full     the whole claim landed. Warm, and it asks for the review.
+   Partial  some of it landed. It states the shortfall and the recorded
+            reason in plain words, invites a conversation about the
+            balance, and does NOT ask for a review. Asking a client who
+            is still owed money to go and praise us publicly is the kind
+            of thing that reads as tone deaf, and deserves to.
+
+   `offers` is built by the caller from the agents that are actually live
+   (see lib/sendCaseEmail.ts). Nothing here invents a service.
+   ───────────────────────────────────────────────────────────────────────── */
+
+export interface RecoveryOffer {
+  name: string
+  line: string
+  href: string
+}
+
+export interface RecoveryConfirmedEmailData {
+  recipientName: string
+  caseTitle: string
+  amountRecovered: number
+  isFull: boolean
+  shortfallReason?: string
+  siteUrl: string
+  // Omitted entirely when GOOGLE_REVIEW_URL is unset, and never sent on a partial recovery.
+  reviewUrl?: string
+  offers: RecoveryOffer[]
+}
+
+const money = (n: number) => '₦' + n.toLocaleString('en-NG')
+
+export function getRecoveryConfirmedEmail(data: RecoveryConfirmedEmailData): { subject: string; html: string; text: string } {
+  const { recipientName, caseTitle, amountRecovered, isFull, shortfallReason, siteUrl, reviewUrl, offers } = data
+  const dashboardUrl = `${siteUrl}/dashboard`
+  const amount = money(amountRecovered)
+
+  // A review ask only ever rides on a full recovery.
+  const askForReview = isFull && !!reviewUrl
+
+  const openingText = isFull
+    ? `${amount} has been recovered on your matter, ${caseTitle}. That is the full amount claimed, and it is now with you.`
+    : `${amount} has been recovered on your matter, ${caseTitle}. That is part of what was claimed rather than all of it.`
+
+  const shortfallText = !isFull && shortfallReason
+    ? `\n\nWhy the balance was not recovered: ${shortfallReason}\n\nIf you want to pursue the rest, reply to this email. We will tell you honestly whether it is worth what it would cost you.`
+    : ''
+
+  const shortfallHtml = !isFull && shortfallReason
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+        <tr><td style="border-left:2px solid #D6BB80;padding:2px 0 2px 14px;">
+          <span style="display:block;font-size:11px;color:#ABB1A2;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">Why the balance was not recovered</span>
+          <span style="font-size:15px;color:#F3EFE3;line-height:1.6;">${shortfallReason}</span>
+        </td></tr>
+      </table>
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        If you want to pursue the rest, reply to this email. We will tell you honestly whether
+        it is worth what it would cost you.
+      </p>`
+    : ''
+
+  const offersText = offers.length
+    ? `\n\nWhat else we can do for you:\n${offers.map((o) => `- ${o.name}: ${o.line}\n  ${o.href}`).join('\n')}`
+    : ''
+
+  const offersHtml = offers.length
+    ? `<p style="margin:24px 0 12px;font-size:11px;color:#ABB1A2;letter-spacing:0.06em;text-transform:uppercase;">
+         What else we can do for you
+       </p>
+       <table width="100%" cellpadding="0" cellspacing="0">
+         ${offers.map((o) => `
+         <tr><td style="padding:12px 0;border-top:1px solid rgba(243,239,227,0.1);">
+           <a href="${o.href}" style="font-size:15px;font-weight:600;color:#F3EFE3;text-decoration:none;">${o.name} &rarr;</a>
+           <span style="display:block;font-size:14px;color:#ABB1A2;line-height:1.6;margin-top:4px;">${o.line}</span>
+         </td></tr>`).join('')}
+       </table>`
+    : ''
+
+  const reviewText = askForReview
+    ? `\n\nIf you have a moment, a review helps other people in the same situation find us: ${reviewUrl}`
+    : ''
+
+  const reviewHtml = askForReview
+    ? `<p style="margin:24px 0 12px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+         If you have a moment, a review helps the next person in the same situation find us.
+       </p>
+       <a href="${reviewUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">
+         Leave a Review &rarr;
+       </a>`
+    : ''
+
+  return {
+    subject: isFull
+      ? `Recovered in full: ${amount} | ${caseTitle}`
+      : `A part payment has been recovered | ${caseTitle}`,
+
+    text: `Hi ${recipientName},
+
+${openingText}${shortfallText}
+
+Thank you for trusting us with it. Most people in your position write the money off rather than chase it. You did not.
+
+View your case: ${dashboardUrl}${offersText}${reviewText}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
+
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        ${isFull ? 'Your money has been recovered' : 'A part payment has been recovered'}
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Hi ${recipientName},
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+        <tr><td style="background:#182A3A;border:1px solid rgba(243,239,227,0.1);border-radius:12px;padding:20px 24px;">
+          <span style="display:block;font-size:11px;color:#ABB1A2;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:6px;">
+            ${isFull ? 'Recovered in full' : 'Recovered so far'}
+          </span>
+          <span style="font-size:30px;font-weight:700;color:#D6BB80;letter-spacing:-0.02em;">${amount}</span>
+          <span style="display:block;font-size:14px;color:#ABB1A2;line-height:1.6;margin-top:8px;">${caseTitle}</span>
+        </td></tr>
+      </table>
+
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        ${isFull
+          ? 'That is the full amount claimed, and it is now with you.'
+          : 'That is part of what was claimed rather than all of it.'}
+      </p>
+
+      ${shortfallHtml}
+
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Thank you for trusting us with it. Most people in your position write the money off
+        rather than chase it. You did not.
+      </p>
+
+      <a href="${dashboardUrl}" style="display:inline-block;border:1px solid rgba(243,239,227,0.2);color:#F3EFE3;font-size:14px;font-weight:600;text-decoration:none;padding:12px 22px;border-radius:12px;">
+        View your case &rarr;
+      </a>
+
+      ${offersHtml}
+      ${reviewHtml}
+    `),
+  }
+}

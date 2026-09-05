@@ -373,6 +373,9 @@ CREATE TABLE IF NOT EXISTS public.recoveries (
   proof_path        TEXT,
   confirmed_by      TEXT        NOT NULL,
   confirmed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- stamped only once the confirmation email has actually left, so "client notified" in the
+  -- admin UI means sent, not intended. Null means no email was sent for this recovery.
+  client_notified_at TIMESTAMPTZ,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
   CONSTRAINT partial_recovery_needs_a_reason
@@ -385,3 +388,6 @@ CREATE INDEX IF NOT EXISTS idx_recoveries_confirmed_at ON public.recoveries(conf
 -- RLS on, with no client-facing policy: every read and write goes through the admin API
 -- using the service role. Nothing here is ever queried with the anon key.
 ALTER TABLE public.recoveries ENABLE ROW LEVEL SECURITY;
+
+-- Safe to run whether or not the table already existed without this column.
+ALTER TABLE public.recoveries ADD COLUMN IF NOT EXISTS client_notified_at TIMESTAMPTZ;

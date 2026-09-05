@@ -27,6 +27,7 @@ type RecoveryRow = {
   proof_note: string
   confirmed_by: string
   confirmed_at: string
+  client_notified_at: string | null
   proofUrl: string | null
 }
 
@@ -46,6 +47,8 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  // Default on: the recovery landing is the moment a client most wants to hear from us.
+  const [notifyClient, setNotifyClient] = useState(true)
 
   async function load() {
     setLoading(true)
@@ -72,6 +75,7 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
     setReason('')
     setProofNote('')
     setProofFile(null)
+    setNotifyClient(true)
   }
 
   async function submit(e: React.FormEvent) {
@@ -130,6 +134,7 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
           proofNote: proofNote.trim(),
           proofBase64,
           proofType,
+          notifyClient,
         }),
       })
       const data = await res.json()
@@ -137,7 +142,15 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
         setError(data.error || 'Could not record the recovery.')
         return
       }
-      setNotice(data.warning || 'Recovery recorded. It now counts towards the public total.')
+      // Three separate outcomes, reported separately, because "recorded" and "the client was
+      // told" are different facts and staff need to know which one actually happened.
+      const parts: string[] = ['Recovery recorded. It now counts towards the public total.']
+      if (notifyClient && data.emailSent) parts.push('The client has been emailed.')
+      if (notifyClient && !data.emailSent) {
+        parts.push(`The client was NOT emailed: ${data.emailError || 'the send failed.'}`)
+      }
+      if (data.warning) parts.push(data.warning)
+      setNotice(parts.join(' '))
       reset()
       await load()
     } catch {
@@ -182,7 +195,13 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
                   {!r.is_full && r.shortfall_reason && (
                     <div style={{ color: 'var(--text-muted)', marginTop: 3 }}>Shortfall: {r.shortfall_reason}</div>
                   )}
-                  <div style={{ color: 'var(--text-muted)', marginTop: 3, fontSize: 12 }}>Confirmed by {r.confirmed_by}</div>
+                  <div style={{ color: 'var(--text-muted)', marginTop: 3, fontSize: 12 }}>
+                    Confirmed by {r.confirmed_by}
+                    {' · '}
+                    {r.client_notified_at
+                      ? `client emailed ${new Date(r.client_notified_at).toLocaleDateString('en-NG')}`
+                      : 'client not emailed'}
+                  </div>
                 </div>
               ))}
             </div>
@@ -248,6 +267,23 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
                 onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
                 style={{ fontSize: 12 }}
               />
+            </label>
+
+            <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <input
+                type="checkbox"
+                checked={notifyClient}
+                onChange={(e) => setNotifyClient(e.target.checked)}
+                style={{ marginTop: 3 }}
+              />
+              <span>
+                Email the client
+                <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: 12, marginTop: 2 }}>
+                  {isFull === false
+                    ? 'They will be told the amount recovered, that it is only part of the claim, and the reason you gave above. No review is requested on a part payment.'
+                    : 'They will be told the amount recovered, and invited back for the other work we can do today.'}
+                </span>
+              </span>
             </label>
 
             {error && <p style={{ color: 'var(--danger)', margin: 0 }}>{error}</p>}

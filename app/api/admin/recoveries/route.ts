@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { sendCaseEmail } from '@/lib/sendCaseEmail'
 
 export const runtime = 'nodejs'
 
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
     proofNote?: string
     proofBase64?: string
     proofType?: string
+    notifyClient?: boolean
   }
   try {
     body = await req.json()
@@ -134,7 +136,29 @@ export async function POST(req: Request) {
     }
   }
 
-  return Response.json({ ok: true, id: inserted.id, proofPath, warning: proofWarning })
+  // Tell the client. Opt out by sending notifyClient: false; the default is to send, because
+  // the recovery landing is the one moment in a matter the client most wants to hear about.
+  //
+  // Non-fatal for the same reason as the proof upload: the recovery is recorded and correct
+  // whether or not the mail server cooperated, and a failed send should surface as something
+  // to retry rather than lose the confirmation. sendCaseEmail decides the tone from the row,
+  // so a partial recovery gets the partial email with its recorded reason, not a celebration.
+  let emailSent = false
+  let emailError: string | null = null
+
+  if (body.notifyClient !== false) {
+    const result = await sendCaseEmail(caseId, { type: 'recovery_confirmed', recoveryId: inserted.id })
+    // `result.ok === false` rather than `!result.ok`: tsconfig has strict off, so truthiness
+    // alone does not discriminate the union. Same pattern as app/api/send-email/route.ts.
+    if (result.ok === false) {
+      console.error('Failed to send recovery email:', result.error)
+      emailError = result.error
+    } else {
+      emailSent = true
+    }
+  }
+
+  return Response.json({ ok: true, id: inserted.id, proofPath, warning: proofWarning, emailSent, emailError })
 }
 
 // Everything recorded against one case, newest first, for the admin case view.
@@ -157,7 +181,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('recoveries')
-    .select('id, amount_recovered, claim_amount, is_full, shortfall_reason, proof_note, proof_path, confirmed_by, confirmed_at')
+    .select('id, amount_recovered, claim_amount, is_full, shortfall_reason, proof_note, proof_path, confirmed_by, confirmed_at, client_notified_at')
     .eq('case_id', caseId)
     .order('confirmed_at', { ascending: false })
 
