@@ -134,6 +134,15 @@ export default function AgentChat({
 
   const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'View My Case Dashboard →'
   const effectiveAmount = draftDoc?.price ?? amount
+  // PRICE: 0 is the agent's way of saying "there is nothing to collect here". It is not a
+  // free document — it means the fee is one the firm invoices directly rather than one
+  // Paystack can take, which today is the 2.5% on a transfer of title. Percentage fees on a
+  // property sale run to millions, and taking that through a card checkout before the team
+  // has done the stamping and perfection is not how the firm wants to be paid. So the
+  // document is still drafted and shown for the client to check, and the matter is handed to
+  // the team instead of to a payment form. Deliberately `=== 0` rather than falsy: an absent
+  // PRICE line parses to undefined and must keep falling back to the agent's standard fee.
+  const invoicedByFirm = draftDoc?.price === 0
   const effectiveDescription = draftDoc?.priceLabel
     ? `${draftDoc.priceLabel} (${paymentDescription})`
     : paymentDescription
@@ -707,9 +716,37 @@ export default function AgentChat({
                   {paid ? <span className="badge">Paid: Sent For Review</span> : <span className="badge badge-test">Preview</span>}
                 </div>
 
-                {draftDoc.priceLabel && !paid && (
+                {draftDoc.priceLabel && !paid && !invoicedByFirm && (
                   <div className={styles.documentTitle} style={{ marginTop: -8, marginBottom: 8, opacity: 0.8 }}>
                     Selected option: {draftDoc.priceLabel}
+                  </div>
+                )}
+
+                {/* The transfer-of-title path. Nothing is collected here: the client reads the
+                    draft, tells us it is right, and the team takes it from there and invoices
+                    the fee. Says so plainly so nobody is left waiting for a payment screen
+                    that is never going to appear. */}
+                {invoicedByFirm && (
+                  <div
+                    className={styles.documentTitle}
+                    style={{
+                      marginTop: -4,
+                      marginBottom: 12,
+                      padding: '12px 14px',
+                      borderLeft: '2px solid var(--accent)',
+                      background: 'var(--bg-0)',
+                      borderRadius: 8,
+                      fontWeight: 400,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <strong style={{ display: 'block', marginBottom: 4 }}>
+                      There is nothing to pay here.
+                    </strong>
+                    {draftDoc.priceLabel || 'Pandas LP will invoice you for this matter directly.'}{' '}
+                    Read the draft above carefully and check every name, address, figure and date
+                    against your own documents. Tell us what needs changing, or confirm it is
+                    correct, and a member of the firm will take it from there.
                   </div>
                 )}
 
@@ -738,7 +775,11 @@ export default function AgentChat({
                 )}
 
                 <div className={styles.documentActions}>
-                  {!paid ? (
+                  {invoicedByFirm ? (
+                    <button type="button" className="btn btn-primary" onClick={() => onApproved(agent.id)}>
+                      {continueLabel}
+                    </button>
+                  ) : !paid ? (
                     <button
                       type="button"
                       className="btn btn-primary"

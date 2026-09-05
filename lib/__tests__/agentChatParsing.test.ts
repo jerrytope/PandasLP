@@ -117,3 +117,27 @@ describe('extractClientPhone', () => {
     expect(phone).toBeNull()
   })
 })
+
+describe('extractDocument — PRICE: 0 means "invoiced by the firm"', () => {
+  // The transfer-of-title path emits PRICE: 0 to say there is nothing to collect online,
+  // because the 2.5% is invoiced directly. AgentChat distinguishes that from a missing
+  // PRICE line with `draftDoc?.price === 0`, so 0 has to survive parsing as the number 0
+  // and NOT collapse to undefined. If it ever did, `price ?? amount` would fall back to the
+  // agent's standard fee and quietly put a Paystack form in front of a deed.
+  it('parses PRICE: 0 as the number 0, not undefined', () => {
+    const { doc } = extractDocument(
+      '<<<DOCUMENT>>>\nTITLE: Deed of Assignment\nPRICE: 0\nPRICE_LABEL: Pandas LP will invoice you 2.5%\n---\nTHIS DEED OF ASSIGNMENT is made...\n<<<END_DOCUMENT>>>',
+    )
+    expect(doc).not.toBeNull()
+    expect(doc!.price).toBe(0)
+    expect(doc!.price).not.toBeUndefined()
+  })
+
+  it('still leaves price undefined when no PRICE line is given', () => {
+    const { doc } = extractDocument(
+      '<<<DOCUMENT>>>\nTITLE: Notice to Quit\n---\nTAKE NOTICE that you are required...\n<<<END_DOCUMENT>>>',
+    )
+    expect(doc).not.toBeNull()
+    expect(doc!.price).toBeUndefined()
+  })
+})
