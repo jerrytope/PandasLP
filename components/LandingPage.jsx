@@ -43,7 +43,7 @@ const AGENTS_LIVE = [
   {
     id: PROPERTY_AGENT,
     name: 'Property Law',
-    price: 'From ₦5,000',
+    price: 'From ₦25,000',
     img: '/img/img-property.jpg',
     alt: 'A folded land survey plan, a rolled deed and two keys',
     line: 'Tenancy documents at ₦25,000. Transfer deeds at 2.5% of the consideration.',
@@ -83,7 +83,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
             </h1>
 
             <p className="lp-lede">
-              Court-ready documents from ₦5,000. Ten minutes of your time, then a licensed
+              Court-ready documents from ₦10,000. Ten minutes of your time, then a licensed
               practitioner finishes the work and signs it.
             </p>
 

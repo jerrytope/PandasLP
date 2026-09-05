@@ -101,7 +101,7 @@ NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-cons
 | Agent ID | Name | Price |
 |---|---|---|
 | `small-claims` | Small Claims Court Agent | ₦10,000 (self-serve) / ₦25,000 (Pandas serves) |
-| `recovery-of-premises` | Property Law Agent (tenancy/lease, recovery of premises, deeds, powers of attorney, property searches) | Not flat. See `lib/propertyPricing.ts`, the single source of truth: tenancy/lease ₦25,000 · transfer deeds 2.5% of consideration (no drafting fee) · deed of gift ₦30,000 · legal mortgage ₦30,000 · PoA and agreement for sale ₦5,000 · standard search ₦50,000 · comprehensive search from ₦100,000, lawyer-quoted |
+| `recovery-of-premises` | Property Law Agent (tenancy/lease, recovery of premises, deeds, powers of attorney, property searches) | Not flat. See `lib/propertyPricing.ts`, the single source of truth: tenancy/lease ₦25,000 · transfer deeds 2.5% of consideration (no drafting fee) · every other document ₦30,000 · standard search ₦50,000 · comprehensive search from ₦100,000, lawyer-quoted |
 | `contracts` | Contracts & Commercial Agent | ₦5,000 |
 | `cac-registration` | CAC Registration Agent | ₦15,000 |
 | `judgment-enforcement` | Judgment Enforcement Agent | ₦10,000 + 5% of judgment |

@@ -35,7 +35,7 @@ const PREVIEWS = {
     label: 'I have a property matter',
     agentId: 'recovery-of-premises',
     name: 'Property Law Agent',
-    sub: 'From ₦5,000',
+    sub: 'From ₦25,000',
     cta: 'Start a property matter',
     turns: [
       ['a', 'What do you need today?'],

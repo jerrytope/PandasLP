@@ -41,18 +41,17 @@ export const PROPERTY_PRICING = {
      only takes the instruction. */
   standardSearch: 50_000,
 
-  /* Deliberately NOT on the transfer percentage. A gift has no consideration, so 2.5% of
-     it is nothing. Priced as its own flat fee instead. */
-  deedOfGift: 30_000,
+  /* Every property document that is neither a tenancy/lease document nor a transfer of
+     title: Deed of Gift, Deed of Legal Mortgage, Power of Attorney, Agreement for Sale
+     of Land. One fee, because they are all priced the same.
 
-  /* A charge over property rather than a transfer of it, so likewise a flat fee rather
-     than a percentage of the principal. */
-  legalMortgage: 30_000,
-
-  /* Power of Attorney and Agreement for Sale of Land. Still the firm's PRE-EXISTING flat
-     fee: no new price has been agreed for these two, so the old figure is carried forward
-     rather than a new one invented. Both are open pricing questions. */
-  otherDocument: 5_000,
+     None of them belongs on the transfer percentage, and each for its own reason. A gift
+     has no consideration, so 2.5% of it is nothing. A mortgage charges the property
+     rather than transferring it. The Agreement for Sale is the pre-completion contract,
+     not the instrument that transfers title, so taking the percentage there as well as
+     on the deed would bill one transaction twice. A Power of Attorney transfers nothing
+     at all. */
+  flatDocument: 30_000,
 } as const
 
 export const TENANCY_FEE_LABEL = '₦25,000'

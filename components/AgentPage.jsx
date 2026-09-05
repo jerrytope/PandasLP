@@ -63,7 +63,7 @@ export const AGENT_PAGES = {
     preview: 'property',
     crumb: 'Property Law',
     title: 'Property Law',
-    price: 'From ₦5,000',
+    price: 'From ₦25,000',
     lede: 'Tenancies, notices, deeds and title. You describe the property situation, and it works out which instrument the law actually requires.',
     cta: 'Start a property matter',
     docs: [
@@ -94,9 +94,7 @@ export const AGENT_PAGES = {
     fees: [
       { label: 'Tenancy and lease documents, including notices to quit and recovery of possession', value: '₦25,000' },
       { label: 'Deeds transferring title, drafted with no separate drafting fee', value: '2.5% of the consideration', accent: true },
-      { label: 'Deed of gift', value: '₦30,000' },
-      { label: 'Deed of legal mortgage', value: '₦30,000' },
-      { label: 'Power of attorney, agreement for sale of land', value: '₦5,000' },
+      { label: 'Deeds of gift, mortgages, powers of attorney, sale agreements', value: '₦30,000' },
       { label: 'Standard property search, carried out by the firm', value: '₦50,000' },
       { label: 'Comprehensive search and due diligence, set by a lawyer', value: 'From ₦100,000', muted: true },
       { label: 'Court filing fees, where a matter goes that far', value: 'Set by the court', muted: true },
