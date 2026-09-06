@@ -94,7 +94,7 @@ export const AGENT_PAGES = {
       { t: 'It stands down on contested matters', b: 'Live litigation, disputed ownership, squatters, or skipping Governor’s Consent go to a practitioner before any drafting.' },
     ],
     fees: [
-      { label: 'Tenancy and lease documents, including notices to quit and recovery of possession', value: '₦25,000' },
+      { label: 'Each tenancy or lease document (agreement, notice to quit, recovery of possession)', value: '₦25,000' },
       { label: 'Deeds transferring title. No drafting fee, invoiced by the firm, not paid online', value: '2.5% of the consideration', accent: true },
       { label: 'Deeds of gift, mortgages, powers of attorney, sale agreements', value: '₦30,000' },
       { label: 'Standard property search, carried out by the firm', value: '₦50,000' },

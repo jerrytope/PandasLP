@@ -67,7 +67,7 @@ const FEE_LEAD = {
 const FEES = [
   { label: 'The same letter, served by us', value: '₦25,000' },
   { label: 'Day 7 and Day 14 follow-ups', value: 'Included', accent: true },
-  { label: 'Tenancy and lease documents', value: '₦25,000' },
+  { label: 'Each tenancy or lease document', value: '₦25,000' },
   { label: 'Deeds transferring title, invoiced by the firm', value: '2.5% of the consideration' },
   { label: 'Court filing fees', value: 'Set by the court', muted: true },
 ]

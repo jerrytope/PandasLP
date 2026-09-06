@@ -26,8 +26,10 @@ export const PROPERTY_PRICING = {
   /* Every document arising out of a tenancy or lease relationship: tenancy
      and lease agreements, Notice to Quit, Notice of Owner's Intention to
      Recover Possession, seven days' notice, and anything else directly
-     connected to letting or recovering possession. One category, one fee,
-     regardless of which document in it the client needs. */
+     connected to letting or recovering possession. Charged PER DOCUMENT:
+     every one of these costs the same 25,000 each. "One category" means one
+     price per document, NOT one payment covering several. A client who needs
+     a tenancy agreement and a Notice to Quit pays 25,000 twice. */
   tenancy: 25_000,
 
   /* Deeds and instruments that transfer title. Pandas LP charges no separate

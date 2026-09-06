@@ -134,7 +134,7 @@ export const BLOG_POSTS: BlogPost[] = [
 
 <p>Pandas LP's <a href="/agents/property-law">Property Law Agent</a> takes this as a conversation. You describe the tenancy in ordinary words, and it works out which instrument the situation calls for, applies the statutory notice period for that tenancy type, and drafts the notice. A licensed practitioner reviews and signs it before it is served, because an unsigned notice is not a notice.</p>
 
-<p>It also handles the sequence rather than a single document, so the seven days notice is drafted when the Notice to Quit has expired instead of being forgotten. Tenancy and lease documents, including notices to quit and recovery of possession, are <strong>₦25,000</strong>.</p>
+<p>It also handles the sequence rather than a single document, so the seven days notice is drafted when the Notice to Quit has expired instead of being forgotten. Each tenancy or lease document is <strong>₦25,000</strong>: the agreement, a notice to quit, a recovery-of-possession notice. A matter needing more than one is charged per document.</p>
 
 <p>It will not advise self-help eviction, and it will not invent a figure or an identifier you have not supplied. Where the matter is contested, where ownership is disputed, or where there is live litigation over the property, it escalates to a practitioner rather than drafting.</p>
 
