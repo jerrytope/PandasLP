@@ -1,0 +1,5 @@
+  frames-w 864/1152
+  frames-w 924/1152
+  frames-w 984/1152
+  frames-w 1044/1152
+  frames-w 1104/1152

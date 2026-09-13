@@ -304,26 +304,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 .card-interactive:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Featured/flagship card: a static accent top rule + faint accent tint, no shimmer or
-   motion — the accent line is the signal, not an animated border. */
-.card-gradient {
-  position: relative;
-  border-top: 2px solid var(--accent);
-  background: color-mix(in srgb, var(--accent) 6%, var(--bg-2));
-}
-
 /* Alias for an already-elevated card (used on the roster/capabilities/trust surfaces) —
    no blur/transparency in this system, just a slightly deeper shadow than the base card. */
 .glass-panel {
   box-shadow: 0 4px 12px rgba(26, 26, 26, 0.06);
-}
-
-.glow-gold {
-  box-shadow: 0 8px 24px -8px var(--accent-glow);
-}
-
-.text-gradient-gold {
-  color: var(--accent);
 }
 
 /* ── Inputs ── */
@@ -1078,194 +1062,6 @@ h1, h2, h3, h4, h5, h6 {
   .orbit-center-value { font-size: 19px; }
 }
 
-/* ── How It Works ── */
-.hiw-section { background: var(--bg-0); }
-
-.hiw-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 24px;
-  margin-top: 64px;
-}
-.hiw-grid > *:nth-child(2) { margin-top: 36px; }
-.hiw-grid > *:nth-child(3) { margin-top: 72px; }
-
-.hiw-grid-4 {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-.hiw-grid-4 > *:nth-child(2) { margin-top: 24px; }
-.hiw-grid-4 > *:nth-child(3) { margin-top: 48px; }
-.hiw-grid-4 > *:nth-child(4) { margin-top: 72px; }
-
-@media (max-width: 1100px) {
-  .hiw-grid-4 { grid-template-columns: 1fr 1fr; }
-  .hiw-grid-4 > *:nth-child(2) { margin-top: 0; }
-  .hiw-grid-4 > *:nth-child(3) { margin-top: 0; }
-  .hiw-grid-4 > *:nth-child(4) { margin-top: 0; }
-  .hiw-flow-line { display: none; }
-}
-
-.hiw-step-card {
-  background: var(--bg-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 36px 30px;
-  position: relative;
-  overflow: hidden;
-  transition: transform var(--anim-med), border-color var(--anim-med), box-shadow var(--anim-med);
-}
-.hiw-step-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--border-focus);
-  box-shadow: 0 30px 60px -24px rgba(6, 10, 15, 0.5);
-}
-
-.hiw-step-num {
-  position: absolute;
-  top: 8px;
-  right: 20px;
-  font-family: var(--font-display), sans-serif;
-  font-size: 72px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: var(--bg-2);
-  line-height: 1;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.hiw-icon {
-  width: 44px; height: 44px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 24px;
-  color: var(--accent);
-  position: relative;
-  z-index: 1;
-}
-
-.hiw-step-title {
-  font-family: var(--font-display), sans-serif;
-  font-size: 21px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--text-1);
-  margin-bottom: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.hiw-step-body {
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--text-2);
-  margin-bottom: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.hiw-connector {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-3);
-  font-size: 20px;
-  align-self: center;
-}
-
-.hiw-flow-line {
-  display: none;
-  width: 100%;
-  height: 28px;
-  margin-top: 40px;
-  overflow: visible;
-}
-@media (min-width: 1025px) {
-  .hiw-flow-line { display: block; }
-  .hiw-flow-line + .hiw-grid { margin-top: 8px; }
-}
-
-.hiw-flow-path {
-  fill: none;
-  stroke: var(--border-focus);
-  stroke-width: 0.5;
-  stroke-linecap: round;
-}
-.hiw-flow-path-drawn {
-  stroke: var(--accent);
-  stroke-dasharray: 68;
-  stroke-dashoffset: 68;
-  animation: hiwDraw 1.4s var(--ease-out) forwards;
-}
-@keyframes hiwDraw {
-  to { stroke-dashoffset: 0; }
-}
-
-.hiw-flow-node {
-  fill: var(--bg-1);
-  stroke: var(--border-focus);
-  stroke-width: 0.4;
-}
-
-.hiw-flow-pulse {
-  fill: var(--accent);
-  filter: drop-shadow(0 0 3px var(--accent-glow));
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hiw-flow-path-drawn { animation: none; stroke-dashoffset: 0; }
-  .hiw-flow-pulse { display: none; }
-}
-
-/* ── Bento Grid ── */
-.bento-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: auto auto;
-  gap: 16px;
-  margin-top: 56px;
-}
-
-.bento-card {
-  background: var(--bg-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-  transition: transform var(--anim-med), border-color var(--anim-med);
-}
-.bento-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--border-focus);
-  box-shadow: 0 24px 48px -20px rgba(6, 10, 15, 0.45);
-}
-.bento-card-hero { grid-column: span 2; }
-
-.bento-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-subtle);
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 16px;
-  color: var(--accent);
-}
-
-.bento-title {
-  font-size: 17px;
-  font-weight: 600;
-  color: var(--text-1);
-  margin-bottom: 8px;
-  letter-spacing: -0.01em;
-}
-
-.bento-body {
-  font-size: 14px;
-  color: var(--text-2);
-  line-height: 1.65;
-}
-
 /* ── Pricing Calculator ── */
 .pricing-calc {
   background: var(--bg-1);
@@ -1895,10 +1691,6 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 1024px) {
   .hero-grid { gap: 40px; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
-  .hiw-grid { grid-template-columns: 1fr; gap: 20px; }
-  .hiw-grid > *:nth-child(2), .hiw-grid > *:nth-child(3) { margin-top: 0; }
-  .bento-grid { grid-template-columns: 1fr 1fr; }
-  .bento-card-hero { grid-column: span 2; }
 }
 
 @media (max-width: 768px) {
@@ -1914,8 +1706,6 @@ h1, h2, h3, h4, h5, h6 {
   .hamburger { display: flex; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
   .comparison-table th, .comparison-table td { padding: 12px 10px; font-size: 12px; }
-  .bento-grid { grid-template-columns: 1fr; }
-  .bento-card-hero { grid-column: span 1; }
   .pricing-calc { padding: 28px 20px; }
   .testimonial-card { width: 280px; }
   .escalation-path { padding: 32px 0; }

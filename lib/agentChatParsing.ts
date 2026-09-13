@@ -16,6 +16,8 @@ const DOCUMENT_BLOCK_RE =
 const OPTIONS_BLOCK_RE = /<<<OPTIONS>>>\n([\s\S]*?)<<<END_OPTIONS>>>/
 
 const CLIENT_PHONE_BLOCK_RE = /<<<CLIENT_PHONE>>>\s*([\s\S]*?)\s*<<<END_CLIENT_PHONE>>>/
+const CLIENT_EMAIL_BLOCK_RE = /<<<CLIENT_EMAIL>>>\s*([\s\S]*?)\s*<<<END_CLIENT_EMAIL>>>/
+const RECIPIENT_PHONE_BLOCK_RE = /<<<RECIPIENT_PHONE>>>\s*([\s\S]*?)\s*<<<END_RECIPIENT_PHONE>>>/
 
 // Some agents (e.g. small-claims, once the ₦25,000 "Pandas LP serves it" option is chosen)
 // ask for a callback number so a lawyer can reach the client after payment. The model hands
@@ -25,6 +27,32 @@ export function extractClientPhone(content: string): { visible: string; phone: s
   if (!match) return { visible: content, phone: null }
   const phone = match[1].trim() || null
   const visible = content.replace(CLIENT_PHONE_BLOCK_RE, '').trim()
+  return { visible, phone }
+}
+
+// Same idea as CLIENT_PHONE, for the lawyer-intake flow only (see lib/agents.ts's
+// SMALL_CLAIMS_LAWYER_INTAKE_PROMPT and app/admin/page.tsx's Custom Claims tab). A case
+// created there has no client Supabase account — the case is owned by the staff member
+// running the session, not the client — so there is no auth email for sendCaseEmail to
+// resolve. This is the only place the real client's email gets captured at all.
+export function extractClientEmail(content: string): { visible: string; email: string | null } {
+  const match = content.match(CLIENT_EMAIL_BLOCK_RE)
+  if (!match) return { visible: content, email: null }
+  const email = match[1].trim() || null
+  const visible = content.replace(CLIENT_EMAIL_BLOCK_RE, '').trim()
+  return { visible, email }
+}
+
+// CLIENT_PHONE is a callback number for the CLIENT — the person paying Pandas LP. This is a
+// different person's phone entirely: whoever the drafted document is actually served ON (a
+// debtor, a tenant). Serving via WhatsApp (see app/admin/page.tsx's "Serve via WhatsApp") must
+// send to THIS number, never the client's — sending an e-service notice to your own client
+// instead of the debtor it's meant for defeats the point of service entirely.
+export function extractRecipientPhone(content: string): { visible: string; phone: string | null } {
+  const match = content.match(RECIPIENT_PHONE_BLOCK_RE)
+  if (!match) return { visible: content, phone: null }
+  const phone = match[1].trim() || null
+  const visible = content.replace(RECIPIENT_PHONE_BLOCK_RE, '').trim()
   return { visible, phone }
 }
 

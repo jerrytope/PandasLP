@@ -29,3 +29,9 @@ next-env.d.ts
 .vercel
 .env*
 *.tsbuildinfo
+
+# Disposable per-frame PNG dumps used only to assemble campaign/*-film/*.mp4 via ffmpeg —
+# hundreds of MB of throwaway rendering intermediates, not source and not the deliverable
+# (the .mp4 itself is what ships). Caught once already bloating a commit by ~700MB; this
+# stops it from happening again on the next render pass.
+campaign/*-film/frames-*/

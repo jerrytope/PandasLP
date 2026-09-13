@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type
 import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl } from '@/lib/pdfGenerator'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
-import { extractDocument, extractOptions, extractClientPhone, type DraftDocument } from '@/lib/agentChatParsing'
+import { extractDocument, extractOptions, extractClientPhone, extractClientEmail, extractRecipientPhone, type DraftDocument } from '@/lib/agentChatParsing'
 import { useFocusTrap } from '@/lib/useFocusTrap'
 import { getAttribution } from '@/lib/attribution'
 import { trackEvent } from '@/lib/analytics'
@@ -46,7 +46,19 @@ interface AgentChatProps {
   initialPaid?: boolean
   // Render as a page-filling section (no dark backdrop, no floating card) instead of a modal overlay
   fullPage?: boolean
+  // Custom Claims tab (app/admin/page.tsx) only — a Pandas LP lawyer relaying a case they
+  // picked up offline, not the client themselves. Swaps the client-facing starter message
+  // for one addressed to staff, sends lawyerIntake to /api/chat so the server swaps in
+  // lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT, captures the real client's email via
+  // the CLIENT_EMAIL block (there is no client Supabase account for this case at all — see
+  // supabase-schema.sql's client_email column), and skips the Paystack "Approve & Pay" button
+  // entirely: staff aren't the paying party, and payment for an offline case is confirmed and
+  // recorded separately (see the Cases tab's "Mark Paid (Offline)" action).
+  lawyerIntake?: boolean
 }
+
+const LAWYER_INTAKE_STARTER_MESSAGE =
+  "Hi — tell me about the case you picked up. Who owes the client money, roughly how much, and how did the debt come about? I'll ask you anything else I need as we go, and flag anything you'll need to go back and confirm with the client."
 
 function renderContent(text: string): ReactNode {
   const lines = text.split('\n')
@@ -81,11 +93,12 @@ export default function AgentChat({
   initialClientPhone,
   initialPaid = false,
   fullPage = false,
+  lawyerIntake = false,
 }: AgentChatProps) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessages && initialMessages.length > 0
       ? initialMessages
-      : [{ role: 'assistant', content: agent.starterMessage }],
+      : [{ role: 'assistant', content: lawyerIntake ? LAWYER_INTAKE_STARTER_MESSAGE : agent.starterMessage }],
   )
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -117,6 +130,15 @@ export default function AgentChat({
   // extraction so cancelling can cleanly remove it (nothing was actually contributed).
   const [pendingExtraction, setPendingExtraction] = useState<PendingExtraction | null>(null)
   const pendingAttachMsgRef = useRef<Message | null>(null)
+  // Multi-file attach: the user can select several files in one picker action (see
+  // handleFileSelect's `multiple` input), but they're still reviewed one at a time through
+  // the same ExtractionConfirmModal gate — batch convenience must never dilute the
+  // human-reviews-every-extraction rule that gate exists for. pendingBatchRef holds the
+  // files still waiting after the one currently in the modal; batchTotal/batchIndex only
+  // drive the "File X of Y" label and are safe as plain state since nothing else reads them.
+  const pendingBatchRef = useRef<File[]>([])
+  const [batchTotal, setBatchTotal] = useState(0)
+  const [batchIndex, setBatchIndex] = useState(0)
   const messagesRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const caseRefRef = useRef<string>('')
@@ -132,7 +154,11 @@ export default function AgentChat({
   // own Navbar/Footer that Tab should still be able to reach.
   useFocusTrap(modalRef, !fullPage)
 
-  const continueLabel = agent.id === 'lawyer-consultation' ? 'Continue to Booking →' : 'View My Case Dashboard →'
+  const continueLabel = lawyerIntake
+    ? 'Done — Save This Case →'
+    : agent.id === 'lawyer-consultation'
+      ? 'Continue to Booking →'
+      : 'View My Case Dashboard →'
   const effectiveAmount = draftDoc?.price ?? amount
   // PRICE: 0 is the agent's way of saying "there is nothing to collect here". It is not a
   // free document — it means the fee is one the firm invoices directly rather than one
@@ -212,7 +238,13 @@ export default function AgentChat({
     if (caseCreationPromiseRef.current) return caseCreationPromiseRef.current
 
     const creation = (async () => {
-      const { source, sourceDetail } = getAttribution()
+      // A lawyer-intake case didn't come from a ?ref=/utm_* link at all — user_id here is
+      // the STAFF member running the session, not a client who arrived via some channel, so
+      // getAttribution()'s browser-side capture would just report whatever this staff
+      // member's own browser last saw and mislabel the case's real source.
+      const { source, sourceDetail } = lawyerIntake
+        ? { source: 'staff-offline', sourceDetail: null }
+        : getAttribution()
       const { data, error: dbErr } = await supabase
         .from('cases')
         .insert({ user_id: userId, agent_id: agent.id, status: 'draft', source, source_detail: sourceDetail })
@@ -306,6 +338,25 @@ export default function AgentChat({
     if (!dbErr) setHasClientPhone(true)
   }
 
+  // The debtor's phone — who the letter is actually served on, via "Serve via WhatsApp" in
+  // the admin dashboard. Distinct from client_phone above: two different people's numbers,
+  // never to be confused. See the RECIPIENT_PHONE block in lib/agents.ts.
+  async function saveRecipientPhone(phone: string) {
+    const caseInfo = await ensureCase()
+    if (!caseInfo) return
+    const { error: dbErr } = await supabase.from('cases').update({ recipient_phone: phone }).eq('id', caseInfo.id)
+    if (dbErr) console.error('Failed to save recipient phone:', dbErr)
+  }
+
+  // lawyerIntake only — see the CLIENT_EMAIL block in lib/agents.ts's
+  // SMALL_CLAIMS_LAWYER_INTAKE_PROMPT and client_email in supabase-schema.sql.
+  async function saveClientEmail(email: string) {
+    const caseInfo = await ensureCase()
+    if (!caseInfo) return
+    const { error: dbErr } = await supabase.from('cases').update({ client_email: email }).eq('id', caseInfo.id)
+    if (dbErr) console.error('Failed to save client email:', dbErr)
+  }
+
   // Fallback for when the AI didn't capture a callback number before the chat input
   // disappears at `paid` — see the fallback form rendered near the bottom of this component.
   async function submitFallbackPhone() {
@@ -396,7 +447,7 @@ export default function AgentChat({
       const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages, agentId: agent.id }),
+        body: JSON.stringify({ messages: nextMessages, agentId: agent.id, ...(lawyerIntake ? { lawyerIntake: true } : {}) }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -404,12 +455,16 @@ export default function AgentChat({
         return
       }
       const { visible: afterPhone, phone } = extractClientPhone(data.response ?? '')
-      const { visible, doc: rawDoc } = extractDocument(afterPhone)
+      const { visible: afterRecipientPhone, phone: recipientPhone } = extractRecipientPhone(afterPhone)
+      const { visible: afterEmail, email: clientEmail } = extractClientEmail(afterRecipientPhone)
+      const { visible, doc: rawDoc } = extractDocument(afterEmail)
       const assistantMsg: Message = { role: 'assistant', content: visible }
       setMessages((prev) => [...prev, assistantMsg])
       const doc = await finalizeDocument(rawDoc)
       if (doc) setDraftDoc(doc)
       if (phone) saveClientPhone(phone).catch((err) => console.error('Failed to save client phone:', err))
+      if (recipientPhone) saveRecipientPhone(recipientPhone).catch((err) => console.error('Failed to save recipient phone:', err))
+      if (clientEmail) saveClientEmail(clientEmail).catch((err) => console.error('Failed to save client email:', err))
       // Awaited (not fire-and-forget) specifically so a failed document save can be surfaced
       // before the user reaches the payment button — otherwise they'd pay against a document
       // that only ever existed in this tab's memory and vanishes on refresh (see saveTurn).
@@ -445,57 +500,70 @@ export default function AgentChat({
 
   // ----- File upload -----
 
+  const ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  const MAX_FILE_BYTES = 10 * 1024 * 1024
+
   async function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files ?? [])
     e.target.value = ''
+    if (files.length === 0) return
 
-    const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!ALLOWED.includes(file.type)) {
-      setError('Unsupported file type. Please upload a PDF, JPG, PNG, or WEBP.')
-      return
+    const valid: File[] = []
+    const skipped: string[] = []
+    for (const f of files) {
+      if (!ALLOWED_FILE_TYPES.includes(f.type)) skipped.push(`${f.name} (unsupported type)`)
+      else if (f.size > MAX_FILE_BYTES) skipped.push(`${f.name} (over 10 MB)`)
+      else valid.push(f)
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('File too large. Maximum size is 10 MB.')
-      return
-    }
+    setError(skipped.length > 0 ? `Skipped ${skipped.length === files.length ? 'all files' : skipped.length + ' file(s)'}: ${skipped.join(', ')}` : '')
+    if (valid.length === 0) return
 
-    // Convert to base64
+    // The rest of the selection waits here — processFile picks up the next one only once the
+    // current file's extraction has been reviewed (confirmed or discarded), never in parallel.
+    setBatchTotal(valid.length)
+    setBatchIndex(1)
+    pendingBatchRef.current = valid.slice(1)
+    await processFile(valid[0])
+  }
+
+  // One file through the existing single-file pipeline: attach bubble -> /api/extract ->
+  // hold for human review in ExtractionConfirmModal. Unchanged in substance from the
+  // original single-upload handleFileSelect — just reusable per queued file now.
+  async function processFile(file: File) {
     const base64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        resolve(result.split(',')[1]) // strip data URL prefix
-      }
+      reader.onload = () => resolve((reader.result as string).split(',')[1])
       reader.onerror = reject
       reader.readAsDataURL(file)
     })
 
-    // Show attachment bubble
-    const attachMsg: Message = {
-      role: 'user',
-      content: `Attached: ${file.name}`,
-    }
+    const attachMsg: Message = { role: 'user', content: `Attached: ${file.name}` }
     setMessages((prev) => [...prev, attachMsg])
     setExtracting(true)
-    setError('')
 
     try {
+      // Ensures a case row exists before the file ever reaches the server, so /api/extract has
+      // somewhere real to attach the evidence to — see case_evidence in supabase-schema.sql.
+      // Without this, a client whose very first action is uploading a screenshot would have no
+      // case yet, and that evidence would have nothing to attach to and be lost outright.
+      const caseInfo = await ensureCase()
       const res = await authedFetch('/api/extract', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ fileBase64: base64, mediaType: file.type, filename: file.name }),
+        body: JSON.stringify({ fileBase64: base64, mediaType: file.type, filename: file.name, caseId: caseInfo?.id }),
       })
       const data = await res.json()
 
       if (!res.ok || data.error) {
-        setError(data.error || 'Could not read the document. Please try again.')
+        setError(`${file.name}: ${data.error || 'Could not read the document. Please try again.'}`)
+        advanceBatch()
         return
       }
 
       // Hold here — nothing gets sent to the agent until the user reviews and confirms in
       // ExtractionConfirmModal. An AI read of a scanned document is a read, not a fact,
-      // until a human has looked at it once.
+      // until a human has looked at it once. True for every file in a batch, not just a
+      // single upload — the queue slows down for this on purpose.
       pendingAttachMsgRef.current = attachMsg
       setPendingExtraction({
         filename: file.name,
@@ -505,9 +573,24 @@ export default function AgentChat({
       })
     } catch (err) {
       console.error('Document extraction failed:', err)
-      setError('Network error during document analysis.')
+      setError(`Network error while analysing ${file.name}.`)
+      advanceBatch()
     } finally {
       setExtracting(false)
+    }
+  }
+
+  // Moves to the next file waiting in the batch, if any; otherwise closes out the batch
+  // indicator. Called once the current file has actually been dealt with — confirmed, sent,
+  // discarded, or failed to extract — never before.
+  function advanceBatch() {
+    const next = pendingBatchRef.current.shift()
+    if (next) {
+      setBatchIndex((i) => i + 1)
+      processFile(next)
+    } else {
+      setBatchTotal(0)
+      setBatchIndex(0)
     }
   }
 
@@ -516,12 +599,14 @@ export default function AgentChat({
     const filename = pendingExtraction?.filename ?? 'the uploaded document'
     setPendingExtraction(null)
     pendingAttachMsgRef.current = null
-    if (!attachMsg) return
-    const factsMsg: Message = {
-      role: 'user',
-      content: `DOCUMENT CONTEXT: Facts extracted from ${filename} (reviewed and confirmed by the client):\n${editedFacts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
+    if (attachMsg) {
+      const factsMsg: Message = {
+        role: 'user',
+        content: `DOCUMENT CONTEXT: Facts extracted from ${filename} (reviewed and confirmed by the client):\n${editedFacts}\n\nPlease confirm what you found and continue with only the questions I haven't answered yet.`,
+      }
+      await sendToAgent([...messages, attachMsg, factsMsg], factsMsg)
     }
-    await sendToAgent([...messages, attachMsg, factsMsg], factsMsg)
+    advanceBatch()
   }
 
   // Discarding removes the "Attached: <file>" bubble too — nothing was actually contributed
@@ -531,6 +616,7 @@ export default function AgentChat({
     setPendingExtraction(null)
     pendingAttachMsgRef.current = null
     if (attachMsg) setMessages((prev) => prev.filter((m) => m !== attachMsg))
+    advanceBatch()
   }
 
   // TranslationPane's "Replace Original with Translation" — deliberately re-runs the exact
@@ -558,7 +644,7 @@ export default function AgentChat({
   }
 
   function handleClear() {
-    setMessages([{ role: 'assistant', content: agent.starterMessage }])
+    setMessages([{ role: 'assistant', content: lawyerIntake ? LAWYER_INTAKE_STARTER_MESSAGE : agent.starterMessage }])
     setError('')
     setDraftDoc(null)
     setDocSaveFailed(false)
@@ -750,6 +836,30 @@ export default function AgentChat({
                   </div>
                 )}
 
+                {/* Lawyer intake: staff aren't the paying party for an offline case, so there
+                    is no Paystack button to show them here at all — payment is confirmed and
+                    recorded separately, from the Cases tab's "Mark Paid (Offline)" action,
+                    once the client has actually paid. */}
+                {lawyerIntake && !invoicedByFirm && (
+                  <div
+                    className={styles.documentTitle}
+                    style={{
+                      marginTop: -4,
+                      marginBottom: 12,
+                      padding: '12px 14px',
+                      borderLeft: '2px solid var(--accent)',
+                      background: 'var(--bg-0)',
+                      borderRadius: 8,
+                      fontWeight: 400,
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    <strong style={{ display: 'block', marginBottom: 4 }}>Nothing to pay here.</strong>
+                    Review the draft with the checklist above in mind, then save the case. Once the client's
+                    payment is confirmed, mark it paid from the Cases tab to send this for review.
+                  </div>
+                )}
+
                 {previewUrl && <iframe title="Document preview" src={previewUrl} className={styles.docFrame} />}
 
                 <AudioReader text={draftDoc.body} label="Listen to this document" />
@@ -775,7 +885,7 @@ export default function AgentChat({
                 )}
 
                 <div className={styles.documentActions}>
-                  {invoicedByFirm ? (
+                  {invoicedByFirm || lawyerIntake ? (
                     <button type="button" className="btn btn-primary" onClick={() => onApproved(agent.id)}>
                       {continueLabel}
                     </button>
@@ -857,6 +967,7 @@ export default function AgentChat({
                   ref={fileInputRef}
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  multiple
                   style={{ display: 'none' }}
                   onChange={handleFileSelect}
                 />
@@ -864,9 +975,9 @@ export default function AgentChat({
                   type="button"
                   className={styles.uploadBtn}
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={loading || extracting}
-                  title="Attach a document or invoice"
-                  aria-label="Attach file"
+                  disabled={loading || extracting || pendingExtraction !== null}
+                  title="Attach one or more documents or screenshots"
+                  aria-label="Attach files"
                 >
                   <Paperclip size={16} strokeWidth={1.5} aria-hidden="true" />
                 </button>
@@ -894,6 +1005,8 @@ export default function AgentChat({
       {pendingExtraction && (
         <ExtractionConfirmModal
           extraction={pendingExtraction}
+          batchIndex={batchTotal > 1 ? batchIndex : undefined}
+          batchTotal={batchTotal > 1 ? batchTotal : undefined}
           onConfirm={confirmExtraction}
           onCancel={cancelExtraction}
         />

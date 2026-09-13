@@ -1,5 +1,6 @@
 export const runtime = 'nodejs'
 
+import { timingSafeEqual } from 'crypto'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { classifyLegalProblem } from '@/lib/legalIntakeClassifier'
 import { getAgentPayment } from '@/lib/agentServiceMap'
@@ -8,6 +9,18 @@ import { formatNaira } from '@/lib/formatNaira'
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 10 * 60 * 1000
 const MAX_QUERY_LENGTH = 2000
+
+// Constant-time comparison — a plain !== leaks how many leading bytes matched via response
+// timing. Low real-world risk here (not a session credential, and a remote timing attack over
+// HTTP is impractical), but this is the correct way to compare a secret and costs nothing.
+function safeKeyEquals(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  // timingSafeEqual throws on length mismatch rather than returning false, and comparing
+  // against a fixed-length key would otherwise leak the real key's length too.
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 
@@ -29,7 +42,8 @@ export async function POST(req: Request) {
   if (!pluginKey) {
     return Response.json({ error: 'This endpoint is not configured yet.' }, { status: 503 })
   }
-  if (req.headers.get('x-plugin-key') !== pluginKey) {
+  const providedKey = req.headers.get('x-plugin-key')
+  if (!providedKey || !safeKeyEquals(providedKey, pluginKey)) {
     return Response.json({ error: 'Unauthorized.' }, { status: 401 })
   }
 

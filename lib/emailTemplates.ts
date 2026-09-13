@@ -41,6 +41,10 @@ export interface NewOrderAlertEmailData {
   agentId: string
   caseId: string
   siteUrl: string
+  // Set by app/api/verify-payment/route.ts once it knows whether the editable DOCX (see
+  // lib/docxGenerator.js) actually got built and attached — a case can reach "paid" with no
+  // document yet (e.g. property law's percentage-fee deeds), so this can't just be assumed true.
+  hasEditableDraftAttached?: boolean
 }
 
 function baseWrapper(content: string) {
@@ -350,9 +354,17 @@ pandaslegalpractitioners@gmail.com`,
 // app/api/verify-payment/route.ts rather than through sendCaseEmail, which resolves its
 // recipient from the case owner. This is the "click here to review" alert a payment triggers.
 export function getNewOrderAlertEmail(data: NewOrderAlertEmailData): { subject: string; html: string; text: string } {
-  const { caseTitle, clientEmail, amountPaid, agentId, caseId, siteUrl } = data
+  const { caseTitle, clientEmail, amountPaid, agentId, caseId, siteUrl, hasEditableDraftAttached } = data
   const reviewUrl = `${siteUrl}/admin?caseId=${caseId}`
   const amountStr = `₦${amountPaid.toLocaleString()}`
+  const attachmentNoteText = hasEditableDraftAttached
+    ? '\nAn editable copy of the draft (.docx) is attached — open it in Word to review and mark up before upload-reviewed-document / markReviewed.\n'
+    : ''
+  const attachmentNoteHtml = hasEditableDraftAttached
+    ? `<p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        An editable copy of the draft (<strong style="color:#F3EFE3;">.docx</strong>) is attached — open it in Word to review and mark up before uploading the reviewed version.
+      </p>`
+    : ''
 
   return {
     subject: `New paid order | ${caseTitle}`,
@@ -362,7 +374,7 @@ Client: ${clientEmail}
 Service: ${agentId}
 Amount: ${amountStr}
 Document: ${caseTitle}
-
+${attachmentNoteText}
 Click here to review the document: ${reviewUrl}
 
 Pandas LP`,
@@ -378,6 +390,7 @@ Pandas LP`,
         <tr><td style="padding:4px 0;">Service</td><td style="padding:4px 0;color:#F3EFE3;">${agentId}</td></tr>
         <tr><td style="padding:4px 0;">Amount</td><td style="padding:4px 0;color:#F3EFE3;">${amountStr}</td></tr>
       </table>
+      ${attachmentNoteHtml}
       <a href="${reviewUrl}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">
         Click to Review Document →
       </a>

@@ -1,0 +1,6 @@
+  frames-w 1908/2220
+  frames-w 1968/2220
+  frames-w 2028/2220
+  frames-w 2088/2220
+  frames-w 2148/2220
+  frames-w 2208/2220

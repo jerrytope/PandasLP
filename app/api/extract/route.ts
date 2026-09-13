@@ -36,19 +36,30 @@ export async function POST(req: Request) {
     return Response.json({ error: 'API not configured.' }, { status: 503 })
   }
 
-  let body: { fileBase64: string; mediaType: string; filename: string }
+  let body: { fileBase64: string; mediaType: string; filename: string; caseId?: string }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { fileBase64, mediaType, filename } = body
+  const { fileBase64, mediaType, filename, caseId } = body
   if (!fileBase64 || !mediaType || !filename) {
     return Response.json({ error: 'Missing file data.' }, { status: 400 })
   }
   if (typeof filename !== 'string' || filename.length > 255) {
     return Response.json({ error: 'Invalid filename.' }, { status: 400 })
+  }
+
+  // Optional — AgentChat.tsx calls ensureCase() before uploading and passes the result, but a
+  // case can genuinely not exist yet (ensureCase needs userId, which this same auth check just
+  // established, so in practice this is only ever missing if the client-side insert itself
+  // failed). Ownership is checked the same way every other case-scoped route checks it — a
+  // caller can only attach evidence to their OWN case, never someone else's by guessing an id.
+  let ownedCaseId: string | null = null
+  if (caseId) {
+    const { data: caseRow } = await supabaseAdmin.from('cases').select('user_id').eq('id', caseId).single()
+    if (caseRow?.user_id === callerData.user.id) ownedCaseId = caseId
   }
 
   // Base64 inflates size by ~4/3 — this is only an estimate, but it's enough to reject the
@@ -124,6 +135,39 @@ Document filename: ${filename}`
     }
 
     const facts: string = data.content?.[0]?.text ?? 'No facts extracted.'
+
+    // Persist the actual file, not just Claude's summary of it — see case_evidence's own
+    // comment in supabase-schema.sql for why this exists at all. Best-effort and after the
+    // extraction has already succeeded: a client is mid-interview waiting on `facts` to keep
+    // the conversation moving, and a storage hiccup here must never be the reason that stalls
+    // or errors for them. If ownedCaseId is null (no case yet, or ownership didn't check out)
+    // this simply doesn't persist — the extraction result still returns normally either way.
+    if (ownedCaseId) {
+      try {
+        const buffer = Buffer.from(fileBase64, 'base64')
+        const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const storagePath = `${ownedCaseId}/${Date.now()}-${safeName}`
+        const { error: uploadErr } = await supabaseAdmin.storage
+          .from('case-evidence')
+          .upload(storagePath, buffer, { contentType: mediaType, upsert: false })
+        if (uploadErr) {
+          console.error('Failed to store evidence file:', uploadErr)
+        } else {
+          const { error: insertErr } = await supabaseAdmin.from('case_evidence').insert({
+            case_id: ownedCaseId,
+            filename,
+            storage_path: storagePath,
+            media_type: mediaType,
+            size_bytes: buffer.length,
+            extracted_facts: facts,
+          })
+          if (insertErr) console.error('Failed to record evidence row:', insertErr)
+        }
+      } catch (err) {
+        console.error('Unexpected error persisting evidence:', err)
+      }
+    }
+
     return Response.json({ facts, filename })
   } catch {
     return Response.json({ error: 'Network error during extraction.' }, { status: 502 })

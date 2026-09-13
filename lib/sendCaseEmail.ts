@@ -35,8 +35,16 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
     return { ok: false, error: 'Case not found.', status: 404 }
   }
 
-  const { data: userData } = await supabaseAdmin.auth.admin.getUserById(caseData.user_id)
-  const recipientEmail = userData?.user?.email
+  // A lawyer-intake case (see app/admin/page.tsx's Custom Claims tab) is owned by the staff
+  // member who ran the session, not the actual client — the client never has a Supabase
+  // account for auth.admin.getUserById to resolve at all. client_email, captured directly
+  // from the agent conversation (see lib/agentChatParsing.ts's extractClientEmail), is the
+  // real recipient for those cases and always takes priority when it's set.
+  let recipientEmail = caseData.client_email as string | null
+  if (!recipientEmail) {
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(caseData.user_id)
+    recipientEmail = userData?.user?.email ?? null
+  }
   if (!recipientEmail) {
     return { ok: false, error: 'User email not found.', status: 404 }
   }

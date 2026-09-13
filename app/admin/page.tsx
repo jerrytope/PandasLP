@@ -8,13 +8,16 @@ import { supabase, authedFetch } from '@/lib/supabaseClient'
 import RecoveryPanel from '@/components/RecoveryPanel'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
+import { getAgentPayment } from '@/lib/agentServiceMap'
+import AgentChat from '@/components/AgentChat'
 import { getReviewChecklist, isHighRiskDocument } from '@/lib/reviewChecklists'
 import { formatNaira } from '@/lib/formatNaira'
 import { renderFormattedText } from '@/lib/renderFormattedText'
-import { downloadTextDocument } from '@/lib/pdfGenerator'
+import { downloadTextDocument, buildStampedDocument } from '@/lib/pdfGenerator'
+import { downloadDemandLetterDocx } from '@/lib/docxGenerator'
 import AudioReader from '@/components/AudioReader'
 import TranslationPane from '@/components/TranslationPane'
-import { Phone, AlertTriangle, Scale, Check, Clock } from 'lucide-react'
+import { Phone, AlertTriangle, Scale, Check, Clock, Mail } from 'lucide-react'
 
 interface AdminCaseRow {
   id: string
@@ -29,6 +32,12 @@ interface AdminCaseRow {
   expected_amount: number | null
   delivery_option: string | null
   client_phone: string | null
+  client_email: string | null
+  recipient_phone: string | null
+  // Computed server-side from actual storage contents, not a stored column — see
+  // app/api/admin/cases/route.ts's own comment for why. True once a reviewed-and-stamped
+  // PDF exists for this case, whether uploaded manually or via Attach Stamp's confirm step.
+  hasStampedDocument: boolean
   created_at: string
   paid_at: string | null
   deadline_at: string | null
@@ -78,6 +87,16 @@ interface CaseMessage {
   created_at: string
 }
 
+interface CaseEvidenceRow {
+  id: string
+  filename: string
+  mediaType: string
+  sizeBytes: number | null
+  extractedFacts: string | null
+  createdAt: string
+  url: string | null
+}
+
 const STAGE_LABEL: Record<string, string> = {
   draft: 'Interview',
   document_ready: 'Doc Ready',
@@ -88,7 +107,7 @@ const STAGE_LABEL: Record<string, string> = {
   closed: 'Closed',
 }
 
-type CaseAction = 'markReviewed' | 'sendReviewedDocument' | 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed'
+type CaseAction = 'markReviewed' | 'sendReviewedDocument' | 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed' | 'markPaidOffline'
 
 const NEXT_ACTION: Record<string, { action: CaseAction; label: string } | undefined> = {
   letter_served: { action: 'markFiled', label: 'Mark Filed' },
@@ -132,6 +151,10 @@ function CaseCard({
   togglingTestId,
   onSecondReview,
   secondReviewingId,
+  onSaveClientEmail,
+  savingClientEmailId,
+  onSaveRecipientPhone,
+  savingRecipientPhoneId,
   accentColor,
   domId,
 }: {
@@ -147,6 +170,10 @@ function CaseCard({
   togglingTestId?: string | null
   onSecondReview?: (caseId: string, email: string) => void
   secondReviewingId?: string | null
+  onSaveClientEmail?: (caseId: string, email: string) => void
+  savingClientEmailId?: string | null
+  onSaveRecipientPhone?: (caseId: string, phone: string) => void
+  savingRecipientPhoneId?: string | null
   accentColor?: string
   domId?: string
 }) {
@@ -155,16 +182,32 @@ function CaseCard({
   const [showLetter, setShowLetter] = useState(false)
   const [checklistChecked, setChecklistChecked] = useState<Record<string, boolean>>(c.review_checklist ?? {})
   const [secondReviewerEmail, setSecondReviewerEmail] = useState('')
+  const [clientEmailInput, setClientEmailInput] = useState(c.client_email ?? '')
+  const [recipientPhoneInput, setRecipientPhoneInput] = useState(c.recipient_phone ?? '')
   // Only a document that's actually been paid for AND reviewed by a lawyer is the real,
   // clean deliverable — everything before that (still drafting, paid-but-unreviewed) shows
   // the same watermarked version the client saw in their own preview, so staff never end up
   // with an unreviewed clean copy floating around just because they wanted to check on a lead.
+  // This gates the in-page "SAMPLE: NOT FOR FILING" banner below — it does NOT gate the DOCX
+  // download (see canDownloadReviewCopy), which is deliberately available before review: that
+  // download IS the reviewer's editable working copy, not a preview of the final letter.
   const isFinalClean = c.status === 'paid' && !!c.reviewed_at
+  // Once a case is paid, staff need the real, unwatermarked, editable letter to actually
+  // review it — a watermarked read-only PDF can't be marked up. See lib/docxGenerator.js's
+  // own "INTERNAL REVIEW COPY" footer, which is what keeps this from being confused with a
+  // final, sendable document even though it carries no watermark.
+  const canDownloadReviewCopy = c.status === 'paid'
+  const [downloadingDocx, setDownloadingDocx] = useState(false)
 
   const [showInterview, setShowInterview] = useState(false)
   const [interviewLoading, setInterviewLoading] = useState(false)
   const [interviewError, setInterviewError] = useState('')
   const [messages, setMessages] = useState<CaseMessage[] | null>(null)
+
+  const [showEvidence, setShowEvidence] = useState(false)
+  const [evidenceLoading, setEvidenceLoading] = useState(false)
+  const [evidenceError, setEvidenceError] = useState('')
+  const [evidence, setEvidence] = useState<CaseEvidenceRow[] | null>(null)
 
   // Lets staff upload the actual reviewed-and-stamped PDF for this case so THAT file (not
   // the auto-generated one) is what "Send to Customer" attaches — see
@@ -174,27 +217,13 @@ function CaseCard({
   const [stampUploaded, setStampUploaded] = useState(false)
   const stampInputRef = useRef<HTMLInputElement>(null)
 
-  async function handleStampFileSelect(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    e.target.value = ''
-    if (file.type !== 'application/pdf') {
-      setStampError('Please upload a PDF.')
-      return
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      setStampError('File too large. Maximum size is 10 MB.')
-      return
-    }
+  // Shared by both paths onto the same endpoint: a staff member's own externally-stamped PDF
+  // (handleStampFileSelect) and the one-click "Attach Stamp" flow below, which generates the
+  // PDF in-browser instead of asking staff to produce one outside the app first.
+  async function uploadReviewedBase64(base64: string) {
     setStampError('')
     setUploadingStamp(true)
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve((reader.result as string).split(',')[1])
-        reader.onerror = reject
-        reader.readAsDataURL(file)
-      })
       const res = await authedFetch('/api/admin/upload-reviewed-document', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -211,6 +240,58 @@ function CaseCard({
     } finally {
       setUploadingStamp(false)
     }
+  }
+
+  async function handleStampFileSelect(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    if (file.type !== 'application/pdf') {
+      setStampError('Please upload a PDF.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setStampError('File too large. Maximum size is 10 MB.')
+      return
+    }
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve((reader.result as string).split(',')[1])
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+    await uploadReviewedBase64(base64)
+  }
+
+  // The one-click path: build the reviewed letter with Adedeji Adeyemo's real NBA stamp
+  // placed over the signature line (see lib/pdfGenerator.js's buildStampedDocument), open it
+  // in a new tab so staff can actually look at it, and hold the same generated file's base64
+  // ready — confirmStampUpload sends that exact previewed file, never a freshly regenerated
+  // one, so what gets uploaded is guaranteed to be what was just reviewed.
+  const [stampPreviewBase64, setStampPreviewBase64] = useState<string | null>(null)
+  const [generatingStamp, setGeneratingStamp] = useState(false)
+
+  function handleAttachStamp() {
+    if (!c.document_title || !c.document_body) return
+    setStampError('')
+    setGeneratingStamp(true)
+    try {
+      const doc = buildStampedDocument(c.document_title, c.document_body)
+      const blobUrl = doc.output('bloburl') // a URL instance, not a string — see jspdf's types
+      setStampPreviewBase64(doc.output('datauristring').split(',')[1])
+      window.open(blobUrl.toString(), '_blank', 'noopener')
+    } catch (err) {
+      console.error('Failed to generate stamped document:', err)
+      setStampError('Could not generate the stamped document. Please try again.')
+    } finally {
+      setGeneratingStamp(false)
+    }
+  }
+
+  async function confirmStampUpload() {
+    if (!stampPreviewBase64) return
+    await uploadReviewedBase64(stampPreviewBase64)
+    setStampPreviewBase64(null)
   }
 
   // WhatsApp service — see app/api/admin/service-records/route.ts and lib/whatsappService.ts.
@@ -243,14 +324,16 @@ function CaseCard({
   }
 
   async function dispatchWhatsAppService() {
-    if (!c.client_phone) return
+    // The debtor's number, not the client's — see recipient_phone's own comment in
+    // supabase-schema.sql. Serving to the client's own phone would defeat the point of service.
+    if (!c.recipient_phone) return
     setDispatching(true)
     setServiceRecordsError('')
     try {
       const res = await authedFetch('/api/admin/service-records', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ caseId: c.id, phone: c.client_phone }),
+        body: JSON.stringify({ caseId: c.id, phone: c.recipient_phone }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -307,6 +390,26 @@ function CaseCard({
     }
   }
 
+  async function toggleEvidence() {
+    if (showEvidence) { setShowEvidence(false); return }
+    setShowEvidence(true)
+    // Signed URLs expire (see the route's SIGNED_URL_TTL_SECONDS) — unlike the conversation
+    // transcript, staying open a while shouldn't mean the links quietly go stale, so this
+    // refetches every time the panel opens rather than caching after the first load.
+    setEvidenceLoading(true)
+    setEvidenceError('')
+    try {
+      const res = await authedFetch(`/api/admin/case-evidence?caseId=${c.id}`)
+      const data = await res.json()
+      if (!res.ok) { setEvidenceError(data.error || 'Failed to load evidence.'); return }
+      setEvidence(data.evidence ?? [])
+    } catch {
+      setEvidenceError('Network error. Please try again.')
+    } finally {
+      setEvidenceLoading(false)
+    }
+  }
+
   return (
     <div id={domId} className="card" style={{ padding: '18px 22px', ...(accentColor ? { borderColor: accentColor } : {}) }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
@@ -343,6 +446,64 @@ function CaseCard({
           </span>
         )}
       </div>
+
+      {/* The address sendCaseEmail actually mails to — see its preference for client_email
+          over the case owner's auth email. Editable on every case (a signup address can be
+          wrong or outdated), and the ONLY way to set one at all for a case built through the
+          Custom Claims "lawyer intake" flow, whose client has no account/auth email at all. */}
+      {onSaveClientEmail && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+          <Mail size={13} strokeWidth={1.5} aria-hidden="true" style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input
+            type="email"
+            className="input"
+            placeholder="Client email (for sending the reviewed letter)"
+            value={clientEmailInput}
+            onChange={(e) => setClientEmailInput(e.target.value)}
+            style={{ maxWidth: 280, fontSize: 13 }}
+          />
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={savingClientEmailId === c.id || clientEmailInput.trim() === (c.client_email ?? '')}
+            onClick={() => onSaveClientEmail(c.id, clientEmailInput.trim())}
+          >
+            {savingClientEmailId === c.id ? 'Saving…' : 'Save Email'}
+          </button>
+          {c.client_email && (
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Emails currently go to this address, not {c.userEmail || 'the account email'}.
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* The debtor's/tenant's own phone — who "Serve via WhatsApp" above actually serves.
+          Never the client's own number (client_phone above is that, a different person
+          entirely). The agent asks for this once the ₦25,000 "Pandas LP serves it" tier is
+          chosen (see lib/agents.ts's RECIPIENT_PHONE block), but most existing cases predate
+          that and need it set here directly before Serve via WhatsApp will work at all. */}
+      {onSaveRecipientPhone && (
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 10 }}>
+          <Phone size={13} strokeWidth={1.5} aria-hidden="true" style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <input
+            type="tel"
+            className="input"
+            placeholder="Debtor's phone (for Serve via WhatsApp)"
+            value={recipientPhoneInput}
+            onChange={(e) => setRecipientPhoneInput(e.target.value)}
+            style={{ maxWidth: 280, fontSize: 13 }}
+          />
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={savingRecipientPhoneId === c.id || recipientPhoneInput.trim() === (c.recipient_phone ?? '')}
+            onClick={() => onSaveRecipientPhone(c.id, recipientPhoneInput.trim())}
+          >
+            {savingRecipientPhoneId === c.id ? 'Saving…' : 'Save Phone'}
+          </button>
+        </div>
+      )}
 
       {next?.action === 'markReviewed' && (() => {
         const checklist = getReviewChecklist(c.document_title)
@@ -421,6 +582,22 @@ function CaseCard({
             {updatingId === c.id ? 'Updating…' : next.label}
           </button>
         )}
+        {/* For a case with no Paystack transaction behind it at all — built through the
+            Custom Claims "lawyer intake" flow, where the client paid Pandas LP directly,
+            offline. Records the payment and unlocks the exact same review/stamp/send
+            pipeline every other paid case uses. Not shown once a case is already paid or
+            beyond — there's nothing left to mark. */}
+        {(c.status === 'draft' || c.status === 'document_ready') && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={updatingId === c.id}
+            title="Record that the client paid Pandas LP directly (cash, transfer, etc.) rather than through the site"
+            onClick={() => onAction(c.id, 'markPaidOffline')}
+          >
+            {updatingId === c.id ? 'Updating…' : 'Mark Paid (Offline)'}
+          </button>
+        )}
         {/* Recovery action for cases whose document never persisted — see the schema-drift
             note in app/api/admin/regenerate-document/route.ts. Only shown once a case has
             actually reached document drafting or beyond (status !== 'draft'); a case still
@@ -437,19 +614,71 @@ function CaseCard({
         )}
         {/* Staff can always download any drafted letter, paid or not — useful for following
             up on abandoned/unpaid leads on a sales call, not just reviewed-and-paid cases.
-            Watermarked until it's actually paid AND reviewed — see isFinalClean above. */}
-        {c.document_body && (
+            Once paid, this switches from a watermarked read-only PDF to the real, editable,
+            unwatermarked DOCX (see canDownloadReviewCopy / lib/docxGenerator.js) — that's the
+            reviewer's actual working copy, not a preview, so a client's payment is exactly the
+            moment it needs to stop being watermarked. */}
+        {c.document_body && canDownloadReviewCopy && (
           <button
             type="button"
             className="btn btn-sm"
-            onClick={() => downloadTextDocument(c.document_title ?? 'Document', c.document_body!, { watermark: !isFinalClean })}
+            disabled={downloadingDocx}
+            onClick={async () => {
+              setDownloadingDocx(true)
+              try {
+                await downloadDemandLetterDocx(c.document_title ?? 'Document', c.document_body!)
+              } catch (err) {
+                console.error('Failed to build review DOCX:', err)
+                alert('Could not generate the DOCX. Please try again.')
+              } finally {
+                setDownloadingDocx(false)
+              }
+            }}
+          >
+            {downloadingDocx ? 'Preparing…' : 'Download DOCX'}
+          </button>
+        )}
+        {c.document_body && !canDownloadReviewCopy && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            onClick={() => downloadTextDocument(c.document_title ?? 'Document', c.document_body!, { watermark: true })}
           >
             Download PDF
           </button>
         )}
+        {/* One click: places Pandas LP's real NBA practicing stamp over the signature line
+            (see lib/pdfGenerator.js's buildStampedDocument) and opens it in a new tab so
+            staff actually look at it before it goes anywhere — nothing uploads on this
+            click alone. Same gating as the manual upload below: only once reviewed, since
+            a stamp belongs on the reviewed final, not a draft still being worked on. */}
+        {c.reviewed_at && c.document_body && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={generatingStamp}
+            onClick={handleAttachStamp}
+            title="Generate the reviewed letter with the practicing stamp attached, and preview it in a new tab"
+          >
+            {generatingStamp ? 'Preparing…' : 'Attach Stamp'}
+          </button>
+        )}
+        {stampPreviewBase64 && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)' }}>
+            Preview opened in a new tab.
+            <button type="button" className="btn btn-sm" disabled={uploadingStamp} onClick={confirmStampUpload}>
+              {uploadingStamp ? 'Uploading…' : 'Looks good — upload it'}
+            </button>
+            <button type="button" className="btn btn-sm" onClick={() => setStampPreviewBase64(null)}>
+              Discard
+            </button>
+          </span>
+        )}
         {/* Upload the actual signed/stamped PDF for this case — once present, that exact
             file (not the auto-generated one) is what "Send to Customer" attaches. Only
-            shown once reviewed, matching "reviewed and stamped" being one step. */}
+            shown once reviewed, matching "reviewed and stamped" being one step. Kept
+            alongside "Attach Stamp" above for a case that needs a different signatory, a
+            hand-signed scan, or any document Attach Stamp's own template can't produce. */}
         {c.reviewed_at && (
           <>
             <input
@@ -464,7 +693,7 @@ function CaseCard({
               className="btn btn-sm"
               disabled={uploadingStamp}
               onClick={() => stampInputRef.current?.click()}
-              title="Upload the signed/stamped PDF to send instead of the auto-generated one"
+              title="Upload a different signed/stamped PDF to send instead of the auto-generated one"
             >
               {uploadingStamp ? 'Uploading…' : stampUploaded ? 'Replace Stamped Document' : 'Upload Stamped Document'}
             </button>
@@ -502,12 +731,29 @@ function CaseCard({
         <button type="button" className="btn btn-sm" onClick={toggleInterview}>
           {showInterview ? 'Hide Conversation' : 'View Conversation'}
         </button>
-        {/* Needs a phone number and an actual document to serve — same gating as the
-            "No contact number" warning shown above. */}
-        {c.client_phone && c.document_body && (
+        {/* Same "available regardless of document state" reasoning as View Conversation — a
+            client can attach evidence before a letter's even drafted, and staff following up
+            on a lead should be able to see it just as easily as a paid, reviewed case. */}
+        <button type="button" className="btn btn-sm" onClick={toggleEvidence}>
+          {showEvidence ? 'Hide Evidence' : 'View Evidence'}
+        </button>
+        {/* Needs the DEBTOR's phone (recipient_phone) — never client_phone, a different
+            person's number entirely (see its own comment in supabase-schema.sql) — AND a
+            reviewed-and-stamped PDF actually uploaded first (via Attach Stamp or Upload
+            Stamped Document below). Serving an unstamped draft on the debtor is exactly the
+            mistake this gate exists to block; stampUploaded covers "uploaded just now, this
+            session" immediately, hasStampedDocument covers "uploaded in an earlier session"
+            once the page has reloaded. If recipient_phone is missing, the "Recipient phone"
+            field further down is where staff set it directly. */}
+        {c.recipient_phone && c.document_body && (c.hasStampedDocument || stampUploaded) && (
           <button type="button" className="btn btn-sm" disabled={dispatching} onClick={dispatchWhatsAppService}>
             {dispatching ? 'Opening…' : 'Serve via WhatsApp'}
           </button>
+        )}
+        {c.recipient_phone && c.document_body && !c.hasStampedDocument && !stampUploaded && (
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', alignSelf: 'center' }}>
+            Upload the stamped document before serving on WhatsApp.
+          </span>
         )}
         <button type="button" className="btn btn-sm" onClick={toggleServiceRecords}>
           {showServiceRecords ? 'Hide Service Log' : 'Service Log'}
@@ -577,6 +823,61 @@ function CaseCard({
               <div style={{ whiteSpace: 'pre-wrap' }}>{renderFormattedText(m.content)}</div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showEvidence && (
+        <div
+          style={{
+            marginTop: 14,
+            padding: '16px 18px',
+            borderRadius: 10,
+            background: 'var(--bg-1)',
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            lineHeight: 1.7,
+            maxHeight: 420,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+          }}
+        >
+          {evidenceLoading && <span style={{ color: 'var(--text-muted)' }}>Loading…</span>}
+          {evidenceError && <span style={{ color: 'var(--danger)' }}>{evidenceError}</span>}
+          {!evidenceLoading && !evidenceError && evidence?.length === 0 && (
+            <span style={{ color: 'var(--text-muted)' }}>
+              No evidence uploaded on this case yet.
+            </span>
+          )}
+          {!evidenceLoading && evidence?.map((ev) => {
+            const kb = ev.sizeBytes ? ev.sizeBytes / 1024 : null
+            const sizeLabel = kb == null ? null : kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(1)} MB`
+            return (
+              <div key={ev.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  {ev.url ? (
+                    <a href={ev.url} target="_blank" rel="noreferrer" style={{ fontWeight: 700 }}>
+                      {ev.filename}
+                    </a>
+                  ) : (
+                    <span style={{ fontWeight: 700, color: 'var(--text-muted)' }}>
+                      {ev.filename} (link unavailable)
+                    </span>
+                  )}
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                    {ev.mediaType}
+                    {sizeLabel ? ` · ${sizeLabel}` : ''} · {formatDate(ev.createdAt)}
+                  </span>
+                </div>
+                {ev.extractedFacts && (
+                  <div style={{ whiteSpace: 'pre-wrap', color: 'var(--text-muted)', fontSize: 12.5 }}>
+                    {renderFormattedText(ev.extractedFacts)}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
@@ -697,6 +998,16 @@ function AdminPageInner() {
   const [filterTest, setFilterTest] = useState<'live' | 'test' | 'all'>('live')
   const [togglingTestId, setTogglingTestId] = useState<string | null>(null)
   const [secondReviewingId, setSecondReviewingId] = useState<string | null>(null)
+  const [savingClientEmailId, setSavingClientEmailId] = useState<string | null>(null)
+  const [savingRecipientPhoneId, setSavingRecipientPhoneId] = useState<string | null>(null)
+
+  // The lawyer-intake case's user_id — see components/AgentChat.tsx's lawyerIntake prop and
+  // lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT. There is no client account for an
+  // offline case, so it's owned by whichever staff member actually ran the session.
+  const [adminUserId, setAdminUserId] = useState<string | null>(null)
+  // Non-null while the Custom Claims tab's agent session is open; holds the seed message
+  // (an existing claim's own description, if launched from one) or '' for a blank session.
+  const [lawyerIntakeSeed, setLawyerIntakeSeed] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -704,6 +1015,7 @@ function AdminPageInner() {
         router.replace('/')
         return
       }
+      setAdminUserId(session.user.id)
       setCheckedAuth(true)
     })
   }, [router])
@@ -874,6 +1186,54 @@ function AdminPageInner() {
       setLoadError('Network error. Please try again.')
     } finally {
       setSecondReviewingId(null)
+    }
+  }
+
+  // Corrects or sets the address a case's emails actually go to — see sendCaseEmail.ts's
+  // preference for client_email over the case owner's auth email. Useful for any case with a
+  // wrong signup address, and the ONLY way to set one at all for a lawyer-intake case whose
+  // client has no account — see lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT.
+  async function handleSaveClientEmail(caseId: string, email: string) {
+    setSavingClientEmailId(caseId)
+    try {
+      const res = await authedFetch('/api/admin/cases', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, clientEmail: email }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLoadError(data.error || 'Could not save the client email.')
+        return
+      }
+      setCases((prev) => prev.map((c) => (c.id === caseId ? { ...c, client_email: email || null } : c)))
+    } catch {
+      setLoadError('Network error. Please try again.')
+    } finally {
+      setSavingClientEmailId(null)
+    }
+  }
+
+  // Sets or corrects the debtor's/tenant's phone — who Serve via WhatsApp actually serves.
+  // See recipient_phone's own comment in supabase-schema.sql for why this is never client_phone.
+  async function handleSaveRecipientPhone(caseId: string, phone: string) {
+    setSavingRecipientPhoneId(caseId)
+    try {
+      const res = await authedFetch('/api/admin/cases', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, recipientPhone: phone }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setLoadError(data.error || 'Could not save the recipient phone.')
+        return
+      }
+      setCases((prev) => prev.map((c) => (c.id === caseId ? { ...c, recipient_phone: phone || null } : c)))
+    } catch {
+      setLoadError('Network error. Please try again.')
+    } finally {
+      setSavingRecipientPhoneId(null)
     }
   }
 
@@ -1055,6 +1415,10 @@ function AdminPageInner() {
                           togglingTestId={togglingTestId}
                           onSecondReview={handleSecondReview}
                           secondReviewingId={secondReviewingId}
+                          onSaveClientEmail={handleSaveClientEmail}
+                          savingClientEmailId={savingClientEmailId}
+                          onSaveRecipientPhone={handleSaveRecipientPhone}
+                          savingRecipientPhoneId={savingRecipientPhoneId}
                           accentColor={daysSincePaid >= 3 ? 'var(--danger)' : undefined}
                         />
                       )
@@ -1068,7 +1432,7 @@ function AdminPageInner() {
                   {deadlinePassed.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases past their response deadline.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
                     {deadlinePassed.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} onSecondReview={handleSecondReview} secondReviewingId={secondReviewingId} accentColor="var(--warning)" />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} onSecondReview={handleSecondReview} secondReviewingId={secondReviewingId} onSaveClientEmail={handleSaveClientEmail} savingClientEmailId={savingClientEmailId} onSaveRecipientPhone={handleSaveRecipientPhone} savingRecipientPhoneId={savingRecipientPhoneId} accentColor="var(--warning)" />
                     ))}
                   </div>
 
@@ -1079,7 +1443,7 @@ function AdminPageInner() {
                   {awaitingJudgment.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24 }}>No cases waiting on a judgment.</p>}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                     {awaitingJudgment.map((c) => (
-                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} onSecondReview={handleSecondReview} secondReviewingId={secondReviewingId} />
+                      <CaseCard key={c.id} c={c} updatingId={updatingId} deletingId={deletingId} confirmDeleteId={confirmDeleteId} regeneratingId={regeneratingId} onAction={handleStatusAction} onDeleteAction={handleDeleteAction} onRegenerateDocument={handleRegenerateDocument} onToggleTest={handleToggleTest} togglingTestId={togglingTestId} onSecondReview={handleSecondReview} secondReviewingId={secondReviewingId} onSaveClientEmail={handleSaveClientEmail} savingClientEmailId={savingClientEmailId} onSaveRecipientPhone={handleSaveRecipientPhone} savingRecipientPhoneId={savingRecipientPhoneId} />
                     ))}
                   </div>
                 </>
@@ -1194,6 +1558,10 @@ function AdminPageInner() {
                   togglingTestId={togglingTestId}
                   onSecondReview={handleSecondReview}
                   secondReviewingId={secondReviewingId}
+                  onSaveClientEmail={handleSaveClientEmail}
+                  savingClientEmailId={savingClientEmailId}
+                  onSaveRecipientPhone={handleSaveRecipientPhone}
+                  savingRecipientPhoneId={savingRecipientPhoneId}
                   domId={`case-${c.id}`}
                   accentColor={c.id === deepLinkCaseId ? 'var(--accent)' : undefined}
                 />
@@ -1204,6 +1572,17 @@ function AdminPageInner() {
 
         {tab === 'claims' && (
           <>
+            {/* Runs the real Small Claims Court Agent for a lawyer relaying a case picked up
+                offline (a call, a walk-in, a referral) rather than a client typing it in
+                themselves — see lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT and
+                components/AgentChat.tsx's lawyerIntake prop. Blank start: no seed message,
+                the lawyer just tells the agent what they've got. */}
+            <div style={{ marginBottom: 18 }}>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setLawyerIntakeSeed('')}>
+                Start Offline Case With Agent
+              </button>
+            </div>
+
             {loading && <p style={{ color: 'var(--text-muted)' }}>Loading…</p>}
             {!loading && claims.length === 0 && <p style={{ color: 'var(--text-muted)' }}>No custom claims yet.</p>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -1230,10 +1609,39 @@ function AdminPageInner() {
                     </div>
                   </div>
                   <p style={{ fontSize: 14, color: 'var(--text-1)', marginTop: 10, whiteSpace: 'pre-wrap' }}>{claim.description}</p>
+                  <div style={{ marginTop: 12 }}>
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() =>
+                        setLawyerIntakeSeed(
+                          `Here's what the client (${claim.name}, ${claim.email}) told us in their own words:\n\n${claim.description}`,
+                        )
+                      }
+                    >
+                      Work This Claim With Agent
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </>
+        )}
+
+        {lawyerIntakeSeed !== null && adminUserId && (
+          <AgentChat
+            lawyerIntake
+            agent={AGENTS['small-claims']}
+            amount={getAgentPayment('small-claims').amount}
+            paymentDescription={getAgentPayment('small-claims').description}
+            userId={adminUserId}
+            initialAutoMessage={lawyerIntakeSeed || undefined}
+            onClose={() => setLawyerIntakeSeed(null)}
+            onApproved={() => {
+              setLawyerIntakeSeed(null)
+              setTab('cases')
+            }}
+          />
         )}
 
         {tab === 'waitlist' && (

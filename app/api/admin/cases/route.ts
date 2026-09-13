@@ -57,7 +57,21 @@ export async function GET(req: Request) {
     if (data?.user) emailById.set(data.user.id, data.user.email ?? '')
   }
 
-  let enriched = (cases ?? []).map((c) => ({ ...c, userEmail: emailById.get(c.user_id) ?? '' }))
+  // Whether a staff-uploaded, reviewed-and-stamped PDF actually exists in storage for this
+  // case — see app/api/admin/upload-reviewed-document/route.ts's own comment for why that's
+  // deliberately NOT a `cases` column (a "does an object exist" flag duplicated into a column
+  // is exactly the kind of state that can drift out of sync with the object itself). One list
+  // call for the whole "reviewed/" prefix, not one per case — Serve via WhatsApp
+  // (app/admin/page.tsx) requires this before it'll let staff serve the debtor at all, so it
+  // has to be correct for every case on the page, not just the one currently open.
+  const { data: reviewedFiles } = await supabaseAdmin.storage.from('case-documents').list('reviewed', { limit: 1000 })
+  const stampedCaseIds = new Set((reviewedFiles ?? []).map((f) => f.name.replace(/\.pdf$/, '')))
+
+  let enriched = (cases ?? []).map((c) => ({
+    ...c,
+    userEmail: emailById.get(c.user_id) ?? '',
+    hasStampedDocument: stampedCaseIds.has(c.id),
+  }))
 
   if (emailFilter) {
     enriched = enriched.filter((c) => c.userEmail.toLowerCase().includes(emailFilter))
@@ -125,19 +139,25 @@ export async function PATCH(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  let body: { caseId?: string; isTest?: boolean; secondReviewerEmail?: string }
+  let body: {
+    caseId?: string
+    isTest?: boolean
+    secondReviewerEmail?: string
+    clientEmail?: string
+    recipientPhone?: string
+  }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { caseId, isTest, secondReviewerEmail } = body
+  const { caseId, isTest, secondReviewerEmail, clientEmail, recipientPhone } = body
   if (!caseId) {
     return Response.json({ error: 'Missing caseId.' }, { status: 400 })
   }
-  if (typeof isTest !== 'boolean' && !secondReviewerEmail) {
-    return Response.json({ error: 'Missing isTest or secondReviewerEmail.' }, { status: 400 })
+  if (typeof isTest !== 'boolean' && !secondReviewerEmail && clientEmail === undefined && recipientPhone === undefined) {
+    return Response.json({ error: 'Missing isTest, secondReviewerEmail, clientEmail, or recipientPhone.' }, { status: 400 })
   }
 
   const update: Record<string, unknown> = {}
@@ -148,6 +168,23 @@ export async function PATCH(req: Request) {
   if (secondReviewerEmail) {
     update.second_reviewer_email = secondReviewerEmail
     update.second_reviewed_at = new Date().toISOString()
+  }
+  // Corrects or sets the address sendCaseEmail actually mails to — see its own preference for
+  // client_email over the case owner's auth email (lawyer-intake cases have no client account
+  // at all — see lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT — but any case can have a
+  // wrong or outdated signup address corrected here too). An empty string clears it back to
+  // "use the account email", which is a real, valid state, so this checks for `undefined`
+  // specifically rather than falsiness — the trimmed clientEmail !== undefined check above
+  // already let an intentional '' through.
+  if (clientEmail !== undefined) {
+    update.client_email = clientEmail.trim() || null
+  }
+  // The debtor's/tenant's phone — who "Serve via WhatsApp" (app/admin/page.tsx) actually
+  // serves. Never client_phone, a different person's number entirely — see recipient_phone's
+  // own comment in supabase-schema.sql. Same undefined-vs-falsy handling as clientEmail above:
+  // an explicit empty string is a real "clear it" action, not a missing field.
+  if (recipientPhone !== undefined) {
+    update.recipient_phone = recipientPhone.trim() || null
   }
 
   const { error: updateErr } = await supabaseAdmin.from('cases').update(update).eq('id', caseId)

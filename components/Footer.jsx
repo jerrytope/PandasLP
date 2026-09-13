@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { PandasLogoMark } from './PandasLogo'
 import { STATES } from '@/lib/locations'
+import { LAGOS_DISTRICTS } from '@/lib/lagosDistricts'
+import { LAGOS_PROPERTY_DISTRICTS } from '@/lib/lagosPropertyDistricts'
 import { Check } from 'lucide-react'
 
 export default function Footer() {
@@ -91,6 +93,20 @@ export default function Footer() {
                 <Link key={s.slug} href={`/recover-debt/${s.slug}`}>{s.name}</Link>
               ))}
             </nav>
+
+            <p className="footer-col-title" style={{ marginTop: 20 }}>Debt Recovery — Lagos Areas</p>
+            <nav className="footer-links" aria-label="Debt recovery by Lagos area links">
+              {LAGOS_DISTRICTS.map((d) => (
+                <Link key={d.slug} href={`/recover-debt/lagos/${d.slug}`}>{d.name}</Link>
+              ))}
+            </nav>
+
+            <p className="footer-col-title" style={{ marginTop: 20 }}>Recovery of Premises — Lagos Areas</p>
+            <nav className="footer-links" aria-label="Recovery of premises by Lagos area links">
+              {LAGOS_PROPERTY_DISTRICTS.map((d) => (
+                <Link key={d.slug} href={`/recover-premises/lagos/${d.slug}`}>{d.name}</Link>
+              ))}
+            </nav>
           </div>
 
           {/* Contact */}
@@ -101,7 +117,9 @@ export default function Footer() {
                 pandaslegalpractitioners@gmail.com
               </a>
               <a href="tel:+2348118080189">+234 811 808 0189</a>
-              <span style={{ color: 'var(--text-3)', fontSize: 13 }}>Lagos, Nigeria</span>
+              <span style={{ color: 'var(--text-3)', fontSize: 13 }}>
+                3B Elegbe Festival Drive, Oniru<br />Victoria Island, Lagos
+              </span>
             </div>
             <div style={{ marginTop: 20 }}>
               <span className="badge badge-accent" style={{ fontSize: 10 }}>

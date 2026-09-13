@@ -1,0 +1,6 @@
+  frames-w 1590/1908
+  frames-w 1650/1908
+  frames-w 1710/1908
+  frames-w 1770/1908
+  frames-w 1830/1908
+  frames-w 1890/1908

@@ -60,6 +60,11 @@
   margin-top: 2px;
 }
 
+.headerBatch {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
 .body {
   display: flex;
   flex: 1;

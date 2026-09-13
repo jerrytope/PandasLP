@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 import { getNewOrderAlertEmail } from '@/lib/emailTemplates'
+import { buildDemandLetterDocxBuffer } from '@/lib/docxGenerator.js'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -152,6 +153,30 @@ export async function POST(req: Request) {
   // tab is the fallback if this email doesn't land.
   if (isMailerConfigured()) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+
+    // The unwatermarked, editable copy of the drafted letter, attached straight to this alert
+    // — see lib/docxGenerator.js. Before this, the only way to see what a client actually paid
+    // for was to open the admin panel and download a read-only PDF; this puts the real document
+    // in the reviewer's inbox in a format Word can open and mark up directly. Best-effort: some
+    // cases reach "paid" with no document yet (e.g. property law's percentage-fee deeds, invoiced
+    // outside the app), so a missing document_body just means no attachment, not a failed alert —
+    // and a build failure here must never take the payment-confirmation email down with it. Built
+    // BEFORE the email template call below so the alert can honestly say whether it's attached,
+    // rather than always claiming one is there.
+    let attachments: { filename: string; content: Buffer; contentType?: string }[] | undefined
+    if (caseData.document_title && caseData.document_body) {
+      try {
+        const docxBuffer = await buildDemandLetterDocxBuffer(caseData.document_body)
+        attachments = [{
+          filename: 'demand-letter-for-review.docx',
+          content: docxBuffer,
+          contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        }]
+      } catch (err) {
+        console.error('Failed to build review DOCX for new-order alert:', err)
+      }
+    }
+
     const { subject, html, text } = getNewOrderAlertEmail({
       caseTitle: caseData.document_title ?? 'Untitled case',
       clientEmail: callerData.user.email ?? 'unknown',
@@ -159,8 +184,10 @@ export async function POST(req: Request) {
       agentId: caseData.agent_id,
       caseId,
       siteUrl,
+      hasEditableDraftAttached: attachments !== undefined,
     })
-    sendMail({ to: GMAIL_USER, subject, html, text }).catch((err) => console.error('Failed to send new-order alert email:', err))
+
+    sendMail({ to: GMAIL_USER, subject, html, text, attachments }).catch((err) => console.error('Failed to send new-order alert email:', err))
   }
 
   return Response.json({ ok: true, amount: verifiedAmount, reference: verifiedReference })

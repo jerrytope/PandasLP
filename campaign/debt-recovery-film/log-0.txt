@@ -1,0 +1,6 @@
+  frames-w 0/318
+  frames-w 60/318
+  frames-w 120/318
+  frames-w 180/318
+  frames-w 240/318
+  frames-w 300/318

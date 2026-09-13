@@ -455,6 +455,468 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>Our CAC Registration Agent walks you through the choice between a Business Name and a Limited Company, prepares your CAC forms, and guides you through submission, from ₦15,000.</p>
     `,
   },
+  {
+    slug: 'what-is-governors-consent-nigeria-property',
+    title: "What Is a Governor's Consent, and Why Does Your Property Transfer Need It?",
+    description: "Under the Land Use Act, a Nigerian property transfer without the Governor's Consent doesn't actually transfer anything. Here's what consent is, when it's required, and what happens if a deal skips it.",
+    date: '2026-09-13',
+    readTime: '7 min read',
+    category: 'Property Law',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: "What is Governor's Consent in Nigeria?",
+        answer: "It's the state Governor's approval, required under the Land Use Act, before a right of occupancy over land can be validly transferred, mortgaged, or subleased. Nigerian land law does not give individuals absolute ownership of land itself — it's held in trust by the Governor of the state, and a right of occupancy is what an individual or company actually holds.",
+      },
+      {
+        question: "Do I need Governor's Consent to sell my house?",
+        answer: "If what you hold is a right of occupancy (which covers the great majority of privately held land in Nigeria), then yes — assigning that right to a buyer requires the Governor's prior consent to be valid. This applies whether the sale is documented as a Deed of Assignment or any other form of transfer.",
+      },
+      {
+        question: "What happens if a property is sold without Governor's Consent?",
+        answer: "The transaction does not effectively pass title until consent is obtained. This has real practical consequences: the buyer cannot safely rely on the transfer, a mortgage lender will generally refuse to lend against the property, and a subsequent buyer or the seller's other creditors can create genuine problems for whoever is left holding an unconsented transfer. Consent sought and obtained later can regularise a transaction, which is exactly why it should be pursued as part of the sale, not treated as optional paperwork.",
+      },
+      {
+        question: "Does every lease need Governor's Consent?",
+        answer: "Short, ordinary tenancies generally don't. It's leases and subleases granted for a longer fixed term, along with an outright assignment or a mortgage, that fall within the alienations the Land Use Act requires consent for. Where the exact line sits for a specific lease is worth confirming for the term actually being granted, since getting this wrong is a common and expensive mistake.",
+      },
+      {
+        question: "Is the Governor's Consent fee the same as Pandas LP's fee?",
+        answer: "No — they're two separate things. The Governor's Consent fee, stamp duty, and registration charges are government fees, assessed by the state and paid to it directly. Pandas LP's 2.5% is our professional fee for drafting the Deed of Assignment and handling the consent application itself; it is invoiced separately and is not a substitute for the government charges.",
+      },
+    ],
+    content: `
+<p>A surprising number of Nigerian property disputes trace back to the same missing step: nobody applied for Governor's Consent, or the deal closed before it came through. The buyer paid, the seller handed over the keys, and years later a bank, an heir, or a second buyer surfaces to say the transfer was never actually valid.</p>
+
+<p>Here's what Governor's Consent actually is, why Nigerian land law requires it at all, and what it takes to get it right.</p>
+
+<h2>Why a "sale" of land in Nigeria needs government permission at all</h2>
+<p>The starting point is the Land Use Act 1978, which changed the basic structure of land ownership in Nigeria. Rather than individuals holding land outright, all land in a state is vested in the Governor, held in trust for the people of that state. What an individual, family, or company holds instead is a <strong>right of occupancy</strong>: the right to use and possess a specific piece of land, evidenced by a Certificate of Occupancy or an equivalent instrument, rather than absolute ownership of the land itself.</p>
+<p>Because the underlying land sits with the Governor, transferring a right of occupancy from one person to another — an <strong>alienation</strong>, in the Act's own language — requires the Governor's consent to be effective. This covers an assignment (a sale or transfer of the right of occupancy itself), a mortgage over it, and a sublease or lease for a longer term.</p>
+
+<h2>What actually needs consent</h2>
+<ul>
+  <li><strong>An assignment</strong> — a sale or any other transfer of the right of occupancy from one party to another.</li>
+  <li><strong>A mortgage</strong> — using the right of occupancy as security for a loan.</li>
+  <li><strong>A lease or sublease for a longer term</strong> — ordinary, short periodic tenancies generally sit outside this, but a lease granted for a longer fixed term typically falls within it. Where exactly that line sits for a specific lease is a detail worth confirming for the actual term being granted, rather than assuming either way.</li>
+</ul>
+<p>A straightforward monthly or yearly tenancy of the kind covered in our <a href="/blog/how-to-evict-a-tenant-legally-in-lagos">guide to notice periods and recovery of possession</a> is a different thing entirely from an assignment or a long lease, and does not itself require Governor's Consent.</p>
+
+<h2>What happens if a transfer skips it</h2>
+<p>An assignment made without the Governor's prior consent does not effectively transfer the right of occupancy. In practice, this means the buyer cannot safely rely on having good title until consent is actually obtained — even after money has changed hands and possession has passed. Consent sought and obtained afterwards can regularise the position, which is exactly why chasing it down is worth doing rather than treating it as a formality nobody will ever ask about.</p>
+<p>The real-world cost of skipping it shows up later, usually at the worst possible time: a bank refusing to accept the property as mortgage security, a subsequent buyer's own search turning up an irregular title history, or a family dispute over a deceased owner's estate reopening a transfer nobody thought would ever be examined again.</p>
+
+<h2>Getting consent — what to expect</h2>
+<p>The application goes to the relevant state Lands Bureau (in Lagos, the Lagos State Lands Bureau) with the executed instrument, evidence of the underlying right of occupancy, and payment of the assessed consent fee, stamp duty, and registration charges. These are separate, government-assessed sums — not a fixed, published fee schedule — and processing time varies considerably by state and by how complete the application is. Building in a realistic timeline, rather than assuming a same-week turnaround, avoids a lot of unnecessary pressure on a closing.</p>
+
+<h2>What Pandas LP does</h2>
+<p>Our Deed of Assignment includes the Governor's Consent undertaking as part of the instrument, invoiced at <strong>2.5% of the consideration</strong> — that figure is our professional fee for drafting the deed and handling the consent application, separate from and in addition to the government's own consent fee, stamp duty, and registration charges, which are assessed and paid directly to the state.</p>
+<p>It will not invent a Certificate of Occupancy number, plot number, or consideration figure that hasn't actually been supplied, and where ownership is disputed, litigation is already live, or the matter otherwise sits outside a straightforward transfer, it escalates to a practitioner rather than drafting around the problem.</p>
+
+<p><em>This article is general information about Nigerian land law and is not legal advice on your specific transaction. Requirements and processing vary between states, and the facts of a particular transfer can change the position.</em></p>
+    `,
+  },
+  {
+    slug: 'deed-of-assignment-vs-deed-of-gift-nigeria',
+    title: "Deed of Assignment vs. Deed of Gift: Why They're Not the Same Document",
+    description: "Selling property and gifting it outright are legally different transactions in Nigeria. Using a Deed of Assignment to disguise a gift, or the reverse, can put the transfer at real risk.",
+    date: '2026-09-16',
+    readTime: '6 min read',
+    category: 'Property Law',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'What is the difference between a Deed of Assignment and a Deed of Gift?',
+        answer: "A Deed of Assignment transfers a right of occupancy in exchange for consideration — a purchase price paid by the buyer. A Deed of Gift transfers it with no consideration at all: a genuine gift, most often between family members. The instruments record two legally different transactions, not two names for the same one.",
+      },
+      {
+        question: 'Does a Deed of Gift still need Governor\'s Consent?',
+        answer: "Yes. Consent under the Land Use Act attaches to the alienation of the right of occupancy itself, not to whether money changed hands. A gift is still an alienation, so it still needs the Governor's consent to be valid, the same as a sale does.",
+      },
+      {
+        question: "Can I use a Deed of Assignment for a property I'm giving away for free?",
+        answer: "You shouldn't. Recording a genuine gift as a sale, often to show a token or reduced consideration figure, creates a document that misstates the actual transaction. That mismatch can surface later in a dispute among the giver's heirs, in a tax query over an understated price, or in a subsequent buyer's title search — and it's the kind of thing that's far cheaper to avoid at drafting stage than to untangle afterward.",
+      },
+      {
+        question: 'Why does the distinction affect stamp duty?',
+        answer: "Stamp duty on a Deed of Assignment is generally calculated as a percentage of the stated consideration, so it rises and falls with the sale price. A Deed of Gift has no consideration figure to calculate that percentage from, so it's treated differently. Recording the wrong transaction type doesn't just misdescribe the deal — it can misstate what's actually owed.",
+      },
+    ],
+    content: `
+<p>"It's basically the same thing, just put whatever price on it" is one of the more expensive sentences in Nigerian property practice. A sale and a gift are different transactions in law, and the deed has to say which one actually happened.</p>
+
+<h2>A Deed of Assignment: a transfer for a price</h2>
+<p>A Deed of Assignment transfers a right of occupancy from the assignor to the assignee in exchange for <strong>consideration</strong> — a purchase price, stated as a specific figure. That figure isn't decorative: it's what stamp duty is calculated against, it's what the Governor's Consent application is assessed on, and it's the number a later buyer's own title search will measure the property's history against.</p>
+
+<h2>A Deed of Gift: a transfer for nothing</h2>
+<p>A Deed of Gift transfers the right of occupancy with no consideration at all. It's the instrument for a genuine gift — a parent transferring property to a child, a transfer between spouses, or a transfer made as part of settling a family estate. It still requires Governor's Consent, because consent attaches to the alienation of the right of occupancy, not to whether a price was paid. What it doesn't have is a consideration figure to calculate stamp duty from in the way an assignment does.</p>
+
+<h2>Why the two get confused, and why that's a problem</h2>
+<p>The confusion usually comes from trying to make a gift look like a sale, or the reverse — most often to show a lower price than what actually changed hands, or because nobody thought the label mattered as long as the property "moved." It matters for three reasons:</p>
+<ul>
+  <li><strong>Stamp duty and consent fees</strong> are assessed differently depending on which transaction actually happened, so misdescribing it can misstate what's owed.</li>
+  <li><strong>A challenge from other family members or heirs</strong> is far easier to bring against a "sale" that was really a gift with an invented price, since the paper trail itself becomes evidence of something irregular.</li>
+  <li><strong>A later buyer's title search</strong> reads the deed for what it says happened. A mismatch between the deed's story and the real history of the property is exactly what a diligent search is built to catch, and exactly what causes a sale to stall or collapse.</li>
+</ul>
+
+<h2>What Pandas LP drafts</h2>
+<p>We draft each as its own instrument, matched to the transaction actually taking place rather than the transaction it's convenient to describe. A Deed of Assignment is invoiced at 2.5% of the actual consideration; a Deed of Gift, with no consideration figure to calculate a percentage from, is <strong>₦30,000</strong>. Neither is relabelled as the other. It will not invent a consideration figure that hasn't been confirmed, and where the facts suggest something more complicated than a straightforward gift or sale — a disputed estate, an unclear chain of prior title — it escalates to a practitioner rather than guessing at the right instrument.</p>
+
+<p><em>This article is general information about Nigerian land law and is not legal advice on your specific transaction. Stamp duty rates, consent fees, and processing requirements vary between states.</em></p>
+    `,
+  },
+  {
+    slug: 'tenancy-agreement-vs-lease-agreement-nigeria',
+    title: "Tenancy Agreement vs. Lease Agreement in Nigeria: What's Actually Different?",
+    description: 'The two terms get used interchangeably in everyday conversation, but a short periodic tenancy and a longer fixed-term lease follow different rules in Nigeria — including whether Governor\'s Consent applies.',
+    date: '2026-09-19',
+    readTime: '6 min read',
+    category: 'Property Law',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'Is a tenancy agreement the same as a lease agreement in Nigeria?',
+        answer: "In everyday conversation, yes, people use them interchangeably. Legally, they describe different arrangements. A tenancy is typically a shorter, periodic arrangement — weekly, monthly, quarterly, or yearly — governed by the tenancy law of the state the property sits in. A lease is typically a longer, fixed-term arrangement agreed for a set number of years up front.",
+      },
+      {
+        question: 'How does a lease end differently from a tenancy?',
+        answer: "A periodic tenancy is ended by serving the correct notice to quit for that tenancy type, as covered in our guide to recovery of possession. A fixed-term lease is agreed to run for a set period and generally expires automatically at the end of that term, though re-entry for a breach during the term still has to follow proper procedure rather than self-help.",
+      },
+      {
+        question: 'Does a long lease need Governor\'s Consent when a short tenancy does not?',
+        answer: "Generally, yes — an ordinary short tenancy typically sits outside the Land Use Act's consent requirement, while a lease granted for a longer fixed term is more likely to fall within it. Exactly where that line sits for a specific arrangement is worth confirming against the actual term being agreed.",
+      },
+      {
+        question: 'Which one do I need for my situation?',
+        answer: "It follows from the facts, not from which word sounds more formal: how long the arrangement is meant to run, whether there's a lump-sum premium in addition to or instead of ongoing rent, and what both sides actually intend to happen at the end. Describing the real arrangement clearly is what determines which structure — and which statutory rules — actually apply.",
+      },
+    ],
+    content: `
+<p>Landlords and tenants in Nigeria use "tenancy agreement" and "lease agreement" almost interchangeably in conversation. The law doesn't treat them as interchangeable, and which one actually applies to a given arrangement decides how it can be ended, and whether Governor's Consent comes into the picture at all.</p>
+
+<h2>A tenancy: short, periodic, and governed by tenancy law</h2>
+<p>A tenancy runs in recurring periods — weekly, monthly, quarterly, or yearly — and is governed by the tenancy legislation of the state the property is in (the Lagos State Tenancy Law 2011, for property in Lagos). It doesn't automatically renew forever, but it continues period to period until it's properly ended. Ending one means serving the correct statutory notice to quit for that tenancy type — the subject of our <a href="/blog/how-to-evict-a-tenant-legally-in-lagos">guide to notice periods and recovery of possession</a> — not simply telling the tenant to leave.</p>
+
+<h2>A lease: a fixed term, agreed up front</h2>
+<p>A lease is granted for a specific, agreed term — a set number of years fixed at the outset, rather than running period to period. It often involves a premium (a lump sum paid up front) in addition to or instead of ongoing rent, and it generally comes to an end automatically once the agreed term expires, rather than needing the same notice-to-quit process a periodic tenancy does. Ending it early for a breach still has to follow proper procedure, not a change of the locks.</p>
+<p>A lease granted for a longer fixed term is also more likely to require Governor's Consent under the Land Use Act, the subject of our <a href="/blog/what-is-governors-consent-nigeria-property">guide to Governor's Consent</a> — a distinction that generally doesn't arise for an ordinary short tenancy at all.</p>
+
+<h2>Why getting the label right actually matters</h2>
+<p>Calling a long, fixed-term arrangement a "tenancy," or a short periodic arrangement a "lease," isn't just a wording choice. It affects which notice provisions apply when things need to end, whether Governor's Consent should have been sought before the arrangement started, and what either side can reasonably expect to happen once the term is up. A document that describes the arrangement accurately, rather than borrowing whichever word sounds more official, is what actually protects both sides when a dispute arises.</p>
+
+<h2>What Pandas LP drafts</h2>
+<p>Tenancy agreements and lease agreements are drafted under the same service, at <strong>₦25,000</strong> per document, because which structure applies follows from the facts of the arrangement — the term, the payment structure, what's actually agreed — not from which word the client used to describe it. It will not freehand a structure the facts don't support, and where an arrangement is genuinely unusual or contested, it escalates to a practitioner rather than guessing.</p>
+
+<p><em>This article is general information about Nigerian property law and is not legal advice on your specific arrangement. Tenancy legislation and consent requirements vary between states.</em></p>
+    `,
+  },
+  {
+    slug: 'can-ai-draft-valid-letter-of-demand-nigeria',
+    title: 'Can an AI Draft a Legally Valid Letter of Demand in Nigeria?',
+    description: "A Letter of Demand isn't a fixed statutory form, so the question isn't whether AI can produce one — it's whether the facts are right and a licensed practitioner has actually signed it. Here's what makes one hold up.",
+    date: '2026-09-22',
+    readTime: '6 min read',
+    category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'Is a Letter of Demand drafted by AI legally valid in Nigeria?',
+        answer: "There's no rule against a document being drafted with the help of AI, the same way there's no rule against drafting one in a word processor instead of by hand. What makes a Letter of Demand effective is that it accurately states the amount owed, the basis for the claim, and a real deadline, and that it's reviewed and signed by a licensed legal practitioner before it goes out — not the tool used to produce the first draft.",
+      },
+      {
+        question: 'Does a Letter of Demand have to follow a specific format?',
+        answer: "No single statutory form is prescribed for a Letter of Demand the way it is for some court documents. What matters is substance: it has to clearly identify the debtor, state the amount owed and how it arose, and give a genuine deadline to pay before further action follows. A vague or unsupported demand is weak regardless of how official it looks.",
+      },
+      {
+        question: 'Why does a lawyer need to sign an AI-drafted letter?',
+        answer: "Signature by a licensed practitioner is what puts real, accountable weight behind the letter — it tells the recipient a lawyer has actually looked at the claim and is prepared to stand behind it, not just that a form was filled in. It's also the point where an inaccurate figure, an overstated claim, or a legal error gets caught before it's sent, not after.",
+      },
+      {
+        question: 'Can an AI agent decide whether my claim is strong?',
+        answer: "Not honestly, no — and one that claims to is overselling. Pandas LP's own debt recovery agent is explicit about this: it will not predict your odds of winning or guarantee an outcome. What it can usefully do is tell you where your evidence is thin, which is a more useful answer than a false confidence score.",
+      },
+    ],
+    content: `
+<p>"Can a robot really write a legal letter?" undersells what's actually being asked. The real question is whether the letter that goes out is accurate, properly reasoned, and something a lawyer is willing to put their name to — and that question has the same answer whether the first draft came from an AI, a template, or a solicitor typing from scratch.</p>
+
+<h2>A Letter of Demand isn't a fixed statutory form</h2>
+<p>Unlike some court documents, there's no single prescribed format a Letter of Demand has to follow. What makes one effective is substance, not form: it has to name the debtor correctly, state the sum owed and how it arose, reference any relevant agreement or transaction, and give a genuine deadline before further action follows. Our existing guides to <a href="/blog/what-is-a-letter-of-demand-nigeria">what a Letter of Demand actually is</a> and <a href="/blog/what-happens-if-you-ignore-a-letter-of-demand">what happens if one is ignored</a> cover the substance in more detail.</p>
+
+<h2>So what does "AI-drafted" actually change?</h2>
+<p>Very little, if the process around it is right. Drafting is the mechanical part: taking the facts of a dispute and assembling them into the letter's structure. An AI system can do this competently, the same way a well-built template does — the risk was never in who or what assembles the words, it's in whether the facts going in are accurate and whether anyone with legal judgment checks the result before it goes out.</p>
+<p>That's the part that shouldn't be automated away, and it's the part Pandas LP's own agent is built not to skip. It drafts the letter from what you tell it. A licensed legal practitioner then reviews and signs it before it's served — because an unsigned letter, however well-worded, doesn't carry the same weight as one a lawyer has actually put their name to.</p>
+
+<h2>Where an AI-only approach actually fails</h2>
+<ul>
+  <li><strong>Inventing authority.</strong> A demand letter that cites a statute section, a case, or a monetary limit that doesn't actually apply is worse than one that cites nothing — it hands the debtor's own lawyer an easy line of attack. Pandas LP's agent is explicitly built not to do this: unsure of a figure or a provision, it asks rather than guesses.</li>
+  <li><strong>Predicting an outcome.</strong> No honest system, human or otherwise, can guarantee a debtor will pay or that a court will rule a particular way. What's actually useful is an honest read on where the evidence is strong or thin, not a false confidence score.</li>
+  <li><strong>Skipping the escalation point.</strong> A claim above the Small Claims threshold, a disputed liability, or anything with a hint of fraud needs a practitioner's judgment, not a template. Pandas LP's agent is built to hand these off rather than draft around them.</li>
+</ul>
+
+<h2>What actually makes a demand letter hold up</h2>
+<ol>
+  <li>An accurate, specific figure — not a rounded estimate or a vague reference to "outstanding amounts."</li>
+  <li>A clear statement of how the debt arose, with dates and reference numbers where they exist.</li>
+  <li>A real, stated deadline to pay.</li>
+  <li>Review and signature by a licensed legal practitioner before it's sent.</li>
+  <li>Proof it was actually served, since the court will expect evidence a demand was sent before a claim is filed.</li>
+</ol>
+
+<h2>How Pandas LP does it</h2>
+<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> interviews you in plain language, drafts the Letter of Demand, and a licensed practitioner reviews and signs it before it's served — from ₦10,000 to draft and serve it yourself, or ₦25,000 for Pandas LP to serve it on your behalf. What it won't do is published on its own page: see <a href="/agents/debt-recovery/limits">where the AI stops and a lawyer starts</a>.</p>
+
+<p><em>This article is general information about Nigerian debt recovery practice and is not legal advice on your specific claim.</em></p>
+    `,
+  },
+  {
+    slug: 'small-claims-court-vs-magistrate-court-nigeria',
+    title: 'Small Claims Court vs. Magistrate Court in Nigeria: Which One Handles Your Debt?',
+    description: "In most states, the Small Claims Court isn't a separate courthouse — it's a simplified track inside the Magistrate Court, for claims under a fixed limit. Here's how the two actually differ.",
+    date: '2026-09-25',
+    readTime: '6 min read',
+    category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'Is the Small Claims Court a different court from the Magistrate Court?',
+        answer: "Usually not a separate courthouse — in most states that have set one up, the Small Claims Court operates as a dedicated, simplified track or registry within the Magistrate Court system, following its own Practice Direction rather than the ordinary civil procedure rules.",
+      },
+      {
+        question: 'What makes a claim eligible for the Small Claims Court?',
+        answer: "A simple, liquidated money claim — a specific, undisputed sum owed to you — under the claim limit set by that state's Practice Direction. It does not hear land disputes, criminal matters, or claims where liability is genuinely and substantially contested on complex legal grounds.",
+      },
+      {
+        question: 'Do I need a lawyer for the Small Claims Court?',
+        answer: "No — the Small Claims Court is specifically designed for self-representation, and lawyers are generally not permitted to appear for either side at the hearing itself. Where a lawyer helps is earlier: preparing the Letter of Demand that has to be sent before filing, and afterward, if a matter needs to escalate.",
+      },
+      {
+        question: "What happens if my claim is too big or too complicated for Small Claims?",
+        answer: "It goes through the Magistrate Court's ordinary civil process instead — full pleadings, generally with lawyers involved, and a longer timeline than the Small Claims track. This is also where a claim goes if liability is genuinely disputed rather than just a matter of an unpaid, agreed sum.",
+      },
+    ],
+    content: `
+<p>A common point of confusion for someone owed money for the first time: is the Small Claims Court a separate court, or another name for the Magistrate Court? The honest answer, in most states, is that it's neither entirely separate nor exactly the same thing.</p>
+
+<h2>The Small Claims Court is usually a track inside the Magistrate Court</h2>
+<p>Rather than a new courthouse, most states that have set up a Small Claims Court have built it as a dedicated, simplified procedure operating within the existing Magistrate Court system — a registry and a set of judges or magistrates following a specific Practice Direction, rather than a wholly separate institution. It exists to give straightforward money claims a faster, cheaper, self-representation-friendly route than the Magistrate Court's ordinary civil process.</p>
+
+<h2>What actually qualifies for the Small Claims track</h2>
+<ul>
+  <li><strong>A liquidated claim</strong> — a specific, calculable sum, not a claim for damages that still needs a court to work out how much is owed.</li>
+  <li><strong>Under the state's claim limit</strong> — this varies by state; see our <a href="/recover-debt/lagos">state-by-state guide</a> for the current figures where verified.</li>
+  <li><strong>Genuinely undisputed liability</strong> — the debtor owes the money and the real dispute, if any, is only about payment, not about whether the debt exists at all.</li>
+</ul>
+<p>Land disputes, criminal matters, and claims turning on a complex or seriously contested legal question sit outside the Small Claims track regardless of the amount involved, and go through the Magistrate Court's ordinary civil procedure instead.</p>
+
+<h2>What actually differs in practice</h2>
+<div class="table-scroll">
+<table>
+  <thead><tr><th></th><th>Small Claims track</th><th>Magistrate Court (ordinary civil)</th></tr></thead>
+  <tbody>
+    <tr><td>Claim type</td><td>Simple, liquidated money claims only</td><td>Any civil claim within its jurisdiction, including disputed liability</td></tr>
+    <tr><td>Lawyers at the hearing</td><td>Generally not permitted</td><td>Standard practice</td></tr>
+    <tr><td>Procedure</td><td>Simplified, plain-English</td><td>Formal pleadings and rules of procedure</td></tr>
+    <tr><td>Typical timeline</td><td>Weeks to a few months</td><td>Often considerably longer</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Where a Letter of Demand fits either way</h2>
+<p>Before a Small Claims filing, sending a Letter of Demand and giving the debtor a chance to pay is a mandatory first step, not optional — the court will expect proof one was sent. It's good practice ahead of an ordinary Magistrate Court claim too, since it establishes that the debtor was given a real opportunity to pay before litigation started.</p>
+
+<h2>How Pandas LP helps either way</h2>
+<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> works out whether your claim fits the Small Claims track, drafts and serves your Letter of Demand, and files at the Small Claims Court on your behalf if the debtor doesn't pay — from ₦10,000. Where a matter turns out to be genuinely contested or above the limit, it says so rather than drafting around the problem.</p>
+
+<p><em>This article is general information about Nigerian civil procedure and is not legal advice on your specific claim. Court structure, claim limits, and procedure vary between states.</em></p>
+    `,
+  },
+  {
+    slug: 'can-you-sue-a-company-small-claims-court-nigeria',
+    title: 'Can a Company Be Sued in the Small Claims Court in Nigeria?',
+    description: 'Yes — a company can be both a claimant and a defendant in the Small Claims Court, but suing one correctly means serving the company itself, not a director, and getting the name right.',
+    date: '2026-09-29',
+    readTime: '5 min read',
+    category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'Can I sue a company, not just an individual, in the Small Claims Court?',
+        answer: "Yes. The Small Claims Court's eligibility turns on the nature and size of the claim — a simple, liquidated sum under the state's limit — not on whether the debtor is an individual or a registered company.",
+      },
+      {
+        question: 'Do I serve the Letter of Demand on the company or on a director personally?',
+        answer: "On the company itself, at its registered address, rather than on a director or employee personally — unless the facts genuinely support pursuing an individual directly, which is a different and less common claim. A company is a separate legal entity from the people who run it, and the demand and any claim should be addressed to the entity that actually owes the money.",
+      },
+      {
+        question: "What if the company doesn't respond to a Letter of Demand?",
+        answer: "The same process applies as with an individual debtor: if payment isn't made within the response period, a claim can be filed at the Small Claims Court, naming the company as the defendant.",
+      },
+      {
+        question: 'Can I sue a business by its trading name instead of its registered company name?',
+        answer: "It's safer to use the exact registered name — the one on its CAC certificate — rather than a trading or shop-front name, since a claim and any resulting judgment need to be enforceable against the correct legal entity. Confirming a debtor's registered name before filing is worth the extra step.",
+      },
+    ],
+    content: `
+<p>Debt recovery clients often assume the Small Claims Court is only for disputes between individuals. It isn't — a registered company can be sued there too, provided the claim itself is the kind of simple, liquidated sum the Small Claims track exists for.</p>
+
+<h2>A company is its own legal entity</h2>
+<p>A registered company has a separate legal personality from its directors, shareholders, and staff. That cuts both ways: the company can be sued in its own name for what it owes, and — outside genuinely unusual circumstances — a director or employee generally isn't personally on the hook for the company's debts just because they signed an invoice or ran the transaction. The claim and the eventual judgment belong against the company itself.</p>
+
+<h2>What that means for serving a demand or a claim</h2>
+<p>A Letter of Demand addressed to a company should go to the company at its registered address, not to a director's personal address or a staff member's inbox — though sending it to whoever actually handles the account is sensible practice alongside the formal address. Get the company's exact registered name right: the name on its CAC certificate, not a trading name, a shop sign, or a shortened version people use in conversation. A judgment obtained against the wrong name can be difficult or impossible to enforce.</p>
+
+<h2>The claim itself works the same way</h2>
+<p>Once the response period on the Letter of Demand has passed without payment, a claim can be filed at the Small Claims Court naming the company as defendant, the same way it would name an individual debtor — provided the claim is still a simple, liquidated sum under the state's limit. If liability is genuinely disputed, or the sum is above the limit, the claim goes through the Magistrate Court's ordinary civil process instead, the distinction covered in our <a href="/blog/small-claims-court-vs-magistrate-court-nigeria">guide to Small Claims vs. Magistrate Court</a>.</p>
+
+<h2>What to have ready before pursuing a company debtor</h2>
+<ul>
+  <li>The company's exact registered name and registered address</li>
+  <li>The invoice, contract, or other record showing what's owed and why</li>
+  <li>Any prior communication about the debt, including who you dealt with at the company</li>
+  <li>The company's CAC registration details, if you have them, to confirm the correct legal name</li>
+</ul>
+
+<h2>How Pandas LP helps</h2>
+<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> drafts and serves your Letter of Demand whether the debtor is an individual or a company, and files at the Small Claims Court if it's ignored — from ₦10,000.</p>
+
+<p><em>This article is general information about Nigerian debt recovery practice and is not legal advice on your specific claim.</em></p>
+    `,
+  },
+  {
+    slug: 'cost-to-register-a-business-in-nigeria',
+    title: 'How Much Does It Cost to Register a Business in Nigeria?',
+    description: "CAC's own fees are periodically revised, so any specific naira figure printed here would go stale. Here's the actual structure of what you pay, and where to check the current numbers before you budget.",
+    date: '2026-10-02',
+    readTime: '5 min read',
+    category: 'Business Registration',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'How much does CAC registration cost in Nigeria?',
+        answer: "It depends on the structure (Business Name vs. Limited Company) and, for a Limited Company, on the share capital declared — and CAC's fee schedule is revised from time to time. Rather than quote a figure here that may already be out of date by the time you read it, check the current schedule directly on CAC's own portal (post.cac.gov.ng) before budgeting.",
+      },
+      {
+        question: 'Is a Business Name cheaper to register than a Limited Company?',
+        answer: "Generally, yes — a Business Name has a simpler registration process and no share capital to declare, which keeps both the CAC fee and the overall cost lower than a Limited Company. See our full comparison of the two structures for what else differs beyond cost.",
+      },
+      {
+        question: 'Does share capital affect how much a Limited Company costs to register?',
+        answer: "Yes — a Limited Company's CAC registration fee is tied to the share capital declared at incorporation, so a higher declared share capital generally means a higher registration cost. This is worth discussing with whoever is helping you register, rather than declaring a figure without understanding the cost consequence.",
+      },
+      {
+        question: 'Are there costs beyond the CAC fee itself?',
+        answer: "Usually, yes. Beyond CAC's own registration fee, there's commonly a charge for professional help preparing and filing the application correctly (if you use one), and for a Limited Company, the cost of preparing the Memorandum and Articles of Association. Budget for the full picture, not just the government fee line.",
+      },
+    ],
+    content: `
+<p>A specific naira figure for "how much CAC registration costs" would be out of date the moment CAC next revises its fee schedule — which it periodically does. What's actually useful, and doesn't go stale, is understanding the structure of what you're paying for and where to check the real number before you budget.</p>
+
+<h2>What the cost is actually made up of</h2>
+<ul>
+  <li><strong>The CAC fee itself</strong> — the government charge for the registration, which differs between a Business Name and a Limited Company, and for a Limited Company scales with the share capital declared.</li>
+  <li><strong>Professional or agent fees</strong> — if you use a lawyer, accountant, or registration agent to prepare and file the application, their fee is separate from and in addition to what CAC itself charges.</li>
+  <li><strong>Incorporation documents</strong> — a Limited Company additionally needs Memorandum and Articles of Association prepared, which may carry its own cost depending on who prepares them.</li>
+</ul>
+
+<h2>Why a Business Name is generally the cheaper option</h2>
+<p>As covered in our <a href="/blog/how-to-register-a-business-in-nigeria-cac">full guide to CAC registration</a>, a Business Name is the simpler structure: no share capital to declare, no Memorandum and Articles to prepare, and a more straightforward CAC filing overall. That simplicity is reflected in the cost, which is why it's the common starting point for freelancers, small traders, and sole proprietors, while a Limited Company is the standard choice once a business needs the legal separation of a proper company structure or plans to raise investment.</p>
+
+<h2>Where to check the actual current fee</h2>
+<p>CAC's own portal (post.cac.gov.ng) publishes the current fee schedule, and this is the source to check before budgeting rather than a figure repeated from an article that may predate the last revision. If you're registering through a professional or an agent, ask them to confirm both the CAC fee and their own fee as two separate line items, so it's clear what's a government charge and what's a service fee.</p>
+
+<h2>A note from experience</h2>
+<p>Pandas LP itself is registered as a Business Name (BN 9646741), not a Limited Company — the right call for a firm at our stage, and worth genuinely thinking through for your own business rather than defaulting to whichever structure sounds more official.</p>
+
+<h2>Register with Pandas LP</h2>
+<p>Our CAC Registration Agent walks you through the choice between a Business Name and a Limited Company, prepares your CAC forms, and guides you through submission, from ₦15,000 — separate from CAC's own government fee.</p>
+
+<p><em>This article is general information about CAC registration in Nigeria and is not legal or financial advice. Government fees are set and revised by CAC directly; confirm the current schedule before budgeting.</em></p>
+    `,
+  },
+  {
+    slug: 'enforcing-a-small-claims-judgment-nigeria',
+    title: 'What Happens After You Win a Small Claims Judgment in Nigeria?',
+    description: "Winning the judgment isn't the same as getting paid. Here's what garnishee proceedings, writs of execution, and the other real enforcement routes actually involve when a debtor still won't pay.",
+    date: '2026-10-06',
+    readTime: '6 min read',
+    category: 'Debt Recovery',
+    author: DEFAULT_AUTHOR,
+    faqs: [
+      {
+        question: 'What if a debtor still refuses to pay after I win my case?',
+        answer: "A judgment establishes that the debt is legally owed, but it doesn't move money on its own. If the debtor still doesn't pay voluntarily, the judgment has to be enforced through the court, most commonly through garnishee proceedings or a writ of execution against the debtor's property.",
+      },
+      {
+        question: 'What is a garnishee proceeding?',
+        answer: "It's a procedure that reaches money the debtor is owed by a third party — most commonly funds held in the debtor's bank account. The court orders the third party (the bank, in that example) to pay the judgment sum directly, rather than to the debtor, out of what it's already holding on the debtor's behalf.",
+      },
+      {
+        question: 'What is a writ of execution?',
+        answer: "A court order authorising a sheriff or bailiff to seize and sell the debtor's movable property to satisfy the judgment debt from the proceeds. It's generally pursued when there's identifiable property to seize, as an alternative or addition to garnishee proceedings.",
+      },
+      {
+        question: "How do I know which enforcement method to use?",
+        answer: "It depends on what's actually known about the debtor's assets — whether there's a bank account worth garnishing, movable property worth seizing, or neither, in which case other routes may need to be explored. This is generally where a licensed practitioner's judgment matters, since the wrong choice can waste time and money without moving the debtor any closer to paying.",
+      },
+    ],
+    content: `
+<p>A Small Claims judgment feels like the end of the process. For a debtor who still won't pay voluntarily, it's actually the start of a second one: enforcement.</p>
+
+<h2>A judgment is a legal finding, not a payment</h2>
+<p>Winning establishes, formally and on the record, that the debtor owes you a specific sum. It doesn't move any money by itself. Some debtors pay as soon as judgment is entered, simply because the matter is now settled and further delay has real consequences. Others don't, and that's when enforcement procedure comes in.</p>
+
+<h2>Garnishee proceedings — reaching money held by someone else</h2>
+<p>A garnishee proceeding targets money a third party is holding on the debtor's behalf — most commonly a bank account. Rather than chasing the debtor directly, the court orders the third party (the bank) to pay the judgment sum straight to you out of the debtor's funds it's already holding. This is often the most direct route where the debtor is known to bank somewhere identifiable.</p>
+
+<h2>Writ of execution — seizing and selling property</h2>
+<p>Where there's little to garnish but the debtor has identifiable movable property — vehicles, equipment, stock — a writ of execution authorises a sheriff or bailiff to seize that property and sell it, with the proceeds going toward satisfying the judgment. This route depends on there being something concrete and accessible to seize.</p>
+
+<h2>Choosing between them</h2>
+<p>The right route depends entirely on what's actually known about the debtor's situation — a bank account worth garnishing, property worth seizing, or neither, which is a harder position and where a practitioner's judgment on next steps genuinely matters. Enforcement is also where a matter has clearly moved beyond what a self-represented Small Claims process is designed for, which is exactly why the court doesn't expect you to navigate it alone.</p>
+
+<h2>Where Pandas LP fits in</h2>
+<p>A Judgment Enforcement service is something we're actively building out, rather than a fully self-serve product yet. If you've already won a judgment and the debtor still hasn't paid, reach out directly at <a href="mailto:pandaslegalpractitioners@gmail.com">pandaslegalpractitioners@gmail.com</a> and we'll talk through the right enforcement route for your specific judgment.</p>
+
+<p><em>This article is general information about Nigerian civil enforcement procedure and is not legal advice on your specific judgment. Enforcement procedure and available routes vary between states.</em></p>
+    `,
+  },
+  {
+    slug: 'where-the-ai-stops-and-a-lawyer-starts',
+    title: "Where the AI Stops and a Lawyer Starts: How Pandas LP's Agent Actually Works",
+    description: "Every Pandas LP agent follows the same shape: interview, draft, a licensed practitioner reviews and signs, then serve or file. Here's what that actually looks like, and every refusal built into it.",
+    date: '2026-10-09',
+    readTime: '6 min read',
+    category: 'Business Registration',
+    author: DEFAULT_AUTHOR,
+    content: `
+<p>"How much of this is actually AI, and how much is a real lawyer?" is a fair question to ask before trusting a service with a debt recovery matter or a property transaction. Here's the honest, specific answer.</p>
+
+<h2>The same four steps, every time</h2>
+<p>Every Pandas LP agent follows the same shape, whether the matter is a debt recovery claim or a property instrument:</p>
+<ol>
+  <li><strong>Interview.</strong> You describe your situation in ordinary language — no legal vocabulary required, no form to fill in cold.</li>
+  <li><strong>Draft.</strong> The agent works out which document the situation actually calls for and drafts it from the firm's own templates for that instrument, not from a blank page.</li>
+  <li><strong>Review and sign.</strong> A licensed Nigerian legal practitioner reviews the draft and signs it. Nothing reaches a debtor, a tenant, or a court unsigned.</li>
+  <li><strong>Serve or file.</strong> Depending on what you've chosen, the firm serves the document, follows up on the statutory schedule, and files at court if the matter escalates.</li>
+</ol>
+<p>The AI does the drafting and the organising. The signature — the point where an actual lawyer stands behind the document — is never automated.</p>
+
+<h2>What each agent will not do</h2>
+<p>Both agents publish their limits in full, because the refusals say more about whether to trust the system than the capabilities do:</p>
+<ul>
+  <li>The <a href="/agents/debt-recovery/limits">Debt Recovery Agent's limits</a> — it won't take a claim above the Small Claims threshold, invent legal authority, predict your odds, or claim to represent you in court.</li>
+  <li>The <a href="/agents/property-law/limits">Property Law Agent's limits</a> — it won't advise self-help eviction, invent a Certificate of Occupancy or plot number you haven't supplied, freehand an instrument outside the nine it actually covers, or draft around a contested or litigated matter.</li>
+</ul>
+
+<h2>Why this matters more than the marketing usually says</h2>
+<p>A system that claims to do everything a lawyer does, end to end, without a lawyer in the loop, is either overselling itself or quietly taking on legal risk it hasn't disclosed. Pandas LP's approach is the opposite: the agent handles the part that's genuinely mechanical — turning a plain-language description into a properly structured, correctly worded document — and hands the part that requires actual legal judgment to an actual lawyer, every time, before anything is served or filed.</p>
+
+<h2>What this looks like from your side</h2>
+<p>You describe your situation once, in your own words. You see the drafted document before anything happens with it. A licensed practitioner has reviewed and signed it by the time it's served or filed. And if your matter turns out to be more complicated than the agent is built to handle — disputed liability, contested ownership, live litigation — you're told that plainly, rather than being handed a document that pretends the complication doesn't exist.</p>
+
+<p>Start with <a href="/agents/debt-recovery">Debt Recovery</a> or <a href="/agents/property-law">Property Law</a> to see it in practice.</p>
+    `,
+  },
 ]
 
 export function getPostBySlug(slug: string): BlogPost | undefined {

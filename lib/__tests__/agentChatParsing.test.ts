@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractDocument, extractOptions, extractClientPhone } from '../agentChatParsing'
+import { extractDocument, extractOptions, extractClientPhone, extractClientEmail, extractRecipientPhone } from '../agentChatParsing'
 
 describe('extractDocument', () => {
   it('returns the content untouched when there is no document block', () => {
@@ -115,6 +115,65 @@ describe('extractClientPhone', () => {
     const content = ['<<<CLIENT_PHONE>>>', '', '<<<END_CLIENT_PHONE>>>'].join('\n')
     const { phone } = extractClientPhone(content)
     expect(phone).toBeNull()
+  })
+})
+
+describe('extractClientEmail', () => {
+  it('returns null and the original text when there is no email block', () => {
+    const result = extractClientEmail('Just a normal reply, no email here.')
+    expect(result.email).toBeNull()
+    expect(result.visible).toBe('Just a normal reply, no email here.')
+  })
+
+  it('extracts the email and strips the block from the visible text', () => {
+    const content = [
+      "Got it — I'll use that to send the client their reviewed letter.",
+      '<<<CLIENT_EMAIL>>>',
+      'client@example.com',
+      '<<<END_CLIENT_EMAIL>>>',
+    ].join('\n')
+
+    const { visible, email } = extractClientEmail(content)
+    expect(email).toBe('client@example.com')
+    expect(visible).toBe("Got it — I'll use that to send the client their reviewed letter.")
+  })
+
+  it('treats an empty block as no email', () => {
+    const content = ['<<<CLIENT_EMAIL>>>', '', '<<<END_CLIENT_EMAIL>>>'].join('\n')
+    const { email } = extractClientEmail(content)
+    expect(email).toBeNull()
+  })
+})
+
+describe('extractRecipientPhone', () => {
+  it('returns null and the original text when there is no recipient-phone block', () => {
+    const result = extractRecipientPhone('Just a normal reply, no phone number here.')
+    expect(result.phone).toBeNull()
+    expect(result.visible).toBe('Just a normal reply, no phone number here.')
+  })
+
+  it('extracts the debtor phone and strips the block from the visible text', () => {
+    const content = [
+      "Got it — we'll serve the letter to that number.",
+      '<<<RECIPIENT_PHONE>>>',
+      '+234 802 111 2222',
+      '<<<END_RECIPIENT_PHONE>>>',
+    ].join('\n')
+
+    const { visible, phone } = extractRecipientPhone(content)
+    expect(phone).toBe('+234 802 111 2222')
+    expect(visible).toBe("Got it — we'll serve the letter to that number.")
+  })
+
+  it('treats an empty block as no phone number', () => {
+    const content = ['<<<RECIPIENT_PHONE>>>', '', '<<<END_RECIPIENT_PHONE>>>'].join('\n')
+    const { phone } = extractRecipientPhone(content)
+    expect(phone).toBeNull()
+  })
+
+  it('is distinct from extractClientPhone — a message with only a CLIENT_PHONE block has no recipient phone', () => {
+    const content = ['<<<CLIENT_PHONE>>>', '+234 811 000 0000', '<<<END_CLIENT_PHONE>>>'].join('\n')
+    expect(extractRecipientPhone(content).phone).toBeNull()
   })
 })
 

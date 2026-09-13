@@ -1,0 +1,146 @@
+PANDAS LP - DNS FIX  (updated 5 September 2026)
+Domain: pandaslp.com.ng
+DNS provider: WhoGoHost (nsa.whogohost.com, nsb.whogohost.com)
+Host: Vercel
+
+===============================================================
+WHAT IS ACTUALLY WRONG NOW
+===============================================================
+
+The site is UP. Checked 5 Sept 2026: 200 OK, valid certificate,
+0.85 seconds, no outage, no block. Vercel is serving it fine.
+
+The problem is that there is only ONE road to it.
+
+  pandaslp.com.ng       A      76.76.21.21     <-- one hardcoded IP
+  www.pandaslp.com.ng   CNAME  pandaslp.com.ng <-- points back to the same IP
+  everything else       A      76.76.21.21     <-- wildcard, same IP again
+
+Because www just points back at the root, www and the bare domain are
+NOT two separate routes. They are the same single address. So when a
+particular network in Nigeria cannot reach 76.76.21.21, that person
+loses the site completely - www does not save them, because www is
+that same IP.
+
+That is exactly the symptom: it works for most people, and a few
+people on certain networks get nothing.
+
+76.76.21.21 is not a wrong or dead address - Vercel still documents it.
+The fault is that we pinned ourselves to one fixed IP by hand. Vercel
+normally hands out whichever of its addresses is healthy for the
+network that is asking. We took that ability away by hardcoding one.
+
+===============================================================
+THE FIX - MOVE DNS TO VERCEL  (recommended, do this one)
+===============================================================
+
+Stop hardcoding an IP. Let Vercel answer DNS, so each visitor's
+network is given an address that actually works for them.
+
+STEP 1 - In Vercel
+  Dashboard -> the Pandas LP project -> Settings -> Domains
+  -> pandaslp.com.ng -> choose the Nameservers method.
+  It will show two nameservers, something like:
+      ns1.vercel-dns.com
+      ns2.vercel-dns.com
+  Copy them exactly as shown. Use the ones Vercel gives you, not
+  these examples.
+
+STEP 2 - In WhoGoHost
+  Log in -> Domains -> pandaslp.com.ng -> Nameservers
+  -> "Use custom nameservers"
+  Replace nsa.whogohost.com and nsb.whogohost.com with the two
+  Vercel nameservers from Step 1. Save.
+
+STEP 3 - Wait
+  Up to 24 hours, usually much less. Vercel's Domains page will
+  show "Valid Configuration" when it has taken effect.
+
+SAFE TO DO - I checked before recommending this:
+  - There are NO MX records on this domain. No email is hosted here.
+    Firm email is pandaslegalpractitioners@gmail.com, a Gmail address,
+    which is completely unaffected by this change.
+  - Nothing else of value is on the domain. mail/webmail/cpanel/ftp
+    all just point at Vercel already via a wildcard.
+
+ONE THING TO RE-CREATE (only if you ever send email as @pandaslp.com.ng):
+  There is an SPF record on the domain today:
+      v=spf1 +a +mx +include:relay.mailchannels.net +include:spf.antispamcloud.com ~all
+  It is left over from WhoGoHost shared hosting and is doing nothing
+  right now, because no mail is sent from this domain. If you later
+  set up @pandaslp.com.ng email, add the correct SPF for that provider
+  in Vercel's DNS then. Do not copy the line above across - it points
+  at WhoGoHost's mail servers, which you will no longer be using.
+
+===============================================================
+IF YOU WOULD RATHER NOT MOVE NAMESERVERS
+===============================================================
+
+Smaller change, keeps WhoGoHost in charge, gives a genuine second
+road to the site. Paste this to WhoGoHost support:
+
+  Hello,
+
+  Please change the www record for pandaslp.com.ng.
+
+    Record type:   CNAME
+    Name/Host:     www
+    Current value: pandaslp.com.ng
+    Change to:     cname.vercel-dns.com
+    TTL:           300 if possible
+
+  Please leave the root/apex A record exactly as it is.
+
+  Thank you.
+
+What this buys: www.pandaslp.com.ng stops being a pointer to the same
+single IP and starts resolving through Vercel's own DNS, which returns
+a working address per network. Anyone who cannot load pandaslp.com.ng
+will be able to load www.pandaslp.com.ng.
+
+What it does not fix: someone typing the bare domain is still on the
+one hardcoded IP. This is a fallback, not a cure. The nameserver move
+above is the real fix.
+
+===============================================================
+IF IT STILL HAPPENS AFTER THE NAMESERVER MOVE
+===============================================================
+
+Then Vercel's network genuinely has a reachability problem from that
+Nigerian ISP, and no DNS change fixes it. At that point put Cloudflare
+in front (free plan): Cloudflare has a Lagos presence and is far better
+peered with Nigerian ISPs than Vercel is. That is a bigger change and
+worth doing only if the above does not settle it.
+
+===============================================================
+HOW TO CHECK WHETHER IT WORKED
+===============================================================
+
+Ask ONE of the people who could not load it - and note which network
+they are on (MTN / Glo / Airtel / 9mobile / office wifi), because that
+detail is the thing we have never captured and it is what would let
+this be diagnosed properly next time.
+
+Have them open this one link:
+
+    https://pandas-lp.vercel.app
+
+That is the same website on a completely different Vercel address
+(216.198.79.195, nothing to do with 76.76.21.21). It bypasses our DNS
+entirely, so it splits the problem cleanly in two:
+
+  IT LOADS  -> the site and Vercel are fine for them, and the only thing
+               they cannot reach is the one IP our DNS hands out.
+               The nameserver move above IS the fix. Do it.
+
+  IT ALSO FAILS -> Vercel as a whole is unreachable from that network.
+               No DNS change will help, because there is no Vercel
+               address that works for them. The fix is then to put
+               Cloudflare in front (free plan, Lagos presence), so they
+               connect to Cloudflare instead of to Vercel.
+
+Either way, give them that link in the meantime. It is the live site and
+it works today.
+
+And please get the network name - MTN, Glo, Airtel, 9mobile, office wifi.
+Without it this cannot be narrowed down any further from my side.

@@ -1,0 +1,13 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 900, "h": 1100 },
+    { "file": "DebtRecovery.dc.html", "x": 1000, "y": 0, "w": 900, "h": 1100 },
+    { "file": "RecoveryOfPossession.dc.html", "x": 2000, "y": 0, "w": 900, "h": 1100 },
+    { "file": "TitleSearch.dc.html", "x": 3000, "y": 0, "w": 900, "h": 1100 },
+    { "file": "BusinessRegistration.dc.html", "x": 0, "y": 1250, "w": 900, "h": 1100 },
+    { "file": "Contracts.dc.html", "x": 1000, "y": 1250, "w": 900, "h": 1100 },
+    { "file": "JudgmentEnforcement.dc.html", "x": 2000, "y": 1250, "w": 900, "h": 1100 },
+    { "file": "StreetTeam.dc.html", "x": 3000, "y": 1250, "w": 1900, "h": 1150 }
+  ],
+  "launch": { "view": "canvas" }
+}

@@ -1,0 +1,5 @@
+  frames-w 288/576
+  frames-w 348/576
+  frames-w 408/576
+  frames-w 468/576
+  frames-w 528/576

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isTitleLine, normalizeForPdf } from '../pdfGenerator.js'
+import { isTitleLine, normalizeForPdf, buildTextDocument, buildStampedDocument } from '../pdfGenerator.js'
 
 describe('normalizeForPdf', () => {
   it('substitutes the Naira glyph, which the PDF font cannot render', () => {
@@ -30,5 +30,45 @@ describe('isTitleLine', () => {
 
   it('rejects a lowercase line even if short and punctuation-free', () => {
     expect(isTitleLine('yours faithfully')).toBe(false)
+  })
+})
+
+// buildStampedDocument is the "Attach Stamp" one-click flow's own builder (see
+// app/admin/page.tsx) — it must place Pandas LP's real NBA practicing stamp only where a
+// signature actually belongs, and never watermark what is, by definition, the reviewed final.
+describe('buildStampedDocument', () => {
+  const WITH_SIGNATURE = `RE: LETTER OF DEMAND
+
+Body text here.
+
+Yours faithfully,
+
+For: PANDAS LP
+
+
+________________________
+Adedeji Adeyemo Esq
+Legal Representative, Pandas LP`
+
+  it('produces a real PDF', async () => {
+    const buffer = Buffer.from(buildStampedDocument('Letter of Demand', WITH_SIGNATURE).output('arraybuffer'))
+    expect(buffer.subarray(0, 5).toString('ascii')).toBe('%PDF-')
+  })
+
+  it('embeds the stamp image when a signature line is present', async () => {
+    const stamped = Buffer.from(buildStampedDocument('Letter of Demand', WITH_SIGNATURE).output('arraybuffer'))
+    const plain = Buffer.from(buildTextDocument('Letter of Demand', WITH_SIGNATURE, { watermark: false }).output('arraybuffer'))
+    // An embedded PNG is tens of KB — this is not a rounding difference between two otherwise
+    // identical renders, it's the presence or absence of a whole extra image object.
+    expect(stamped.length).toBeGreaterThan(plain.length + 5000)
+  })
+
+  it('never draws the stamp when no signature line exists to anchor it to', async () => {
+    const noSignature = 'RE: LETTER OF DEMAND\n\nBody text with no sign-off block at all.'
+    const stamped = Buffer.from(buildStampedDocument('Letter of Demand', noSignature).output('arraybuffer'))
+    const plain = Buffer.from(buildTextDocument('Letter of Demand', noSignature, { watermark: false }).output('arraybuffer'))
+    // Same content, same watermark setting (none) — the only variable is stampDataUri, so
+    // with no anchor found, the two outputs should be identical in size.
+    expect(stamped.length).toBe(plain.length)
   })
 })

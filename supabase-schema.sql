@@ -17,6 +17,23 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- callback number for the pandas-serves (₦25,000) tier — collected during intake so a
   -- lawyer can reach the client once payment is confirmed; see lib/agents.ts CLIENT_PHONE block
   client_phone     TEXT,
+  -- the real client's email, for a case with no client Supabase account at all — the Custom
+  -- Claims "lawyer intake" flow (app/admin/page.tsx) lets STAFF run the agent on behalf of a
+  -- client acquired offline, so user_id on that case is the staff member's own account, not
+  -- the client's. sendCaseEmail.ts prefers this column over the auth-resolved email whenever
+  -- it's set. See lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT CLIENT_EMAIL block and
+  -- lib/agentChatParsing.ts's extractClientEmail. NULL for every ordinary case, where the
+  -- signed-in client's own auth email is already correct.
+  client_email     TEXT,
+  -- The phone number of whoever the drafted document is actually served ON — a debtor, a
+  -- tenant — NOT the client's own number (that's client_phone above, a different person
+  -- entirely). "Serve via WhatsApp" (app/admin/page.tsx) sends to this number: an e-service
+  -- notice sent to the client's own phone instead of the debtor's would defeat the entire
+  -- point of service. Collected only when the client picks the ₦25,000 "Pandas LP serves it"
+  -- tier — see lib/agents.ts's RECIPIENT_PHONE block and lib/agentChatParsing.ts's
+  -- extractRecipientPhone. Editable directly from the Cases tab too, since most existing
+  -- cases predate this column and never had it captured by the agent at all.
+  recipient_phone  TEXT,
   -- the price quoted for THIS case's drafted document (varies by agent/delivery choice) —
   -- set when the document is finalized, checked against the real Paystack amount at
   -- /api/verify-payment so a client can't just declare an arbitrary amount "paid"
@@ -84,6 +101,40 @@ CREATE TABLE IF NOT EXISTS public.messages (
   content    TEXT        NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Evidence a client uploads during the chat (screenshots, PDFs — invoices, contracts, WhatsApp
+-- threads, proof of payment). app/api/extract/route.ts used to read one of these into an AI
+-- fact-summary and then discard the original file entirely — nothing survived past that one
+-- request, so nobody could ever go back and actually look at what a client sent. This table plus
+-- the case-evidence Storage bucket below keep the real file; app/admin/page.tsx's "View Evidence"
+-- panel reads both. Only ever written by app/api/extract/route.ts and read by
+-- app/api/admin/case-evidence/route.ts, both via supabaseAdmin (service-role key bypasses RLS),
+-- so RLS is enabled with no browser-facing policies — same posture as case_status_history/
+-- service_records below.
+CREATE TABLE IF NOT EXISTS public.case_evidence (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id         UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  filename        TEXT        NOT NULL,
+  -- Path inside the case-evidence bucket, not the file itself — same "don't store what you'd
+  -- have to keep in sync" reasoning as the reviewed/{caseId}.pdf path used for stamped
+  -- documents (see the case-documents bucket note further down).
+  storage_path    TEXT        NOT NULL,
+  media_type      TEXT        NOT NULL,
+  size_bytes      INTEGER,
+  -- The same summary already shown to the client in ExtractionConfirmModal, kept alongside the
+  -- file so staff can see what the AI made of it without having to re-open the file itself.
+  extracted_facts TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.case_evidence ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_case_evidence_case_id ON public.case_evidence(case_id);
+
+-- Private bucket the evidence files themselves live in — same pattern as case-documents further
+-- down: only ever read/written via supabaseAdmin, never directly from the browser, so no Storage
+-- policies are needed either.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('case-evidence', 'case-evidence', false, 10485760, array['application/pdf','image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do nothing;
 
 -- Custom claims — the "describe your own claim" intake, submitted by users who may not
 -- be signed in. No owner to scope RLS to, so it's written and read only via the
@@ -219,6 +270,12 @@ CREATE TRIGGER cases_touch
 --   ^ Powers the "Our Ref: PLP/<year>/<case_number>" line on generated letters (see lib/agents.ts).
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_phone TEXT;
 --   ^ Callback number for the pandas-serves (₦25,000) tier — see lib/agents.ts CLIENT_PHONE block.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_email TEXT;
+--   ^ The real client's email for a lawyer-intake case with no client Supabase account at
+--     all — see lib/agents.ts CLIENT_EMAIL block and app/admin/page.tsx's Custom Claims tab.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS recipient_phone TEXT;
+--   ^ The debtor/tenant's own phone — who "Serve via WhatsApp" actually serves, distinct
+--     from client_phone (the client's own number). See lib/agents.ts RECIPIENT_PHONE block.
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS expected_amount INTEGER;
 --   ^ Quoted price for this case, checked against the real Paystack amount at payment time
 --     (see app/api/verify-payment/route.ts).

@@ -6,6 +6,7 @@
 import { ImageResponse } from 'next/dist/compiled/@vercel/og/index.node.js'
 import { createElement as h } from 'react'
 import { writeFileSync, readFileSync } from 'fs'
+import { IVORY, INK as INK_T, MUTED as MUTED_T, GOLD as GOLD_T, GOLD_DIM as GOLD_DIM_T, PHOTO, PhotoBackdrop, cardStyle } from './lagos-bg.mjs'
 
 const cinzel = readFileSync(new URL('./cinzel-900.ttf', import.meta.url))
 const dmMono = readFileSync(new URL('./dmmono-500.ttf', import.meta.url))
@@ -13,11 +14,11 @@ const inter = readFileSync(new URL('./inter-400.ttf', import.meta.url))
 
 const SIZE = 1080
 
-const VOID = '#141F2B'
-const GOLD = '#D6BB80'
-const GOLD_DIM = 'rgba(214,187,128,0.45)'
-const TEXT_1 = '#F3EFE3'
-const MUTED = '#8FAEC6'
+const VOID = IVORY
+const GOLD = GOLD_T
+const GOLD_DIM = GOLD_DIM_T
+const TEXT_1 = INK_T
+const MUTED = MUTED_T
 const PAPER = '#EDE6D3'
 const INK = '#1F1A12'
 
@@ -33,15 +34,20 @@ function Corner({ corner }) {
 
 const element = h(
   'div',
-  { style: { width: '100%', height: '100%', display: 'flex', background: VOID, position: 'relative', overflow: 'hidden' } },
+  { style: { width: '100%', height: '100%', display: 'flex', background: '#1A1A1A', position: 'relative', overflow: 'hidden' } },
+
+  h(PhotoBackdrop, { photo: PHOTO.market }),
 
   h('div', { style: { position: 'absolute', top: 26, left: 26, right: 26, bottom: 26, border: `1px solid ${GOLD_DIM}`, display: 'flex' } }),
-  h('div', { style: { position: 'absolute', top: 34, left: 34, right: 34, bottom: 34, border: `1px solid rgba(214,187,128,0.2)`, display: 'flex' } }),
+  h('div', { style: { position: 'absolute', top: 34, left: 34, right: 34, bottom: 34, border: `1px solid rgba(184,134,11,0.3)`, display: 'flex' } }),
   h(Corner, { corner: 'tl' }), h(Corner, { corner: 'tr' }), h(Corner, { corner: 'bl' }), h(Corner, { corner: 'br' }),
 
   h(
     'div',
-    { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '0 84px' } },
+    { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '0 50px' } },
+  h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '48px 60px 40px', ...cardStyle() } },
 
     h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.3em' } }, 'SOUND FAMILIAR?'),
 
@@ -87,12 +93,13 @@ const element = h(
       h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: GOLD, letterSpacing: '0.2em' } }, 'SEE HOW IT WORKS — LIVE'),
       h('span', { style: { display: 'flex', fontFamily: 'Cinzel', fontSize: 26, color: TEXT_1, letterSpacing: '0.04em', marginTop: 4 } }, 'TONIGHT · 7:00 PM WAT'),
     ),
-  ),
 
-  h(
-    'div',
-    { style: { position: 'absolute', bottom: 60, display: 'flex', width: '100%', justifyContent: 'center' } },
-    h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 15, color: MUTED, letterSpacing: '0.12em' } }, 'PANDASLP.COM.NG'),
+    h(
+      'div',
+      { style: { display: 'flex', marginTop: 30, paddingTop: 20, width: '100%', justifyContent: 'center', borderTop: `1px solid ${GOLD_DIM}` } },
+      h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: MUTED, letterSpacing: '0.12em' } }, 'PANDASLP.COM.NG'),
+    ),
+  ),
   ),
 )
 

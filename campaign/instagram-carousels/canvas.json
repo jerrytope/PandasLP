@@ -1,0 +1,34 @@
+{
+  "pages": [
+    { "id": "why", "name": "Why Small Claims Court" },
+    { "id": "other", "name": "Other Claims You Can Bring" },
+    { "id": "agent", "name": "Meet the Agent" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1080, "h": 1350, "page": "why" },
+    { "file": "WhySimplified.dc.html", "x": 1180, "y": 0, "w": 1080, "h": 1350, "page": "why" },
+    { "file": "WhyFaster.dc.html", "x": 2360, "y": 0, "w": 1080, "h": 1350, "page": "why" },
+    { "file": "WhyProcess.dc.html", "x": 3540, "y": 0, "w": 1080, "h": 1350, "page": "why" },
+    { "file": "WhyBeforeFile.dc.html", "x": 4720, "y": 0, "w": 1080, "h": 1350, "page": "why" },
+    { "file": "WhyCta.dc.html", "x": 5900, "y": 0, "w": 1080, "h": 1350, "page": "why" },
+
+    { "file": "OtherCover.dc.html", "x": 0, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherGoods.dc.html", "x": 1180, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherServices.dc.html", "x": 2360, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherInformal.dc.html", "x": 3540, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherCheque.dc.html", "x": 4720, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherDeposit.dc.html", "x": 5900, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherNotFor.dc.html", "x": 7080, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+    { "file": "OtherCta.dc.html", "x": 8260, "y": 0, "w": 1080, "h": 1350, "page": "other" },
+
+    { "file": "AgentCover.dc.html", "x": 0, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentTell.dc.html", "x": 1180, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentDraft.dc.html", "x": 2360, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentChoice.dc.html", "x": 3540, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentClock.dc.html", "x": 4720, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentCourt.dc.html", "x": 5900, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentHowTo.dc.html", "x": 7080, "y": 0, "w": 1080, "h": 1350, "page": "agent" },
+    { "file": "AgentBrand.dc.html", "x": 8260, "y": 0, "w": 1080, "h": 1350, "page": "agent" }
+  ],
+  "launch": { "view": "canvas", "page": "why" }
+}

@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 import { STATES } from '@/lib/locations'
+import { LAGOS_DISTRICTS } from '@/lib/lagosDistricts'
+import { LAGOS_PROPERTY_DISTRICTS } from '@/lib/lagosPropertyDistricts'
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
 
@@ -17,6 +19,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // it in the sitemap anyway would send Google a mixed signal.
   const stateEntries: MetadataRoute.Sitemap = STATES.filter((s) => s.verified).map((s) => ({
     url: `${SITE_URL}/recover-debt/${s.slug}`,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
+
+  // Same verified gate as state entries above — see lib/lagosDistricts.ts's `verified` field.
+  const lagosDistrictEntries: MetadataRoute.Sitemap = LAGOS_DISTRICTS.filter((d) => d.verified).map((d) => ({
+    url: `${SITE_URL}/recover-debt/lagos/${d.slug}`,
+    changeFrequency: 'monthly',
+    priority: 0.6,
+  }))
+
+  // Same verified gate — see lib/lagosPropertyDistricts.ts's `verified` field.
+  const lagosPropertyDistrictEntries: MetadataRoute.Sitemap = LAGOS_PROPERTY_DISTRICTS.filter((d) => d.verified).map((d) => ({
+    url: `${SITE_URL}/recover-premises/lagos/${d.slug}`,
     changeFrequency: 'monthly',
     priority: 0.6,
   }))
@@ -62,7 +78,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.9,
     },
+    {
+      url: `${SITE_URL}/agents/debt-recovery/limits`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${SITE_URL}/agents/property-law/limits`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
     ...blogEntries,
     ...stateEntries,
+    ...lagosDistrictEntries,
+    ...lagosPropertyDistrictEntries,
   ]
 }

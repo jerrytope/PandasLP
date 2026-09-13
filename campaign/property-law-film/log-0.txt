@@ -1,0 +1,5 @@
+  frames-w 0/288
+  frames-w 60/288
+  frames-w 120/288
+  frames-w 180/288
+  frames-w 240/288

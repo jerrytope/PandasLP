@@ -9,13 +9,22 @@ import { getReviewChecklist } from '@/lib/reviewChecklists'
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
 
-type Action = 'markReviewed' | 'sendReviewedDocument' | 'markServed' | 'markFiled' | 'markJudgment' | 'markClosed'
+type Action =
+  | 'markReviewed'
+  | 'sendReviewedDocument'
+  | 'markServed'
+  | 'markFiled'
+  | 'markJudgment'
+  | 'markClosed'
+  | 'markPaidOffline'
 
 // Each action's required prior status — without this, the dashboard's status-changing
 // buttons were only gated by client-side UI, and the actual database write (a raw
 // supabase.update() from the browser) had no server-side check that the case was really
 // eligible to move to that stage. RLS only verifies row ownership, not transition validity.
-const REQUIRED_PRIOR_STATUS: Record<Action, string> = {
+// markPaidOffline isn't here — it accepts either 'draft' or 'document_ready', which this
+// single-string map can't express, so it gets its own check below instead.
+const REQUIRED_PRIOR_STATUS: Record<Exclude<Action, 'markPaidOffline'>, string> = {
   markReviewed: 'paid',
   sendReviewedDocument: 'paid',
   markServed: 'paid',
@@ -34,6 +43,11 @@ const NEXT_STATUS: Record<Action, string> = {
   markFiled: 'filed',
   markJudgment: 'judgment_obtained',
   markClosed: 'closed',
+  // A case built through the Custom Claims "lawyer intake" flow (app/admin/page.tsx) has no
+  // Paystack transaction behind it at all — the client paid the firm directly, offline. This
+  // is the ONLY other way a case reaches 'paid', so everything downstream (markReviewed,
+  // Attach Stamp, sendReviewedDocument) works exactly the same afterward.
+  markPaidOffline: 'paid',
 }
 
 // Terminal stages that should trigger the "your case is resolved" email — see
@@ -60,15 +74,15 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
   }
 
-  let body: { caseId?: string; action?: Action; reviewChecklist?: Record<string, boolean> }
+  let body: { caseId?: string; action?: Action; reviewChecklist?: Record<string, boolean>; amountPaid?: number }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
 
-  const { caseId, action, reviewChecklist } = body
-  if (!caseId || !action || !(action in REQUIRED_PRIOR_STATUS)) {
+  const { caseId, action, reviewChecklist, amountPaid } = body
+  if (!caseId || !action || !(action in NEXT_STATUS)) {
     return Response.json({ error: 'Missing or invalid caseId/action.' }, { status: 400 })
   }
 
@@ -84,20 +98,36 @@ export async function POST(req: Request) {
   if (caseData.user_id !== callerData.user.id && !isAdminEmail(callerData.user.email)) {
     return Response.json({ error: 'You do not have access to this case.' }, { status: 403 })
   }
-  // markReviewed certifies that a licensed member of staff reviewed the document, and
-  // sendReviewedDocument is staff choosing when to actually release it — the case owner
-  // doing either would defeat the entire point of the gate, so both are admin-only
+  // markReviewed certifies that a licensed member of staff reviewed the document,
+  // sendReviewedDocument is staff choosing when to actually release it, and markPaidOffline
+  // is staff recording money the client paid outside the app entirely — the case owner doing
+  // any of the three would defeat the point of each gate, so all three are admin-only
   // regardless of ownership, unlike every other action above.
-  if ((action === 'markReviewed' || action === 'sendReviewedDocument') && !isAdminEmail(callerData.user.email)) {
+  if (
+    (action === 'markReviewed' || action === 'sendReviewedDocument' || action === 'markPaidOffline') &&
+    !isAdminEmail(callerData.user.email)
+  ) {
     return Response.json({ error: 'Only a member of staff can do this.' }, { status: 403 })
   }
 
-  const requiredStatus = REQUIRED_PRIOR_STATUS[action]
-  if (caseData.status !== requiredStatus) {
-    return Response.json(
-      { error: `This case must be "${requiredStatus}" before it can move to the next stage (it's currently "${caseData.status}").` },
-      { status: 409 },
-    )
+  // markPaidOffline is the one action that isn't a single fixed prior status — a lawyer-intake
+  // case (see app/admin/page.tsx's Custom Claims tab) can be marked paid whether or not a
+  // document has been drafted yet, so it accepts either pre-payment stage.
+  if (action === 'markPaidOffline') {
+    if (caseData.status !== 'draft' && caseData.status !== 'document_ready') {
+      return Response.json(
+        { error: `This case is already "${caseData.status}" — there's nothing to mark paid.` },
+        { status: 409 },
+      )
+    }
+  } else {
+    const requiredStatus = REQUIRED_PRIOR_STATUS[action]
+    if (caseData.status !== requiredStatus) {
+      return Response.json(
+        { error: `This case must be "${requiredStatus}" before it can move to the next stage (it's currently "${caseData.status}").` },
+        { status: 409 },
+      )
+    }
   }
   // Can't send what hasn't been reviewed yet.
   if (action === 'sendReviewedDocument' && !caseData.reviewed_at) {
@@ -131,6 +161,14 @@ export async function POST(req: Request) {
     update.reviewed_by = callerData.user.email
     update.review_checklist = reviewChecklist
   }
+  if (action === 'markPaidOffline') {
+    // Defaults to whatever the drafted document actually quoted — the same figure
+    // /api/verify-payment would have checked a real Paystack amount against — so staff only
+    // need to type a number when the client genuinely paid something other than that (a
+    // negotiated adjustment, a partial payment taken as full and final, etc.).
+    update.amount_paid = typeof amountPaid === 'number' && amountPaid >= 0 ? amountPaid : (caseData.expected_amount ?? 0)
+    update.paid_at = new Date().toISOString()
+  }
   // sendReviewedDocument does NOT set reviewed_document_sent_at here — that only happens
   // further down, after sendCaseEmail actually confirms success. Setting it here would
   // record a successful send even if the email fails.
@@ -161,6 +199,15 @@ export async function POST(req: Request) {
       .then(({ error }) => {
         if (error) console.error('Failed to write case_status_history:', error)
       })
+  }
+
+  // Every ONLINE payment gets this via a separate client-triggered call right after
+  // /api/verify-payment succeeds (see AgentChat.tsx) — there is no client browser present
+  // for an offline one, so markPaidOffline is what actually sends it here instead.
+  // Fire-and-forget, same reasoning as the resolution email below: already-succeeded status
+  // change must not roll back over a failed send.
+  if (action === 'markPaidOffline') {
+    sendCaseEmail(caseId, { type: 'payment_confirmed' }).catch((err) => console.error('Failed to send payment-confirmed email:', err))
   }
 
   if (action === 'sendReviewedDocument') {

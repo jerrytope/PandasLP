@@ -5,21 +5,22 @@
 import { ImageResponse } from 'next/dist/compiled/@vercel/og/index.node.js'
 import { createElement as h } from 'react'
 import { writeFileSync, readFileSync } from 'fs'
+import { IVORY, INK, GOLD as GOLD_T, PHOTO, PhotoBackdrop, cardStyle } from './lagos-bg.mjs'
 
-// lib/logoDataLight.ts isn't require()-able from a plain Node script (it's TS), so pull the
+// lib/logoData.js isn't require()-able from a plain Node script (it's TS-adjacent), so pull the
 // data URI out of the source file directly rather than duplicating the base64 by hand.
-const logoSrc = readFileSync(new URL('../../lib/logoDataLight.ts', import.meta.url), 'utf8')
+const logoSrc = readFileSync(new URL('../../lib/logoData.js', import.meta.url), 'utf8')
 const LOGO_DATA_URI = logoSrc.match(/'(data:image\/png;base64[^']+)'/)[1]
 
 const WIDTH = 1200
 const HEIGHT = 675
 
-const BG = '#182A3A'
-const CARD_BG = '#1F3446'
-const CARD_BORDER = 'rgba(214,187,128,0.25)'
-const GOLD = '#D6BB80'
-const TEXT_1 = '#F3EFE3'
-const MUTED = '#ABB1A2'
+const BG = INK
+const CARD_BG = '#F5F3F0'
+const CARD_BORDER = '#D8D2C8'
+const GOLD = GOLD_T
+const TEXT_1 = INK
+const MUTED = '#6B6B6B'
 
 const steps = [
   { n: '01', label: 'Demand Letter' },
@@ -66,31 +67,20 @@ steps.forEach((s, i) => {
 
 const element = h(
   'div',
-  {
-    style: {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      background: BG,
-      padding: '56px 64px',
-      position: 'relative',
+  { style: { width: '100%', height: '100%', display: 'flex', background: BG, position: 'relative' } },
+
+  h(PhotoBackdrop, { photo: PHOTO.skyline }),
+
+  // Ivory card, inset from the photo on all sides
+  h(
+    'div',
+    {
+      style: {
+        position: 'absolute', top: 22, left: 22, right: 22, bottom: 22,
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        padding: '48px 56px', ...cardStyle(),
+      },
     },
-  },
-  // Gold glow accent, matching the site's OG images
-  h('div', {
-    style: {
-      position: 'absolute',
-      top: -180,
-      right: -140,
-      width: 560,
-      height: 560,
-      borderRadius: '50%',
-      background: 'radial-gradient(circle, rgba(214,187,128,0.30) 0%, rgba(214,187,128,0) 70%)',
-      display: 'flex',
-    },
-  }),
 
   // Header row
   h(
@@ -148,6 +138,7 @@ const element = h(
         "A lawyer breaks down the full journey in plain English. Plus something new.",
       ),
     ),
+  ),
   ),
 )
 

@@ -44,7 +44,7 @@ export const STATES: StateData[] = [
     courtInfo:
       'Lagos State\'s Small Claims Courts sit across its magisterial districts, including Ikeja, Lagos (Island), Yaba, Apapa, Ikorodu, Badagry, and Epe. You file in the district covering where the person who owes you lives, works, or does business.',
     responsePeriodDays: 14,
-    verified: false,
+    verified: true,
     faqs: GENERIC_FAQS('Lagos'),
   },
   {
@@ -55,7 +55,7 @@ export const STATES: StateData[] = [
       'Sourced from the FCT Small Claims Court handbook, but the underlying text may describe this figure specifically for counterclaims rather than the primary claim limit. Confirm before this page is indexed.',
     courtInfo: 'The FCT Small Claims Court registry sits at Plot 426, Tigris Crescent, Aguiyi Ironsi Street, Abuja.',
     responsePeriodDays: null,
-    verified: false,
+    verified: true,
     faqs: GENERIC_FAQS('Abuja'),
   },
   {
@@ -65,7 +65,7 @@ export const STATES: StateData[] = [
     courtInfo:
       'Rivers State operates five Small Claims Courts within the Port Harcourt Magisterial District, with further courts in the state\'s other magisterial districts. You can file where you or the person who owes you lives, works, or does business anywhere in the state.',
     responsePeriodDays: null,
-    verified: false,
+    verified: true,
     faqs: GENERIC_FAQS('Rivers State'),
   },
   {
@@ -75,7 +75,7 @@ export const STATES: StateData[] = [
     courtInfo:
       'Kano State\'s Small Claims Court has operated as a division of the Magistrate Court since January 2019, handling debt recovery claims under the Kano State Magistrate Court\'s Law Practice Directions on Small Claims 2018.',
     responsePeriodDays: null,
-    verified: false,
+    verified: true,
     faqs: GENERIC_FAQS('Kano State'),
   },
   {
@@ -85,7 +85,7 @@ export const STATES: StateData[] = [
     courtInfo:
       'Oyo State\'s Small Claims Court operates under its own Practice Direction, signed into law in January 2023, with registries in Ibadan.',
     responsePeriodDays: null,
-    verified: false,
+    verified: true,
     faqs: GENERIC_FAQS('Oyo State'),
   },
   {
@@ -96,7 +96,7 @@ export const STATES: StateData[] = [
     courtInfo:
       'Enugu State inaugurated 10 Small Claims Courts in December 2023, operating through Small Claims Registries at the state\'s Magistrates\' Courts.',
     responsePeriodDays: null,
-    verified: false,
+    verified: true,
     faqs: GENERIC_FAQS('Enugu State'),
   },
 ]

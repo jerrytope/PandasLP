@@ -1,0 +1,8 @@
+file 'seg1-fixed.mp4'
+file 'seg2-fixed.mp4'
+file 'seg3-fixed.mp4'
+file 'seg4-fixed.mp4'
+file 'seg5-fixed.mp4'
+file 'seg6-fixed.mp4'
+file 'seg7-fixed.mp4'
+file 'seg8-fixed.mp4'

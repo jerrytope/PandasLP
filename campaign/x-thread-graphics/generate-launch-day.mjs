@@ -7,8 +7,9 @@
 import { ImageResponse } from 'next/dist/compiled/@vercel/og/index.node.js'
 import { createElement as h } from 'react'
 import { writeFileSync, readFileSync } from 'fs'
+import { IVORY, INK, MUTED as MUTED_T, GOLD as GOLD_T, GOLD_DIM as GOLD_DIM_T, PHOTO, PhotoBackdrop, cardStyle } from './lagos-bg.mjs'
 
-const logoSrc = readFileSync(new URL('../../lib/logoDataLight.ts', import.meta.url), 'utf8')
+const logoSrc = readFileSync(new URL('../../lib/logoData.js', import.meta.url), 'utf8')
 const LOGO_DATA_URI = logoSrc.match(/'(data:image\/png;base64[^']+)'/)[1]
 
 const cinzel = readFileSync(new URL('./cinzel-900.ttf', import.meta.url))
@@ -17,11 +18,11 @@ const inter = readFileSync(new URL('./inter-400.ttf', import.meta.url))
 
 const SIZE = 1080
 
-const VOID = '#141F2B'
-const GOLD = '#D6BB80'
-const GOLD_DIM = 'rgba(214,187,128,0.45)'
-const TEXT_1 = '#F3EFE3'
-const MUTED = '#8FAEC6'
+const VOID = IVORY
+const GOLD = GOLD_T
+const GOLD_DIM = GOLD_DIM_T
+const TEXT_1 = INK
+const MUTED = MUTED_T
 
 // Small L-shaped corner ornament with a curled inner edge — safer to render than an embedded
 // SVG flourish, still reads as an engraved-certificate corner rather than a plain frame.
@@ -37,18 +38,23 @@ function Corner({ corner }) {
 
 const element = h(
   'div',
-  { style: { width: '100%', height: '100%', display: 'flex', background: VOID, position: 'relative', overflow: 'hidden' } },
+  { style: { width: '100%', height: '100%', display: 'flex', background: INK, position: 'relative', overflow: 'hidden' } },
 
-  // Double-line certificate border
+  h(PhotoBackdrop, { photo: PHOTO.skyline }),
+
+  // Double-line certificate border, now framing the photo itself
   h('div', { style: { position: 'absolute', top: 26, left: 26, right: 26, bottom: 26, border: `1px solid ${GOLD_DIM}`, display: 'flex' } }),
-  h('div', { style: { position: 'absolute', top: 34, left: 34, right: 34, bottom: 34, border: `1px solid rgba(214,187,128,0.2)`, display: 'flex' } }),
+  h('div', { style: { position: 'absolute', top: 34, left: 34, right: 34, bottom: 34, border: `1px solid rgba(184,134,11,0.3)`, display: 'flex' } }),
 
   h(Corner, { corner: 'tl' }), h(Corner, { corner: 'tr' }), h(Corner, { corner: 'bl' }), h(Corner, { corner: 'br' }),
 
-  // Centered content column
+  // Centering wrapper — the card itself carries the ivory surface, floated over the photo
   h(
     'div',
-    { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '0 90px' } },
+    { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', padding: '0 56px' } },
+  h(
+    'div',
+    { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '52px 70px 44px', ...cardStyle() } },
 
     h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: GOLD, letterSpacing: '0.32em' } }, 'CAC BN 9646741 · LAGOS'),
 
@@ -92,13 +98,14 @@ const element = h(
       h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: GOLD_DIM } }, '·'),
       h('span', { style: { display: 'flex', fontFamily: 'DM Mono', fontSize: 14, color: GOLD, letterSpacing: '0.08em' } }, 'FROM N10,000'),
     ),
-  ),
 
-  // Bottom sign-off
-  h(
-    'div',
-    { style: { position: 'absolute', bottom: 62, display: 'flex', width: '100%', justifyContent: 'center' } },
-    h('span', { style: { display: 'flex', fontFamily: 'Cinzel', fontSize: 21, color: TEXT_1, letterSpacing: '0.01em' } }, 'PANDASLP.COM.NG'),
+    // Sign-off, now part of the card rather than a separate overlay on the photo
+    h(
+      'div',
+      { style: { display: 'flex', marginTop: 34, paddingTop: 22, width: '100%', justifyContent: 'center', borderTop: `1px solid ${GOLD_DIM}` } },
+      h('span', { style: { display: 'flex', fontFamily: 'Cinzel', fontSize: 19, color: TEXT_1, letterSpacing: '0.01em' } }, 'PANDASLP.COM.NG'),
+    ),
+  ),
   ),
 )
 

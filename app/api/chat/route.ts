@@ -1,8 +1,9 @@
-import { getAgent } from '@/lib/agents'
+import { getAgent, SMALL_CLAIMS_LAWYER_INTAKE_PROMPT } from '@/lib/agents'
 import { capHistory, type ChatMessage } from '@/lib/chatHistory'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { buildCurrentDateContext } from '@/lib/currentDateContext'
+import { isAdminEmail } from '@/lib/adminAuth'
 
 // Node runtime (not edge) — this route now needs supabaseAdmin for the auth check below,
 // and CLAUDE.md documents that Supabase admin calls require Node's runtime. This route
@@ -21,6 +22,32 @@ export async function POST(req: Request) {
     )
   }
 
+  let body: { messages?: ChatMessage[]; agentId?: string; lawyerIntake?: boolean }
+  try {
+    body = await req.json()
+  } catch {
+    return Response.json({ error: 'Invalid request body.' }, { status: 400 })
+  }
+
+  const { messages, agentId, lawyerIntake } = body
+
+  if (!agentId || typeof agentId !== 'string') {
+    return Response.json({ error: 'Missing agentId.' }, { status: 400 })
+  }
+
+  const agent = getAgent(agentId)
+  if (!agent) {
+    return Response.json({ error: `Unknown agent: ${agentId}` }, { status: 400 })
+  }
+
+  // Lawyer intake (Custom Claims tab, see app/admin/page.tsx) swaps in the admin-only prompt
+  // below instead of agent.systemPrompt. Only small-claims has one so far — see
+  // lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT for why it deliberately isn't just
+  // another entry in AGENTS.
+  if (lawyerIntake && agentId !== 'small-claims') {
+    return Response.json({ error: 'Lawyer intake mode is not available for this agent.' }, { status: 400 })
+  }
+
   const authHeader = req.headers.get('authorization') ?? ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
   if (!token) {
@@ -30,23 +57,11 @@ export async function POST(req: Request) {
   if (callerErr || !callerData?.user) {
     return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
   }
-
-  let body: { messages?: ChatMessage[]; agentId?: string }
-  try {
-    body = await req.json()
-  } catch {
-    return Response.json({ error: 'Invalid request body.' }, { status: 400 })
-  }
-
-  const { messages, agentId } = body
-
-  if (!agentId || typeof agentId !== 'string') {
-    return Response.json({ error: 'Missing agentId.' }, { status: 400 })
-  }
-
-  const agent = getAgent(agentId)
-  if (!agent) {
-    return Response.json({ error: `Unknown agent: ${agentId}` }, { status: 400 })
+  // The one place this route cares about WHO the caller is, not just THAT they're signed
+  // in — lawyer intake hands back a prompt written for Pandas LP's own staff, so it must
+  // never be reachable by an ordinary client who happens to know the request shape.
+  if (lawyerIntake && !isAdminEmail(callerData.user.email)) {
+    return Response.json({ error: 'Only a member of staff can use lawyer intake mode.' }, { status: 403 })
   }
 
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -88,7 +103,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
-        system: `${agent.systemPrompt}
+        system: `${lawyerIntake ? SMALL_CLAIMS_LAWYER_INTAKE_PROMPT : agent.systemPrompt}
 
 ${currentDateContext}
 

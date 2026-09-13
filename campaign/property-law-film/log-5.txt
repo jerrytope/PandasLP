@@ -1,0 +1,5 @@
+  frames-w 1440/1728
+  frames-w 1500/1728
+  frames-w 1560/1728
+  frames-w 1620/1728
+  frames-w 1680/1728

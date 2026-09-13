@@ -203,6 +203,9 @@ export default function AgentPage({ slug }) {
             </div>
           ))}
         </div>
+        <Link href={`/agents/${slug}/limits`} className="lp-textlink" style={{ display: 'inline-block', marginTop: 16 }}>
+          Read this on its own page →
+        </Link>
       </section>
 
       {/* price and entry */}

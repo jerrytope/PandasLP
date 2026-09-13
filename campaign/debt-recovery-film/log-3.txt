@@ -1,0 +1,6 @@
+  frames-w 954/1272
+  frames-w 1014/1272
+  frames-w 1074/1272
+  frames-w 1134/1272
+  frames-w 1194/1272
+  frames-w 1254/1272

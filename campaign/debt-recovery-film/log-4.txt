@@ -1,0 +1,6 @@
+  frames-w 1272/1590
+  frames-w 1332/1590
+  frames-w 1392/1590
+  frames-w 1452/1590
+  frames-w 1512/1590
+  frames-w 1572/1590

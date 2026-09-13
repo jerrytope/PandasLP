@@ -15,6 +15,11 @@ export interface PendingExtraction {
 
 interface ExtractionConfirmModalProps {
   extraction: PendingExtraction
+  // Set only when several files were selected in one go (see AgentChat.tsx's handleFileSelect
+  // and its `multiple` file input) — shows "File X of Y" so review doesn't feel like it lost
+  // track of the batch. Omitted entirely for a single-file upload.
+  batchIndex?: number
+  batchTotal?: number
   onConfirm: (editedFacts: string) => void
   onCancel: () => void
 }
@@ -24,7 +29,7 @@ interface ExtractionConfirmModalProps {
 // document; for a law firm, treating that read as fact without a human glancing at it first
 // is exactly the kind of silent-error risk this modal exists to close off. Nothing extracted
 // reaches the case/agent until the user explicitly confirms it here.
-export default function ExtractionConfirmModal({ extraction, onConfirm, onCancel }: ExtractionConfirmModalProps) {
+export default function ExtractionConfirmModal({ extraction, batchIndex, batchTotal, onConfirm, onCancel }: ExtractionConfirmModalProps) {
   const [editedFacts, setEditedFacts] = useState(extraction.originalFacts)
   const [tab, setTab] = useState<'edit' | 'diff'>('edit')
 
@@ -38,8 +43,17 @@ export default function ExtractionConfirmModal({ extraction, onConfirm, onCancel
       <div className={styles.modal}>
         <div className={styles.header}>
           <div>
-            <div className={styles.headerTitle}>Review what we found in {extraction.filename}</div>
-            <div className={styles.headerSub}>Confirm this is accurate before it's used in your case — edit anything that's wrong.</div>
+            <div className={styles.headerTitle}>
+              Review what we found in {extraction.filename}
+              {batchIndex && batchTotal ? (
+                <span className={styles.headerBatch}> — File {batchIndex} of {batchTotal}</span>
+              ) : null}
+            </div>
+            <div className={styles.headerSub}>
+              {batchTotal
+                ? "Confirm each file is accurate before it's used in your case — edit anything that's wrong. You'll move to the next file automatically."
+                : "Confirm this is accurate before it's used in your case — edit anything that's wrong."}
+            </div>
           </div>
         </div>
 
@@ -105,14 +119,16 @@ export default function ExtractionConfirmModal({ extraction, onConfirm, onCancel
             {edited ? 'Edited — the version you send is what actually reaches your case.' : 'Sending exactly what was extracted, unedited.'}
           </span>
           <div className={styles.footerActions}>
-            <button type="button" className="btn btn-sm" onClick={onCancel}>Discard</button>
+            <button type="button" className="btn btn-sm" onClick={onCancel}>
+              {batchIndex && batchTotal && batchIndex < batchTotal ? 'Discard — Next File →' : 'Discard'}
+            </button>
             <button
               type="button"
               className="btn btn-primary btn-sm"
               disabled={!editedFacts.trim()}
               onClick={() => onConfirm(editedFacts.trim())}
             >
-              Confirm &amp; Send
+              {batchIndex && batchTotal && batchIndex < batchTotal ? 'Confirm & Send — Next File →' : 'Confirm & Send'}
             </button>
           </div>
         </div>
