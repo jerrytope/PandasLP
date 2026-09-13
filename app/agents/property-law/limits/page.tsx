@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import AgentLimitsPage from '@/components/AgentLimitsPage'
-import { AGENT_PAGES } from '@/components/AgentPage'
+import { AGENT_PAGES } from '@/lib/agentPagesData'
 import { safeJsonLd } from '@/lib/jsonLd'
 
 export const metadata: Metadata = {

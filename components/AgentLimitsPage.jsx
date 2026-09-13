@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { AGENT_PAGES } from './AgentPage'
+import { AGENT_PAGES } from '@/lib/agentPagesData'
 
 /* ─────────────────────────────────────────────────────────────
    The "what it will not do" block from AgentPage.jsx, given its own
