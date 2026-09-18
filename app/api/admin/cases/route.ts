@@ -67,10 +67,34 @@ export async function GET(req: Request) {
   const { data: reviewedFiles } = await supabaseAdmin.storage.from('case-documents').list('reviewed', { limit: 1000 })
   const stampedCaseIds = new Set((reviewedFiles ?? []).map((f) => f.name.replace(/\.pdf$/, '')))
 
+  // Whether each case currently owes a reply in its negotiation thread — derived from the
+  // latest case_negotiations row per case, not a duplicated column (same "compute it, don't
+  // store it" reasoning as hasStampedDocument above). One query for every case on this page,
+  // not one per case, then grouped in memory — case_negotiations is a thin table (a handful of
+  // rows per case, not one per case), so this stays cheap even as it grows.
+  const caseIds = (cases ?? []).map((c) => c.id)
+  const negotiationStatusByCase = new Map<string, 'awaiting_our_reply' | 'awaiting_their_reply'>()
+  if (caseIds.length > 0) {
+    const { data: negotiationRows } = await supabaseAdmin
+      .from('case_negotiations')
+      .select('case_id, party, occurred_at')
+      .in('case_id', caseIds)
+      .order('occurred_at', { ascending: true })
+    for (const row of negotiationRows ?? []) {
+      // Rows arrive oldest-first, so the last write for a case_id wins here and ends up
+      // holding the latest round — no separate max() pass needed.
+      negotiationStatusByCase.set(
+        row.case_id,
+        row.party === 'debtor_counsel' ? 'awaiting_our_reply' : 'awaiting_their_reply',
+      )
+    }
+  }
+
   let enriched = (cases ?? []).map((c) => ({
     ...c,
     userEmail: emailById.get(c.user_id) ?? '',
     hasStampedDocument: stampedCaseIds.has(c.id),
+    negotiationStatus: negotiationStatusByCase.get(c.id) ?? null,
   }))
 
   if (emailFilter) {

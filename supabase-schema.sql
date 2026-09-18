@@ -448,3 +448,62 @@ ALTER TABLE public.recoveries ENABLE ROW LEVEL SECURITY;
 
 -- Safe to run whether or not the table already existed without this column.
 ALTER TABLE public.recoveries ADD COLUMN IF NOT EXISTS client_notified_at TIMESTAMPTZ;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- NEGOTIATIONS  (added 2026-09-18)
+--
+-- A letter of demand often doesn't get a straight payment or straight
+-- silence — the debtor's own lawyer responds instead, disputing the amount,
+-- offering a lesser sum, or proposing terms. Until now there was nowhere to
+-- record that at all: it wasn't a status the case machine understood, and a
+-- reply from opposing counsel would otherwise only ever live in someone's
+-- inbox. This is a running thread per case, not a single field, because a
+-- negotiation is usually several rounds, not one.
+--
+-- Deliberately NOT a new `cases.status` value: negotiation can start while a
+-- case is still 'letter_served' (before the 14-day window closes) and can
+-- keep going after 'filed' — it overlays the existing status machine rather
+-- than replacing a stage in it. app/api/admin/cases/route.ts derives whether
+-- a case currently owes a reply from the latest row per case_id, the same
+-- "compute it, don't duplicate it" approach already used for
+-- hasStampedDocument — see that route's own comment for why.
+--
+-- If your database already exists, run just this block.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.case_negotiations (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id          UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  -- Whose round this is. 'debtor_counsel' = a counter/reply we received from the debtor's
+  -- lawyer; 'pandas_lp' = our reply back to them. Alternating rows read as the thread.
+  party            TEXT        NOT NULL CHECK (party IN ('debtor_counsel', 'pandas_lp')),
+  -- Name/firm of the debtor's lawyer — only meaningful (and only asked for in the admin UI)
+  -- when party = 'debtor_counsel'. NULL on our own 'pandas_lp' rows.
+  counsel_name     TEXT,
+  -- Naira, whole units, same convention as cases.amount_paid/expected_amount — the figure
+  -- actually named in this round, if one was. NULL when a round doesn't name a number (e.g.
+  -- a flat denial with no counter-figure, or a reply that only asks for more time).
+  proposed_amount  INTEGER,
+  -- Staff's own account of what was said or offered — always required, even when an
+  -- attachment carries the real letter, so the thread is readable without opening a file.
+  summary          TEXT        NOT NULL CHECK (length(trim(summary)) > 0),
+  -- Optional scanned/photographed copy of the actual letter, in the case-documents bucket at
+  -- negotiations/{id}.pdf — same private-bucket, service-role-only pattern as reviewed/{caseId}.pdf.
+  attachment_path  TEXT,
+  -- True only for a 'pandas_lp' row that started from the AI-drafted reply
+  -- (app/api/admin/negotiations/draft/route.ts) rather than being typed from scratch — an
+  -- honest record of which replies had a machine first pass, even after a human edited it
+  -- before logging. Never true for a 'debtor_counsel' row.
+  ai_drafted       BOOLEAN     NOT NULL DEFAULT FALSE,
+  logged_by        TEXT        NOT NULL,
+  -- When the counter/reply actually happened, not necessarily when staff got around to
+  -- logging it — staff-settable, defaults to now.
+  occurred_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_case_negotiations_case_id ON public.case_negotiations(case_id, occurred_at);
+
+-- RLS on, no client-facing policy — same posture as case_status_history/service_records:
+-- every read and write goes through the admin API using the service role.
+ALTER TABLE public.case_negotiations ENABLE ROW LEVEL SECURITY;

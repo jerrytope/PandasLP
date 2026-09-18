@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
 import RecoveryPanel from '@/components/RecoveryPanel'
+import NegotiationPanel from '@/components/NegotiationPanel'
 import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { getAgentPayment } from '@/lib/agentServiceMap'
@@ -38,6 +39,9 @@ interface AdminCaseRow {
   // app/api/admin/cases/route.ts's own comment for why. True once a reviewed-and-stamped
   // PDF exists for this case, whether uploaded manually or via Attach Stamp's confirm step.
   hasStampedDocument: boolean
+  // Derived from the latest case_negotiations row, not a stored column — see
+  // app/api/admin/cases/route.ts's own comment. null means no negotiation thread exists yet.
+  negotiationStatus: 'awaiting_our_reply' | 'awaiting_their_reply' | null
   created_at: string
   paid_at: string | null
   deadline_at: string | null
@@ -427,6 +431,11 @@ function CaseCard({
               TEST
             </span>
           )}
+          {c.negotiationStatus === 'awaiting_our_reply' && (
+            <span className="badge" style={{ background: 'color-mix(in srgb, var(--danger) 20%, transparent)', color: 'var(--danger)' }}>
+              COUNTER RECEIVED
+            </span>
+          )}
           <span className="badge">{STAGE_LABEL[c.status] ?? c.status}</span>
         </div>
       </div>
@@ -788,8 +797,13 @@ function CaseCard({
           nothing to recover on a deed of assignment or a tenancy agreement. What is
           confirmed here feeds the public total on the homepage. */}
       {(c.agent_id === 'small-claims' || c.agent_id === 'judgment-enforcement') && (
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <RecoveryPanel caseId={c.id} expectedAmount={c.expected_amount} />
+          {/* A counter from the debtor's own lawyer is a real, common response to a demand
+              letter — not just payment or silence. Same practice area as recovery above,
+              debt claims specifically, since a counter-offer only makes sense against a
+              liquidated sum. */}
+          <NegotiationPanel caseId={c.id} />
         </div>
       )}
 
