@@ -51,6 +51,12 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
+  // Reads the attached letter as soon as it's selected so staff don't have to retype what it
+  // already says — see app/api/admin/negotiations/extract/route.ts. Fields stay editable
+  // either way: a wrong or missing read is a form staff can correct, not a blocker.
+  const [extracting, setExtracting] = useState(false)
+  const [extractError, setExtractError] = useState('')
+
   // AI-draft sub-form — only relevant while logging our own reply.
   const [showDraftForm, setShowDraftForm] = useState(false)
   const [stance, setStance] = useState<'accept' | 'reject' | 'counter' | 'request_info'>('counter')
@@ -125,6 +131,48 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
       setDraftError('Network error. Please try again.')
     } finally {
       setDrafting(false)
+    }
+  }
+
+  async function handleAttachmentSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null
+    setAttachmentFile(file)
+    setExtractError('')
+    if (!file || party !== 'debtor_counsel') return
+    if (!ACCEPTED.includes(file.type)) {
+      setExtractError('Attachment must be a PDF, PNG or JPEG to read automatically — fill the fields in by hand instead.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setExtractError('File is too large to read automatically (max 10 MB) — fill the fields in by hand instead.')
+      return
+    }
+
+    setExtracting(true)
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const res = await authedFetch('/api/admin/negotiations/extract', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ fileBase64: base64, mediaType: file.type }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setExtractError(data.error || 'Could not read this file — fill the fields in by hand instead.')
+        return
+      }
+      if (data.counselName) setCounselName(data.counselName)
+      if (data.proposedAmount != null) setProposedAmount(String(data.proposedAmount))
+      if (data.summary) setSummary(data.summary)
+    } catch {
+      setExtractError('Network error while reading the file — fill the fields in by hand instead.')
+    } finally {
+      setExtracting(false)
     }
   }
 
@@ -266,10 +314,24 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
 
             {party === 'debtor_counsel' && (
               <label style={{ display: 'grid', gap: 4 }}>
+                <span>Their letter (PDF/PNG/JPEG) — attach it and the fields below fill in automatically</span>
+                <input
+                  type="file"
+                  accept="application/pdf,image/png,image/jpeg"
+                  onChange={handleAttachmentSelect}
+                  style={{ fontSize: 12 }}
+                />
+                {extracting && <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>Reading the letter…</span>}
+                {extractError && <span style={{ color: 'var(--danger)', fontSize: 12 }}>{extractError}</span>}
+              </label>
+            )}
+
+            {party === 'debtor_counsel' && (
+              <label style={{ display: 'grid', gap: 4 }}>
                 <span>Debtor&rsquo;s lawyer / firm name</span>
                 <input
                   className="input"
-                  placeholder="e.g. Chidi Okafor, Okafor & Associates"
+                  placeholder="Filled in automatically once a letter is attached — or type it in directly"
                   value={counselName}
                   onChange={(e) => setCounselName(e.target.value)}
                   style={{ fontSize: 13 }}
@@ -347,24 +409,12 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
               <textarea
                 className="input"
                 rows={party === 'pandas_lp' ? 8 : 3}
-                placeholder={party === 'debtor_counsel' ? 'e.g. Disputes ₦200,000 of the claim as already paid, offers ₦650,000 in full and final settlement.' : 'The reply text, as it will be sent to opposing counsel.'}
+                placeholder={party === 'debtor_counsel' ? 'Filled in automatically once a letter is attached above — or describe it yourself if there’s nothing to attach.' : 'The reply text, as it will be sent to opposing counsel.'}
                 value={summary}
                 onChange={(e) => { setSummary(e.target.value); setAiDrafted(false) }}
                 style={{ fontSize: 13, resize: 'vertical' }}
               />
             </label>
-
-            {party === 'debtor_counsel' && (
-              <label style={{ display: 'grid', gap: 4 }}>
-                <span style={{ color: 'var(--text-muted)' }}>Scanned copy of their letter (optional, PDF/PNG/JPEG)</span>
-                <input
-                  type="file"
-                  accept="application/pdf,image/png,image/jpeg"
-                  onChange={(e) => setAttachmentFile(e.target.files?.[0] ?? null)}
-                  style={{ fontSize: 12 }}
-                />
-              </label>
-            )}
 
             {error && <p style={{ color: 'var(--danger)', margin: 0 }}>{error}</p>}
             {notice && <p style={{ color: 'var(--text-muted)', margin: 0 }}>{notice}</p>}

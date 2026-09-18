@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractDocument, extractOptions, extractClientPhone, extractClientEmail, extractRecipientPhone } from '../agentChatParsing'
+import { extractDocument, extractOptions, extractClientPhone, extractClientEmail, extractRecipientPhone, extractCounterFacts } from '../agentChatParsing'
 
 describe('extractDocument', () => {
   it('returns the content untouched when there is no document block', () => {
@@ -198,5 +198,59 @@ describe('extractDocument — PRICE: 0 means "invoiced by the firm"', () => {
     )
     expect(doc).not.toBeNull()
     expect(doc!.price).toBeUndefined()
+  })
+})
+
+describe('extractCounterFacts', () => {
+  it('returns null when there is no counter-extract block', () => {
+    expect(extractCounterFacts('Just a normal reply, no extraction block here.')).toBeNull()
+  })
+
+  it('parses a well-formed extraction, including a multi-line summary', () => {
+    const content = [
+      '<<<COUNTER_EXTRACT>>>',
+      'COUNSEL_NAME: Chidi Okafor, Okafor & Associates',
+      'PROPOSED_AMOUNT: 650000',
+      'SUMMARY:',
+      'Disputes ₦200,000 of the claim as already paid.',
+      'Offers ₦650,000 in full and final settlement.',
+      '<<<END_COUNTER_EXTRACT>>>',
+    ].join('\n')
+
+    const facts = extractCounterFacts(content)
+    expect(facts).toEqual({
+      counselName: 'Chidi Okafor, Okafor & Associates',
+      proposedAmount: 650000,
+      summary: 'Disputes ₦200,000 of the claim as already paid.\nOffers ₦650,000 in full and final settlement.',
+    })
+  })
+
+  it('treats "unknown" and "none" as honest absences, not literal values', () => {
+    const content = [
+      '<<<COUNTER_EXTRACT>>>',
+      'COUNSEL_NAME: unknown',
+      'PROPOSED_AMOUNT: none',
+      'SUMMARY:',
+      'A brief letter acknowledging receipt and requesting two more weeks to respond.',
+      '<<<END_COUNTER_EXTRACT>>>',
+    ].join('\n')
+
+    const facts = extractCounterFacts(content)
+    expect(facts?.counselName).toBeNull()
+    expect(facts?.proposedAmount).toBeNull()
+    expect(facts?.summary).toContain('two more weeks')
+  })
+
+  it('strips commas and the naira sign from the figure before parsing it', () => {
+    const content = [
+      '<<<COUNTER_EXTRACT>>>',
+      'COUNSEL_NAME: unknown',
+      'PROPOSED_AMOUNT: ₦1,250,000',
+      'SUMMARY:',
+      'Counter-offer.',
+      '<<<END_COUNTER_EXTRACT>>>',
+    ].join('\n')
+
+    expect(extractCounterFacts(content)?.proposedAmount).toBe(1250000)
   })
 })

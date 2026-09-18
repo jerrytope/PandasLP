@@ -76,3 +76,32 @@ export function extractOptions(content: string): { visible: string; options: str
   const visible = content.replace(OPTIONS_BLOCK_RE, '').trim()
   return { visible, options }
 }
+
+export interface CounterFacts {
+  counselName: string | null
+  proposedAmount: number | null
+  summary: string
+}
+
+const COUNTER_EXTRACT_BLOCK_RE =
+  /<<<COUNTER_EXTRACT>>>\s*COUNSEL_NAME:\s*(.*?)\s*\nPROPOSED_AMOUNT:\s*(.*?)\s*\nSUMMARY:\s*\n([\s\S]*?)<<<END_COUNTER_EXTRACT>>>/
+
+// Parses the one-shot extraction Claude produces from a scanned counter letter — see
+// app/api/admin/negotiations/extract/route.ts. "unknown"/"none" are the model's own honest
+// answers when the letter doesn't state a name or a figure, not a parsing failure, so both
+// collapse to null rather than being stored as the literal words "unknown"/"none".
+export function extractCounterFacts(content: string): CounterFacts | null {
+  const match = content.match(COUNTER_EXTRACT_BLOCK_RE)
+  if (!match) return null
+
+  const rawName = match[1].trim()
+  const counselName = rawName && !/^unknown$/i.test(rawName) ? rawName : null
+
+  const rawAmount = match[2].trim().replace(/[,\s₦]/g, '')
+  const parsedAmount = Number(rawAmount)
+  const proposedAmount = rawAmount && !/^none$/i.test(rawAmount) && Number.isFinite(parsedAmount) ? parsedAmount : null
+
+  const summary = match[3].trim()
+
+  return { counselName, proposedAmount, summary }
+}
