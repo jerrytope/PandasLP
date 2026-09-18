@@ -16,7 +16,7 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
 
   const { data: record, error: recordErr } = await supabaseAdmin
     .from('service_records')
-    .select('id, case_id, status')
+    .select('id, case_id, status, negotiation_id')
     .eq('access_token', token)
     .single()
 
@@ -37,6 +37,13 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
     .eq('id', record.case_id)
     .single()
 
+  // A reply logged in NegotiationPanel.tsx, not the case's original document — see
+  // supabase-schema.sql's service_records.negotiation_id comment. Reuses this same page and
+  // token mechanism rather than a second serve system; only the body and heading differ.
+  const negotiationReply = record.negotiation_id
+    ? (await supabaseAdmin.from('case_negotiations').select('summary').eq('id', record.negotiation_id).single()).data
+    : null
+
   // Only ever moves 'dispatched' -> 'link_opened' — never overwrites 'acknowledged', and
   // never re-fires link_opened_at on a repeat visit (real first-view timestamp, not "last
   // visit"). Best-effort: a failed update here must never block the recipient from seeing
@@ -51,7 +58,8 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
       })
   }
 
-  if (!caseData?.document_body) {
+  const bodyText = negotiationReply?.summary ?? caseData?.document_body
+  if (!bodyText) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAF8', color: '#1A1A1A', padding: 24 }}>
         <p style={{ color: '#6B6B6B', fontSize: 14 }}>This document is not yet available. Contact pandaslegalpractitioners@gmail.com.</p>
@@ -63,11 +71,13 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
     <div style={{ minHeight: '100vh', background: '#FAFAF8', color: '#1A1A1A', padding: '64px 20px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <div style={{ fontSize: 12, letterSpacing: '0.15em', color: '#B8860B', textTransform: 'uppercase', marginBottom: 16 }}>
-          Pandas LP — Notice of Service
+          {negotiationReply ? 'Pandas LP — Reply on Your Matter' : 'Pandas LP — Notice of Service'}
         </div>
-        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 28, lineHeight: 1.3 }}>{caseData.document_title}</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 28, lineHeight: 1.3 }}>
+          {negotiationReply ? `Re: ${caseData?.document_title ?? 'Your Matter'}` : caseData?.document_title}
+        </h1>
         <div style={{ background: '#FFFFFF', border: '1px solid #E8E4DF', borderRadius: 8, padding: '32px 28px', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-          {renderFormattedText(caseData.document_body)}
+          {renderFormattedText(bodyText)}
         </div>
         <p style={{ marginTop: 28, fontSize: 12, color: '#6B6B6B' }}>
           Pandas LP — Licensed Legal Practitioners, Lagos, Nigeria — CAC BN 9646741<br />

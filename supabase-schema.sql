@@ -507,3 +507,10 @@ CREATE INDEX IF NOT EXISTS idx_case_negotiations_case_id ON public.case_negotiat
 -- RLS on, no client-facing policy — same posture as case_status_history/service_records:
 -- every read and write goes through the admin API using the service role.
 ALTER TABLE public.case_negotiations ENABLE ROW LEVEL SECURITY;
+
+-- Lets a 'pandas_lp' negotiation round be served to the debtor the same way the original
+-- demand letter is — WhatsApp link to a /serve/<token> page — without a second serve-page
+-- system. NULL means "serving the case's original document_body," same as every existing
+-- service_records row; set only when staff serve a specific reply from NegotiationPanel.tsx.
+-- See app/serve/[token]/page.tsx for the branch that reads this.
+ALTER TABLE public.service_records ADD COLUMN IF NOT EXISTS negotiation_id UUID REFERENCES public.case_negotiations(id);

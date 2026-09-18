@@ -1,4 +1,4 @@
-import { getFollowUpEmail, getPaymentConfirmedEmail, getRecoveryConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, type FollowUpEmailData } from './emailTemplates'
+import { getFollowUpEmail, getPaymentConfirmedEmail, getRecoveryConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, getNegotiationReplyEmail, type FollowUpEmailData } from './emailTemplates'
 import { supabaseAdmin } from './supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from './mailer'
 import { buildTextDocumentBuffer } from './pdfGenerator.js'
@@ -11,6 +11,7 @@ export type SendCaseEmailOptions =
   | { type: 'resolution' }
   | { type: 'reviewed_document' }
   | { type: 'recovery_confirmed'; recoveryId: string }
+  | { type: 'negotiation_reply'; negotiationId: string }
 
 export type SendCaseEmailResult = { ok: true } | { ok: false; error: string; status: number }
 
@@ -139,6 +140,38 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       // Only agents that are actually live, with hand-written copy. See lib/recoveryOffers.ts.
       offers: buildRecoveryOffers(siteUrl, caseData.agent_id),
     }))
+  } else if (options.type === 'negotiation_reply') {
+    // Read back from the actual logged row, same reasoning as recovery_confirmed above —
+    // the client is told exactly what was recorded, never a figure or summary the caller
+    // happened to pass in.
+    const { data: round, error: roundErr } = await supabaseAdmin
+      .from('case_negotiations')
+      .select('summary, attachment_path, party')
+      .eq('id', options.negotiationId)
+      .eq('case_id', caseId)
+      .single()
+
+    if (roundErr || !round || round.party !== 'pandas_lp') {
+      return { ok: false, error: 'Negotiation reply not found.', status: 404 }
+    }
+
+    ;({ subject, html, text } = getNegotiationReplyEmail({
+      recipientName,
+      caseTitle: caseData.document_title ?? 'your case',
+      replySummary: round.summary,
+      siteUrl,
+    }))
+
+    if (round.attachment_path) {
+      const { data: replyBlob } = await supabaseAdmin.storage.from('case-documents').download(round.attachment_path)
+      if (replyBlob) {
+        attachments = [{
+          filename: 'reply-to-counter-offer.pdf',
+          content: Buffer.from(await replyBlob.arrayBuffer()),
+          contentType: 'application/pdf',
+        }]
+      }
+    }
   } else {
     ;({ subject, html, text } = getResolutionEmail({
       recipientName,

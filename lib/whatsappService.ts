@@ -25,6 +25,25 @@ export function buildServiceMessage({ caseRef, documentTitle, serveUrl }: Servic
   ].join('\n')
 }
 
+// Same shape as buildServiceMessage, worded for a reply to an already-open negotiation
+// rather than an opening notice of service — see NegotiationPanel.tsx's "Serve Reply via
+// WhatsApp" and app/serve/[token]/page.tsx, which renders the negotiation round's own text
+// instead of the case's original document_body when a service_records row carries a
+// negotiation_id.
+export function buildNegotiationReplyMessage({ caseRef, documentTitle, serveUrl }: ServiceMessageInput): string {
+  return [
+    `Pandas LP — Reply on Your Matter`,
+    ``,
+    `Re: ${documentTitle} (Ref: ${caseRef})`,
+    ``,
+    `Our reply regarding this matter is ready. View it here:`,
+    serveUrl,
+    ``,
+    `Pandas LP — Licensed Legal Practitioners, Lagos, Nigeria`,
+    `pandaslegalpractitioners@gmail.com | +234 811 808 0189`,
+  ].join('\n')
+}
+
 // wa.me requires digits only (no +, spaces, or leading zeros replaced with country code) —
 // this does the minimum normalization: strips everything but digits, and assumes a Nigerian
 // local number (0XXXXXXXXXX) if no country code was included, since that's what client_phone

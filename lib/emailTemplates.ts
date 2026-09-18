@@ -34,6 +34,16 @@ export interface ReviewedDocumentEmailData {
   siteUrl: string
 }
 
+export interface NegotiationReplyEmailData {
+  recipientName: string
+  caseTitle: string
+  // The exact text staff logged for this round — never re-summarized or reworded by the
+  // email template, so the client reads precisely what was sent on their behalf, not a
+  // paraphrase of it. See lib/sendCaseEmail.ts's negotiation_reply branch.
+  replySummary: string
+  siteUrl: string
+}
+
 export interface NewOrderAlertEmailData {
   caseTitle: string
   clientEmail: string
@@ -295,6 +305,45 @@ pandaslegalpractitioners@gmail.com`,
         ${reviewUrl ? 'If you have a moment, a review helps other people in the same situation find us.' : 'You can view the full history of your case at any time from your dashboard.'}
       </p>
       ${reviewHtmlBlock}
+    `),
+  }
+}
+
+// Sent whenever staff log our reply to a counter-offer from the debtor's own lawyer — see
+// app/api/admin/negotiations/route.ts. Keeps the client in the loop on negotiation activity
+// without them having to ask; the attached PDF (if a stamped one was generated) is added by
+// the caller in lib/sendCaseEmail.ts, not this function.
+export function getNegotiationReplyEmail(data: NegotiationReplyEmailData): { subject: string; html: string; text: string } {
+  const { recipientName, caseTitle, replySummary, siteUrl } = data
+  const dashboardUrl = `${siteUrl}/dashboard`
+
+  return {
+    subject: `We've replied on your case | ${caseTitle}`,
+    text: `Hi ${recipientName},
+
+The other side responded to our letter on your case, ${caseTitle}, and we've now replied on your behalf. Here's what we sent:
+
+${replySummary}
+
+View your case: ${dashboardUrl}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        We've replied on your case
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        Hi ${recipientName},
+      </p>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        The other side responded to our letter on <strong style="color:#F3EFE3;">${caseTitle}</strong>, and we've now
+        replied on your behalf. Here's what we sent:
+      </p>
+      <p style="margin:0 0 20px;font-size:14px;color:#F3EFE3;line-height:1.7;white-space:pre-wrap;background:rgba(255,255,255,0.04);border-radius:10px;padding:16px 18px;">${replySummary}</p>
+      <p style="margin:0;font-size:15px;color:#ABB1A2;line-height:1.6;">
+        You can see the full history of your case at any time from your dashboard.
+      </p>
     `),
   }
 }

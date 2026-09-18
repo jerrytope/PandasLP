@@ -3,7 +3,7 @@ export const runtime = 'nodejs'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
-import { buildServiceMessage, buildWhatsAppLink, hashMessage, generateAccessToken } from '@/lib/whatsappService'
+import { buildServiceMessage, buildNegotiationReplyMessage, buildWhatsAppLink, hashMessage, generateAccessToken } from '@/lib/whatsappService'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -24,13 +24,13 @@ export async function POST(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  let body: { caseId?: string; phone?: string }
+  let body: { caseId?: string; phone?: string; negotiationId?: string }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
-  const { caseId, phone } = body
+  const { caseId, phone, negotiationId } = body
   if (!caseId || !phone) {
     return Response.json({ error: 'Missing caseId or phone.' }, { status: 400 })
   }
@@ -47,13 +47,36 @@ export async function POST(req: Request) {
     return Response.json({ error: 'This case has no document to serve yet.' }, { status: 400 })
   }
 
+  // Serving a specific negotiation reply rather than the case's original document — confirm
+  // the round actually exists, belongs to this case, is our side of the thread, and has a
+  // stamped attachment before dispatching. Staff should never be able to serve a reply with
+  // nothing behind it, or one that belongs to a different case entirely.
+  if (negotiationId) {
+    const { data: round, error: roundErr } = await supabaseAdmin
+      .from('case_negotiations')
+      .select('id, party, attachment_path')
+      .eq('id', negotiationId)
+      .eq('case_id', caseId)
+      .single()
+    if (roundErr || !round) {
+      return Response.json({ error: 'Negotiation entry not found.' }, { status: 404 })
+    }
+    if (round.party !== 'pandas_lp') {
+      return Response.json({ error: 'Only our own reply can be served — not a counter we received.' }, { status: 400 })
+    }
+    if (!round.attachment_path) {
+      return Response.json({ error: 'Attach the stamped reply before serving it.' }, { status: 409 })
+    }
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
   const year = new Date(caseData.created_at).getFullYear()
   const caseRef = caseData.case_number != null ? `PLP/${year}/${String(caseData.case_number).padStart(6, '0')}` : `PLP/${year}/PENDING`
 
   const accessToken = generateAccessToken()
   const serveUrl = `${siteUrl}/serve/${accessToken}`
-  const message = buildServiceMessage({ caseRef, documentTitle: caseData.document_title, serveUrl })
+  const messageBuilder = negotiationId ? buildNegotiationReplyMessage : buildServiceMessage
+  const message = messageBuilder({ caseRef, documentTitle: caseData.document_title, serveUrl })
   const waLink = buildWhatsAppLink(phone, message)
 
   const { error: insertErr } = await supabaseAdmin.from('service_records').insert({
@@ -64,6 +87,7 @@ export async function POST(req: Request) {
     message_hash: hashMessage(message),
     access_token: accessToken,
     status: 'dispatched',
+    negotiation_id: negotiationId || null,
   })
   if (insertErr) {
     console.error('Failed to record service dispatch:', insertErr)

@@ -3,6 +3,7 @@ export const runtime = 'nodejs'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { sendCaseEmail } from '@/lib/sendCaseEmail'
 
 const RATE_LIMIT = 30
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -125,6 +126,15 @@ export async function POST(req: Request) {
         await supabaseAdmin.from('case_negotiations').update({ attachment_path: path }).eq('id', inserted.id)
       }
     }
+  }
+
+  // Keeps the client in the loop the moment we reply on their behalf — fire-and-forget, same
+  // reasoning as every other client email in this app: an already-saved negotiation round
+  // must never fail or roll back because the notification email had trouble sending.
+  if (party === 'pandas_lp') {
+    sendCaseEmail(caseId, { type: 'negotiation_reply', negotiationId: inserted.id }).catch((err) =>
+      console.error('Failed to send negotiation-reply email:', err),
+    )
   }
 
   return Response.json({ ok: true, id: inserted.id, attachmentPath, warning: attachmentWarning })

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { authedFetch } from '@/lib/supabaseClient'
 import { formatNaira as naira } from '@/lib/formatNaira'
+import { buildStampedDocument } from '@/lib/pdfGenerator'
 
 /* ─────────────────────────────────────────────────────────────
    A demand letter doesn't just get paid or ignored — the debtor's
@@ -36,7 +37,20 @@ type NegotiationRound = {
 
 const ACCEPTED = ['application/pdf', 'image/png', 'image/jpeg']
 
-export default function NegotiationPanel({ caseId }: { caseId: string }) {
+export default function NegotiationPanel({
+  caseId,
+  caseTitle,
+  recipientPhone,
+}: {
+  caseId: string
+  // Used only to give the generated reply letter a meaningful heading — falls back to a
+  // generic one if the parent case has no document_title yet.
+  caseTitle?: string | null
+  // The debtor's phone, same field "Serve via WhatsApp" on the case card already uses (never
+  // client_phone — see its own comment in supabase-schema.sql). Needed here too so a specific
+  // reply can be served the same way, without staff leaving this panel to do it.
+  recipientPhone?: string | null
+}) {
   const [open, setOpen] = useState(false)
   const [rounds, setRounds] = useState<NegotiationRound[] | null>(null)
   const [loading, setLoading] = useState(false)
@@ -56,6 +70,19 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
   // either way: a wrong or missing read is a form staff can correct, not a blocker.
   const [extracting, setExtracting] = useState(false)
   const [extractError, setExtractError] = useState('')
+
+  // Our own reply, formatted on Pandas LP letterhead and stamped — same generator and same
+  // one-click pattern as "Attach Stamp" on the main case card (app/admin/page.tsx), just
+  // pointed at this round's text instead of the case's demand letter. Becomes this round's
+  // attachment on submit, exactly like a scanned debtor letter would.
+  const [replyPreviewBase64, setReplyPreviewBase64] = useState<string | null>(null)
+  const [generatingReplyPdf, setGeneratingReplyPdf] = useState(false)
+  const [replyPdfError, setReplyPdfError] = useState('')
+
+  // Per-round "Serve Reply via WhatsApp" — see app/api/admin/service-records/route.ts's
+  // negotiationId branch and app/serve/[token]/page.tsx's negotiation_id rendering.
+  const [servingRoundId, setServingRoundId] = useState<string | null>(null)
+  const [serveError, setServeError] = useState('')
 
   // AI-draft sub-form — only relevant while logging our own reply.
   const [showDraftForm, setShowDraftForm] = useState(false)
@@ -96,6 +123,8 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
     setDraftInstructions('')
     setAuthorizedAmount('')
     setDraftError('')
+    setReplyPreviewBase64(null)
+    setReplyPdfError('')
   }
 
   const STANCE_LABEL: Record<typeof stance, string> = {
@@ -176,6 +205,49 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
     }
   }
 
+  function handleAttachStampToReply() {
+    if (!summary.trim()) return
+    setReplyPdfError('')
+    setGeneratingReplyPdf(true)
+    try {
+      const title = `Reply — ${caseTitle || 'Pandas LP Matter'}`
+      const doc = buildStampedDocument(title, summary)
+      const blobUrl = doc.output('bloburl') // a URL instance, not a string — see jspdf's types
+      setReplyPreviewBase64(doc.output('datauristring').split(',')[1])
+      window.open(blobUrl.toString(), '_blank', 'noopener')
+    } catch (err) {
+      console.error('Failed to generate the stamped reply:', err)
+      setReplyPdfError('Could not generate the stamped reply. Please try again.')
+    } finally {
+      setGeneratingReplyPdf(false)
+    }
+  }
+
+  async function serveRoundViaWhatsApp(negotiationId: string) {
+    if (!recipientPhone) return
+    setServeError('')
+    setServingRoundId(negotiationId)
+    try {
+      const res = await authedFetch('/api/admin/service-records', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId, phone: recipientPhone, negotiationId }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setServeError(data.error || 'Failed to dispatch.')
+        return
+      }
+      // Same as the case-level "Serve via WhatsApp": staff still presses send inside
+      // WhatsApp themselves, this only opens it pre-filled and records the attempt.
+      window.open(data.whatsappLink, '_blank', 'noopener,noreferrer')
+    } catch {
+      setServeError('Network error. Please try again.')
+    } finally {
+      setServingRoundId(null)
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -198,7 +270,12 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
 
     let attachmentBase64: string | undefined
     let attachmentType: string | undefined
-    if (attachmentFile) {
+    if (party === 'pandas_lp' && replyPreviewBase64) {
+      // The stamped letter generated by "Attach stamp to this reply" — takes priority over a
+      // manually-picked file, since generating one is the whole point of that button.
+      attachmentBase64 = replyPreviewBase64
+      attachmentType = 'application/pdf'
+    } else if (attachmentFile) {
       if (!ACCEPTED.includes(attachmentFile.type)) {
         setError('Attachment must be a PDF, PNG or JPEG.')
         return
@@ -292,8 +369,26 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
                       </>
                     )}
                   </div>
+                  {r.party === 'pandas_lp' && r.attachment_path && recipientPhone && (
+                    <div style={{ marginTop: 8 }}>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        disabled={servingRoundId === r.id}
+                        onClick={() => serveRoundViaWhatsApp(r.id)}
+                      >
+                        {servingRoundId === r.id ? 'Opening…' : 'Serve This Reply via WhatsApp'}
+                      </button>
+                    </div>
+                  )}
+                  {r.party === 'pandas_lp' && !r.attachment_path && (
+                    <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                      No stamped copy attached — this reply can be emailed to the client, but not served on WhatsApp until one is.
+                    </div>
+                  )}
                 </div>
               ))}
+              {serveError && <p style={{ color: 'var(--danger)', margin: '6px 0 0' }}>{serveError}</p>}
             </div>
           )}
 
@@ -411,10 +506,32 @@ export default function NegotiationPanel({ caseId }: { caseId: string }) {
                 rows={party === 'pandas_lp' ? 8 : 3}
                 placeholder={party === 'debtor_counsel' ? 'Filled in automatically once a letter is attached above — or describe it yourself if there’s nothing to attach.' : 'The reply text, as it will be sent to opposing counsel.'}
                 value={summary}
-                onChange={(e) => { setSummary(e.target.value); setAiDrafted(false) }}
+                onChange={(e) => { setSummary(e.target.value); setAiDrafted(false); setReplyPreviewBase64(null) }}
                 style={{ fontSize: 13, resize: 'vertical' }}
               />
             </label>
+
+            {party === 'pandas_lp' && (
+              <div style={{ padding: 10, border: '1px dashed var(--border)', borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  disabled={!summary.trim() || generatingReplyPdf}
+                  onClick={handleAttachStampToReply}
+                >
+                  {generatingReplyPdf ? 'Generating…' : 'Attach stamp to this reply'}
+                </button>
+                {replyPreviewBase64 && (
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    Stamped letter ready — opened in a new tab for you to check. It attaches automatically when you log this reply.
+                  </span>
+                )}
+                {replyPdfError && <span style={{ fontSize: 12, color: 'var(--danger)' }}>{replyPdfError}</span>}
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  Puts the text above on Pandas LP letterhead with the firm&rsquo;s stamp, the same way the original demand letter is stamped. Needed before this specific reply can be served via WhatsApp below — optional if you only need the client emailed.
+                </span>
+              </div>
+            )}
 
             {error && <p style={{ color: 'var(--danger)', margin: 0 }}>{error}</p>}
             {notice && <p style={{ color: 'var(--text-muted)', margin: 0 }}>{notice}</p>}

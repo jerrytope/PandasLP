@@ -803,7 +803,7 @@ function CaseCard({
               letter — not just payment or silence. Same practice area as recovery above,
               debt claims specifically, since a counter-offer only makes sense against a
               liquidated sum. */}
-          <NegotiationPanel caseId={c.id} />
+          <NegotiationPanel caseId={c.id} caseTitle={c.document_title} recipientPhone={c.recipient_phone} />
         </div>
       )}
 
