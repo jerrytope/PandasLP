@@ -514,3 +514,8 @@ ALTER TABLE public.case_negotiations ENABLE ROW LEVEL SECURITY;
 -- service_records row; set only when staff serve a specific reply from NegotiationPanel.tsx.
 -- See app/serve/[token]/page.tsx for the branch that reads this.
 ALTER TABLE public.service_records ADD COLUMN IF NOT EXISTS negotiation_id UUID REFERENCES public.case_negotiations(id);
+
+-- Negotiation status + next action tracking (admin queue "Negotiation follow-ups" and the
+-- daily reminder email). Run add-negotiation-next-actions.sql, which adds to
+-- public.case_negotiations: status, next_action, next_action_due, next_action_done_at,
+-- reminder_sent_at, plus a partial index on open actions.

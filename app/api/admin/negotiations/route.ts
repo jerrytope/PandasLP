@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
+import { defaultStatusFor, isDueDate, isNegotiationStatus } from '@/lib/negotiationStatus'
 
 const RATE_LIMIT = 30
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -42,6 +43,9 @@ export async function POST(req: Request) {
     aiDrafted?: boolean
     attachmentBase64?: string
     attachmentType?: string
+    status?: string
+    nextAction?: string
+    nextActionDue?: string
   }
   try {
     body = await req.json()
@@ -50,6 +54,8 @@ export async function POST(req: Request) {
   }
 
   const { caseId, party, attachmentBase64, attachmentType } = body
+  const nextAction = (body.nextAction || '').trim()
+  const nextActionDue = (body.nextActionDue || '').trim()
   const summary = (body.summary || '').trim()
   const counselName = (body.counselName || '').trim()
 
@@ -62,6 +68,16 @@ export async function POST(req: Request) {
   if (!summary) {
     return Response.json({ error: 'A summary of what was said or offered is required.' }, { status: 400 })
   }
+  if (body.status !== undefined && body.status !== '' && !isNegotiationStatus(body.status)) {
+    return Response.json({ error: 'Unknown negotiation status.' }, { status: 400 })
+  }
+  if (nextActionDue && !isDueDate(nextActionDue)) {
+    return Response.json({ error: 'The due date must be a real date (YYYY-MM-DD).' }, { status: 400 })
+  }
+  if (nextActionDue && !nextAction) {
+    return Response.json({ error: 'Say what the next action is, or clear the due date.' }, { status: 400 })
+  }
+  const status = isNegotiationStatus(body.status) ? body.status : defaultStatusFor(party)
 
   let proposedAmount: number | null = null
   if (body.proposedAmount !== undefined && body.proposedAmount !== '') {
@@ -81,9 +97,23 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Case not found.' }, { status: 404 })
   }
 
+  // A new round supersedes whatever the previous one was waiting on: their reply arriving
+  // answers "awaiting their reply", and our reply going out answers "respond to their counter".
+  // Closing those here keeps the dashboard's follow-up list to what is actually still open.
+  const { error: closeErr } = await supabaseAdmin
+    .from('case_negotiations')
+    .update({ next_action_done_at: new Date().toISOString() })
+    .eq('case_id', caseId)
+    .is('next_action_done_at', null)
+    .not('next_action', 'is', null)
+  if (closeErr) console.error('Failed to close superseded negotiation actions:', closeErr)
+
   const { data: inserted, error: insertErr } = await supabaseAdmin
     .from('case_negotiations')
     .insert({
+      status,
+      next_action: nextAction || null,
+      next_action_due: nextAction && nextActionDue ? nextActionDue : null,
       case_id: caseId,
       party,
       counsel_name: party === 'debtor_counsel' && counselName ? counselName : null,
@@ -160,7 +190,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('case_negotiations')
-    .select('id, party, counsel_name, proposed_amount, summary, attachment_path, ai_drafted, logged_by, occurred_at')
+    .select('id, party, counsel_name, proposed_amount, summary, attachment_path, ai_drafted, logged_by, occurred_at, status, next_action, next_action_due, next_action_done_at')
     .eq('case_id', caseId)
     .order('occurred_at', { ascending: true })
 
@@ -180,4 +210,75 @@ export async function GET(req: Request) {
   )
 
   return Response.json({ rounds })
+}
+
+// Updates where a round stands without rewriting what was said in it: change the status,
+// reschedule or reword the next action, or mark it done. The summary, amount and attachment
+// are the record of the correspondence and stay as logged.
+export async function PATCH(req: Request) {
+  const { allowed, retryAfterSeconds } = checkRateLimit(`admin-negotiations-patch:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
+  if (!allowed) {
+    return Response.json(
+      { error: 'Too many requests — please wait a moment before trying again.' },
+      { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } },
+    )
+  }
+
+  const authResult = await requireAdmin(req)
+  if (authResult instanceof Response) return authResult
+
+  let body: { id?: string; status?: string; nextAction?: string | null; nextActionDue?: string | null; done?: boolean }
+  try {
+    body = await req.json()
+  } catch {
+    return Response.json({ error: 'Invalid request.' }, { status: 400 })
+  }
+  if (!body.id) {
+    return Response.json({ error: 'Missing id.' }, { status: 400 })
+  }
+
+  const update: Record<string, unknown> = {}
+
+  if (body.status !== undefined) {
+    if (!isNegotiationStatus(body.status)) {
+      return Response.json({ error: 'Unknown negotiation status.' }, { status: 400 })
+    }
+    update.status = body.status
+  }
+  if (body.nextAction !== undefined) {
+    const text = (body.nextAction || '').trim()
+    update.next_action = text || null
+    // A reworded action is a new action: reopen it and let the reminder fire again.
+    update.next_action_done_at = null
+    update.reminder_sent_at = null
+    if (!text) update.next_action_due = null
+  }
+  if (body.nextActionDue !== undefined) {
+    const due = (body.nextActionDue || '').trim()
+    if (due && !isDueDate(due)) {
+      return Response.json({ error: 'The due date must be a real date (YYYY-MM-DD).' }, { status: 400 })
+    }
+    update.next_action_due = due || null
+    update.reminder_sent_at = null
+  }
+  if (body.done === true) update.next_action_done_at = new Date().toISOString()
+  if (body.done === false) update.next_action_done_at = null
+
+  if (Object.keys(update).length === 0) {
+    return Response.json({ error: 'Nothing to update.' }, { status: 400 })
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('case_negotiations')
+    .update(update)
+    .eq('id', body.id)
+    .select('id, status, next_action, next_action_due, next_action_done_at')
+    .single()
+
+  if (error || !data) {
+    console.error('Failed to update negotiation round:', error)
+    return Response.json({ error: `Could not update this entry.${error ? ` (${error.message})` : ''}` }, { status: 500 })
+  }
+
+  return Response.json({ ok: true, round: data })
 }

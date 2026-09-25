@@ -2,6 +2,7 @@
 
 import { DAY_MS, type AdminCaseRow, type CaseAction } from './types'
 import CaseCard from './CaseCard'
+import NegotiationFollowUps from './NegotiationFollowUps'
 import { AlertTriangle, Clock, Scale, Inbox } from 'lucide-react'
 
 interface AdminQueueViewProps {
@@ -58,6 +59,9 @@ export default function AdminQueueView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {/* Negotiation next actions falling due — undertakings, reply deadlines */}
+      <NegotiationFollowUps cases={cases} onOpenDrawer={onOpenDrawer} />
+
       {/* SECTION 1: Awaiting Review or Serving */}
       <section>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>

@@ -4,6 +4,14 @@ import { useState } from 'react'
 import { authedFetch } from '@/lib/supabaseClient'
 import { formatNaira as naira } from '@/lib/formatNaira'
 import { buildStampedDocument } from '@/lib/pdfGenerator'
+import {
+  NEGOTIATION_STATUSES,
+  NEGOTIATION_STATUS_LABEL,
+  defaultStatusFor,
+  isNegotiationStatus,
+  lagosToday,
+  type NegotiationStatus,
+} from '@/lib/negotiationStatus'
 
 /* ─────────────────────────────────────────────────────────────
    A demand letter doesn't just get paid or ignored — the debtor's
@@ -33,6 +41,16 @@ type NegotiationRound = {
   ai_drafted: boolean
   logged_by: string
   occurred_at: string
+  // Where things stood after this round and what had to happen next — see
+  // add-negotiation-next-actions.sql. Null on rounds logged before that migration.
+  status: string | null
+  next_action: string | null
+  next_action_due: string | null
+  next_action_done_at: string | null
+}
+
+function formatDue(d: string) {
+  return new Date(`${d}T00:00:00Z`).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 }
 
 const ACCEPTED = ['application/pdf', 'image/png', 'image/jpeg']
@@ -64,6 +82,17 @@ export default function NegotiationPanel({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+
+  // Status + next action for the round being logged. An empty status means "use the default
+  // for this party" (their counter → awaiting our reply; our reply → awaiting theirs).
+  const [statusChoice, setStatusChoice] = useState<NegotiationStatus | ''>('')
+  const [nextAction, setNextAction] = useState('')
+  const [nextActionDue, setNextActionDue] = useState('')
+
+  // Per-round follow-up controls: mark done, or move the due date.
+  const [updatingRoundId, setUpdatingRoundId] = useState<string | null>(null)
+  const [dueEdits, setDueEdits] = useState<Record<string, string>>({})
+  const [roundError, setRoundError] = useState('')
 
   // Reads the attached letter as soon as it's selected so staff don't have to retype what it
   // already says — see app/api/admin/negotiations/extract/route.ts. Fields stay editable
@@ -125,6 +154,39 @@ export default function NegotiationPanel({
     setDraftError('')
     setReplyPreviewBase64(null)
     setReplyPdfError('')
+    setStatusChoice('')
+    setNextAction('')
+    setNextActionDue('')
+  }
+
+  async function updateRound(
+    id: string,
+    patch: { done?: boolean; nextActionDue?: string | null; status?: NegotiationStatus },
+  ) {
+    setRoundError('')
+    setUpdatingRoundId(id)
+    try {
+      const res = await authedFetch('/api/admin/negotiations', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id, ...patch }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setRoundError(data.error || 'Could not update this entry.')
+        return
+      }
+      setRounds((prev) => (prev || []).map((r) => (r.id === id ? { ...r, ...data.round } : r)))
+      setDueEdits((prev) => {
+        const next = { ...prev }
+        delete next[id]
+        return next
+      })
+    } catch {
+      setRoundError('Network error. Please try again.')
+    } finally {
+      setUpdatingRoundId(null)
+    }
   }
 
   const STANCE_LABEL: Record<typeof stance, string> = {
@@ -257,6 +319,10 @@ export default function NegotiationPanel({
       setError(party === 'debtor_counsel' ? 'Give a summary of what they said or offered.' : 'The reply text is required.')
       return
     }
+    if (nextActionDue && !nextAction.trim()) {
+      setError('Say what the next action is, or clear the due date.')
+      return
+    }
 
     let amountNum: number | undefined
     if (proposedAmount.trim()) {
@@ -307,6 +373,9 @@ export default function NegotiationPanel({
           aiDrafted,
           attachmentBase64,
           attachmentType,
+          status: statusChoice || defaultStatusFor(party),
+          nextAction: nextAction.trim() || undefined,
+          nextActionDue: nextAction.trim() && nextActionDue ? nextActionDue : undefined,
         }),
       })
       const data = await res.json()
@@ -325,12 +394,18 @@ export default function NegotiationPanel({
   }
 
   const latest = rounds && rounds.length > 0 ? rounds[rounds.length - 1] : null
+  const latestStatus: NegotiationStatus | null = latest
+    ? isNegotiationStatus(latest.status)
+      ? latest.status
+      : defaultStatusFor(latest.party)
+    : null
+  const today = lagosToday()
 
   return (
     <>
       <button type="button" className="btn btn-sm" onClick={toggle}>
         {open ? 'Hide negotiation' : 'Negotiation'}
-        {latest ? ` · ${latest.party === 'debtor_counsel' ? 'awaiting our reply' : 'awaiting their reply'}` : ''}
+        {latestStatus ? ` · ${NEGOTIATION_STATUS_LABEL[latestStatus].toLowerCase()}` : ''}
       </button>
 
       {open && (
@@ -359,6 +434,68 @@ export default function NegotiationPanel({
                     </span>
                   </div>
                   <div style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{r.summary}</div>
+                  {(isNegotiationStatus(r.status) || r.next_action) && (() => {
+                    const open = !!r.next_action && !r.next_action_done_at
+                    const overdue = open && !!r.next_action_due && r.next_action_due < today
+                    const dueToday = open && r.next_action_due === today
+                    const dueColor = overdue ? 'var(--danger)' : dueToday ? 'var(--warning)' : 'var(--text-muted)'
+                    return (
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border-subtle, var(--border))', display: 'grid', gap: 6 }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
+                          {isNegotiationStatus(r.status) && (
+                            <span className="badge" style={{ fontSize: 11 }}>{NEGOTIATION_STATUS_LABEL[r.status]}</span>
+                          )}
+                          {r.next_action && (
+                            <span style={{ color: open ? 'var(--text-1, inherit)' : 'var(--text-muted)', textDecoration: open ? 'none' : 'line-through' }}>
+                              Next: {r.next_action}
+                            </span>
+                          )}
+                          {r.next_action && r.next_action_due && (
+                            <span style={{ color: dueColor, fontWeight: overdue || dueToday ? 600 : 400 }}>
+                              {overdue ? 'Overdue since ' : dueToday ? 'Due today, ' : 'Due '}
+                              {formatDue(r.next_action_due)}
+                            </span>
+                          )}
+                          {r.next_action && r.next_action_done_at && (
+                            <span style={{ color: 'var(--text-muted)' }}>Done</span>
+                          )}
+                        </div>
+                        {open && (
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn btn-sm"
+                              disabled={updatingRoundId === r.id}
+                              onClick={() => updateRound(r.id, { done: true })}
+                            >
+                              {updatingRoundId === r.id ? 'Saving…' : 'Mark done'}
+                            </button>
+                            <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 12 }}>
+                              <span>Move due date</span>
+                              <input
+                                id={`due-${r.id}`}
+                                type="date"
+                                className="input"
+                                value={dueEdits[r.id] ?? r.next_action_due ?? ''}
+                                onChange={(e) => setDueEdits((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                                style={{ fontSize: 12, minHeight: 32, padding: '4px 8px' }}
+                              />
+                            </label>
+                            {dueEdits[r.id] !== undefined && dueEdits[r.id] !== (r.next_action_due ?? '') && (
+                              <button
+                                type="button"
+                                className="btn btn-sm"
+                                disabled={updatingRoundId === r.id}
+                                onClick={() => updateRound(r.id, { nextActionDue: dueEdits[r.id] || null })}
+                              >
+                                Save date
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                   <div style={{ marginTop: 4, color: 'var(--text-muted)', fontSize: 12 }}>
                     {r.ai_drafted && 'AI-drafted, reviewed by staff · '}
                     Logged by {r.logged_by}
@@ -389,6 +526,7 @@ export default function NegotiationPanel({
                 </div>
               ))}
               {serveError && <p style={{ color: 'var(--danger)', margin: '6px 0 0' }}>{serveError}</p>}
+              {roundError && <p style={{ color: 'var(--danger)', margin: '6px 0 0' }}>{roundError}</p>}
             </div>
           )}
 
@@ -532,6 +670,50 @@ export default function NegotiationPanel({
                 </span>
               </div>
             )}
+
+            <div style={{ padding: 10, border: '1px solid var(--border)', borderRadius: 6, display: 'grid', gap: 8 }}>
+              <label style={{ display: 'grid', gap: 4 }}>
+                <span>Where does it stand after this?</span>
+                <select
+                  id={`neg-status-${caseId}`}
+                  className="input"
+                  value={statusChoice || defaultStatusFor(party)}
+                  onChange={(e) => setStatusChoice(e.target.value as NegotiationStatus)}
+                  style={{ fontSize: 13 }}
+                >
+                  {NEGOTIATION_STATUSES.map((s) => (
+                    <option key={s} value={s}>{NEGOTIATION_STATUS_LABEL[s]}</option>
+                  ))}
+                </select>
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 8 }}>
+                <label style={{ display: 'grid', gap: 4 }}>
+                  <span>Next action (optional)</span>
+                  <input
+                    id={`neg-next-${caseId}`}
+                    className="input"
+                    placeholder={party === 'pandas_lp' ? 'e.g. Receive signed undertaking' : 'e.g. Send our reply'}
+                    value={nextAction}
+                    onChange={(e) => setNextAction(e.target.value)}
+                    style={{ fontSize: 13 }}
+                  />
+                </label>
+                <label style={{ display: 'grid', gap: 4 }}>
+                  <span>Due by</span>
+                  <input
+                    id={`neg-due-${caseId}`}
+                    type="date"
+                    className="input"
+                    value={nextActionDue}
+                    onChange={(e) => setNextActionDue(e.target.value)}
+                    style={{ fontSize: 13 }}
+                  />
+                </label>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                With a due date, this shows in the admin queue&rsquo;s negotiation follow-ups and in the morning reminder email once it falls due. Logging the next round closes it automatically.
+              </span>
+            </div>
 
             {error && <p style={{ color: 'var(--danger)', margin: 0 }}>{error}</p>}
             {notice && <p style={{ color: 'var(--text-muted)', margin: 0 }}>{notice}</p>}
