@@ -77,7 +77,9 @@ export async function POST(req: Request) {
     .upload(storagePath(caseId), buffer, { contentType: 'application/pdf', upsert: true })
   if (uploadErr) {
     console.error('Failed to upload reviewed document:', uploadErr)
-    return Response.json({ error: 'Failed to upload the document. Please try again.' }, { status: 500 })
+    // Admin-only route, so the storage message is safe to show — it is the only way to see
+    // that the case-documents bucket is missing (see fix-review-and-stamp.sql).
+    return Response.json({ error: `Failed to upload the document. (${uploadErr.message})` }, { status: 500 })
   }
 
   return Response.json({ ok: true })

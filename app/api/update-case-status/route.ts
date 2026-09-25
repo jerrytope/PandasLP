@@ -182,7 +182,12 @@ export async function POST(req: Request) {
 
   const { error: updateErr } = await supabaseAdmin.from('cases').update(update).eq('id', caseId)
   if (updateErr) {
-    return Response.json({ error: 'Failed to update case status.' }, { status: 500 })
+    console.error('Failed to update case status:', updateErr)
+    // Staff get the database's own message: a generic error here hid a missing
+    // review_checklist column (see fix-review-and-stamp.sql) with no way to tell from the
+    // admin page why "Mark Reviewed" kept failing. Clients still get the generic message.
+    const detail = isAdminEmail(callerData.user.email) ? ` (${updateErr.message})` : ''
+    return Response.json({ error: `Failed to update case status.${detail}` }, { status: 500 })
   }
 
   const nextStatus = NEXT_STATUS[action]
