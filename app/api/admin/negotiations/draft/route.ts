@@ -4,31 +4,34 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { NEGOTIATION_REPLY_PROMPT } from '@/lib/agents'
-import { buildCurrentDateContext } from '@/lib/currentDateContext'
+import { parseReplyDraft } from '@/lib/replyLetter.js'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 10 * 60 * 1000
 
 interface NegotiationRound {
+  id: string
   party: 'debtor_counsel' | 'pandas_lp'
   counsel_name: string | null
   proposed_amount: number | null
   summary: string
   occurred_at: string
+  client_instructions: string | null
 }
 
 function formatRound(r: NegotiationRound): string {
   const who = r.party === 'debtor_counsel' ? `Debtor's counsel${r.counsel_name ? ` (${r.counsel_name})` : ''}` : 'Pandas LP'
   const amount = r.proposed_amount != null ? ` — proposed ₦${r.proposed_amount.toLocaleString()}` : ''
-  const date = new Date(r.occurred_at).toISOString().slice(0, 10)
-  return `[${date}] ${who}${amount}:\n${r.summary}`
+  return `${who}${amount}:\n${r.summary}`
 }
 
-// Drafts a reply to opposing counsel from the case's own facts and the negotiation thread so
-// far — never saves anything itself. Staff review, edit, and explicitly log the result via
-// POST /api/admin/negotiations (party: 'pandas_lp', aiDrafted: true) — same "AI drafts, a
-// human commits it" shape as every other document this app produces, just for correspondence
-// instead of a client-facing instrument this time.
+// Step 4 of the reply workflow in components/NegotiationPanel.tsx: drafts the BODY of a reply
+// to opposing counsel, in the house style (NEGOTIATION_HOUSE_STYLE in lib/agents.ts), from the
+// case facts, the thread, and the client's recorded instructions. Never saves anything: the
+// lawyer edits the draft, adds the date and any deadline dates, previews it on letterhead with
+// the stamp, and logs it via POST /api/admin/negotiations.
+//
+// The letter date is deliberately not passed to the model. Dates are the lawyer's to write.
 export async function POST(req: Request) {
   const { allowed, retryAfterSeconds } = checkRateLimit(`admin-negotiation-draft:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
   if (!allowed) {
@@ -41,7 +44,7 @@ export async function POST(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  let body: { caseId?: string; stance?: string; authorizedAmount?: string; instructions?: string }
+  let body: { caseId?: string; negotiationId?: string; stance?: string; authorizedAmount?: string; instructions?: string }
   try {
     body = await req.json()
   } catch {
@@ -52,12 +55,6 @@ export async function POST(req: Request) {
   const stance = (body.stance || '').trim()
   if (!caseId) {
     return Response.json({ error: 'Missing caseId.' }, { status: 400 })
-  }
-  if (!stance) {
-    return Response.json(
-      { error: 'Say how to respond first — accept, reject, or counter, and at what figure or range if any. The prompt refuses to guess a settlement position on its own.' },
-      { status: 400 },
-    )
   }
 
   const { data: caseData, error: caseErr } = await supabaseAdmin
@@ -72,16 +69,30 @@ export async function POST(req: Request) {
     return Response.json({ error: 'This case has no drafted demand letter yet to negotiate from.' }, { status: 409 })
   }
 
-  const { data: thread, error: threadErr } = await supabaseAdmin
+  const { data: threadData, error: threadErr } = await supabaseAdmin
     .from('case_negotiations')
-    .select('party, counsel_name, proposed_amount, summary, occurred_at')
+    .select('id, party, counsel_name, proposed_amount, summary, occurred_at, client_instructions')
     .eq('case_id', caseId)
     .order('occurred_at', { ascending: true })
   if (threadErr) {
     return Response.json({ error: 'Failed to load the negotiation thread.' }, { status: 500 })
   }
-  if (!thread || thread.length === 0) {
-    return Response.json({ error: 'No counter has been logged for this case yet — log what the debtor’s counsel said first.' }, { status: 409 })
+  const thread = (threadData || []) as NegotiationRound[]
+  if (thread.length === 0) {
+    return Response.json({ error: 'No response has been logged for this case yet — log what the debtor’s lawyer said first.' }, { status: 409 })
+  }
+
+  // The client's recorded instructions on the response being answered are the authority for
+  // the reply; anything typed in the draft form is added to them.
+  const answering =
+    (body.negotiationId ? thread.find((r) => r.id === body.negotiationId) : undefined) ||
+    [...thread].reverse().find((r) => r.party === 'debtor_counsel')
+  const savedInstructions = answering?.client_instructions?.trim() || ''
+  if (!savedInstructions && !stance) {
+    return Response.json(
+      { error: 'Record the client’s instructions first. The agent will not guess the firm’s settlement position.' },
+      { status: 400 },
+    )
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -89,24 +100,30 @@ export async function POST(req: Request) {
     return Response.json({ error: 'ANTHROPIC_API_KEY is not configured.' }, { status: 503 })
   }
 
-  const threadText = thread.map(formatRound).join('\n\n')
+  const instructionLines = [
+    savedInstructions && `Client's instructions (recorded by the lawyer): ${savedInstructions}`,
+    stance && `Position to take: ${stance}`,
+    body.authorizedAmount && `Authorised figure/range: ₦${body.authorizedAmount}`,
+    body.instructions?.trim() && `Lawyer's additional instructions: ${body.instructions.trim()}`,
+  ].filter(Boolean)
+
   const userMessage = `ORIGINAL CLAIM (${caseData.document_title || 'Letter of Demand'}${caseData.expected_amount ? `, ₦${caseData.expected_amount.toLocaleString()}` : ''}):
 ${caseData.document_body}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-NEGOTIATION THREAD SO FAR:
+NEGOTIATION THREAD SO FAR (oldest first):
 
-${threadText}
+${thread.map(formatRound).join('\n\n')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-STAFF INSTRUCTION FOR THIS REPLY: ${stance}${body.authorizedAmount ? `\nAuthorized figure/range: ₦${body.authorizedAmount}` : ''}${body.instructions ? `\nAdditional instructions: ${body.instructions.trim()}` : ''}
+CLIENT'S INSTRUCTIONS FOR THIS REPLY:
+${instructionLines.join('\n')}
 
-Draft the reply now.`
+Draft the reply now, in the house style and the three-part output format.`
 
   try {
-    const currentDateContext = buildCurrentDateContext(new Date())
     const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -116,8 +133,8 @@ Draft the reply now.`
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
-        system: `${NEGOTIATION_REPLY_PROMPT}\n\n${currentDateContext}`,
+        max_tokens: 3000,
+        system: NEGOTIATION_REPLY_PROMPT,
         messages: [{ role: 'user', content: userMessage }],
       }),
     })
@@ -140,7 +157,8 @@ Draft the reply now.`
       return Response.json({ error: 'The agent returned an empty draft. Please try again.' }, { status: 502 })
     }
 
-    return Response.json({ draft })
+    const parsed = parseReplyDraft(draft)
+    return Response.json({ draft: parsed.body, re: parsed.re, staffNote: parsed.staffNote, answeringId: answering?.id ?? null })
   } catch (err) {
     console.error('Negotiation draft request failed:', err)
     return Response.json({ error: 'Network error while contacting the drafting agent.' }, { status: 500 })

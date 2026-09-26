@@ -1,4 +1,4 @@
-import { getFollowUpEmail, getPaymentConfirmedEmail, getRecoveryConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, getNegotiationReplyEmail, type FollowUpEmailData } from './emailTemplates'
+import { getFollowUpEmail, getPaymentConfirmedEmail, getRecoveryConfirmedEmail, getResolutionEmail, getReviewedDocumentEmail, getNegotiationReplyEmail, getNegotiationAdviceEmail, type FollowUpEmailData } from './emailTemplates'
 import { supabaseAdmin } from './supabaseAdmin'
 import { isMailerConfigured, sendMail, GMAIL_USER } from './mailer'
 import { buildTextDocumentBuffer } from './pdfGenerator.js'
@@ -12,6 +12,7 @@ export type SendCaseEmailOptions =
   | { type: 'reviewed_document' }
   | { type: 'recovery_confirmed'; recoveryId: string }
   | { type: 'negotiation_reply'; negotiationId: string }
+  | { type: 'negotiation_advice'; negotiationId: string }
 
 export type SendCaseEmailResult = { ok: true } | { ok: false; error: string; status: number }
 
@@ -139,6 +140,21 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
       reviewUrl: process.env.GOOGLE_REVIEW_URL || undefined,
       // Only agents that are actually live, with hand-written copy. See lib/recoveryOffers.ts.
       offers: buildRecoveryOffers(siteUrl, caseData.agent_id),
+    }))
+  } else if (options.type === 'negotiation_advice') {
+    const { data: round, error: roundErr } = await supabaseAdmin
+      .from('case_negotiations')
+      .select('id, party, advice_note')
+      .eq('id', options.negotiationId)
+      .eq('case_id', caseId)
+      .single()
+    if (roundErr || !round || round.party !== 'debtor_counsel' || !round.advice_note?.trim()) {
+      return { ok: false, error: 'No saved advice note to send for this response.', status: 404 }
+    }
+    ;({ subject, html, text } = getNegotiationAdviceEmail({
+      recipientName,
+      caseTitle: caseData.document_title ?? 'your case',
+      adviceNote: round.advice_note,
     }))
   } else if (options.type === 'negotiation_reply') {
     // Read back from the actual logged row, same reasoning as recovery_confirmed above —

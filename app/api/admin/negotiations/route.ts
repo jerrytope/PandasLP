@@ -190,7 +190,7 @@ export async function GET(req: Request) {
 
   const { data, error } = await supabaseAdmin
     .from('case_negotiations')
-    .select('id, party, counsel_name, proposed_amount, summary, attachment_path, ai_drafted, logged_by, occurred_at, status, next_action, next_action_due, next_action_done_at')
+    .select('id, party, counsel_name, proposed_amount, summary, attachment_path, ai_drafted, logged_by, occurred_at, status, next_action, next_action_due, next_action_done_at, advice_note, advice_sent_at, client_instructions, instructions_received_at')
     .eq('case_id', caseId)
     .order('occurred_at', { ascending: true })
 
@@ -227,7 +227,15 @@ export async function PATCH(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  let body: { id?: string; status?: string; nextAction?: string | null; nextActionDue?: string | null; done?: boolean }
+  let body: {
+    id?: string
+    status?: string
+    nextAction?: string | null
+    nextActionDue?: string | null
+    done?: boolean
+    adviceNote?: string | null
+    clientInstructions?: string | null
+  }
   try {
     body = await req.json()
   } catch {
@@ -261,6 +269,13 @@ export async function PATCH(req: Request) {
     update.next_action_due = due || null
     update.reminder_sent_at = null
   }
+  // The advise-the-client step, recorded on the response it answers.
+  if (body.adviceNote !== undefined) update.advice_note = (body.adviceNote || '').trim() || null
+  if (body.clientInstructions !== undefined) {
+    const text = (body.clientInstructions || '').trim()
+    update.client_instructions = text || null
+    update.instructions_received_at = text ? new Date().toISOString() : null
+  }
   if (body.done === true) update.next_action_done_at = new Date().toISOString()
   if (body.done === false) update.next_action_done_at = null
 
@@ -272,7 +287,7 @@ export async function PATCH(req: Request) {
     .from('case_negotiations')
     .update(update)
     .eq('id', body.id)
-    .select('id, status, next_action, next_action_due, next_action_done_at')
+    .select('id, status, next_action, next_action_due, next_action_done_at, advice_note, advice_sent_at, client_instructions, instructions_received_at')
     .single()
 
   if (error || !data) {

@@ -687,7 +687,7 @@ export default function CaseDetailDrawer({
               {activeTab === 'negotiation' && isMoneyAgent && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <RecoveryPanel caseId={c.id} expectedAmount={c.expected_amount} />
-                  <NegotiationPanel caseId={c.id} caseTitle={c.document_title} recipientPhone={c.recipient_phone} />
+                  <NegotiationPanel caseId={c.id} caseTitle={c.document_title} caseNumber={c.case_number} recipientPhone={c.recipient_phone} />
                 </div>
               )}
             </div>

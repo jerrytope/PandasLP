@@ -601,3 +601,38 @@ pandaslegalpractitioners@gmail.com`,
     `),
   }
 }
+
+export interface NegotiationAdviceEmailData {
+  recipientName: string
+  caseTitle: string
+  adviceNote: string
+}
+
+function escapeForHtml(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// The practitioner's advice to our client on a response from the debtor's lawyer, asking for
+// instructions before we reply. The note itself is written by the lawyer (starting from an AI
+// draft, app/api/admin/negotiations/advice/route.ts) and sent exactly as edited. Replies come
+// back to the firm's inbox via replyTo.
+export function getNegotiationAdviceEmail(data: NegotiationAdviceEmailData): { subject: string; html: string; text: string } {
+  const { caseTitle, adviceNote } = data
+  return {
+    subject: `Update and instructions needed on your case | ${caseTitle}`,
+    text: `${adviceNote}
+
+Pandas LP
+pandaslegalpractitioners@gmail.com
++234 811 808 0189`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        The other side has responded
+      </h2>
+      <p style="margin:0 0 20px;font-size:14px;color:#F3EFE3;line-height:1.7;white-space:pre-wrap;">${escapeForHtml(adviceNote)}</p>
+      <p style="margin:0;font-size:13px;color:#ABB1A2;line-height:1.6;">
+        Pandas LP · pandaslegalpractitioners@gmail.com · +234 811 808 0189
+      </p>
+    `),
+  }
+}
