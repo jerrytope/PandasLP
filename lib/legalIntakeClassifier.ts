@@ -1,4 +1,6 @@
-export type ClassifiedAgent = 'small-claims' | 'recovery-of-premises' | 'cac-registration' | 'contracts'
+import { callClaude } from './claude'
+
+export type ClassifiedAgent ='small-claims' | 'recovery-of-premises' | 'cac-registration' | 'contracts'
 
 export interface Classification {
   recognized: boolean
@@ -49,33 +51,14 @@ export async function classifyLegalProblem(query: string): Promise<Classificatio
     return { recognized: false }
   }
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 500,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: query }],
-    }),
+  const result = await callClaude({
+    route: 'intake.classify',
+    system: SYSTEM_PROMPT,
+    messages: [{ role: 'user', content: query }],
+    maxTokens: 500,
   })
-
-  if (!res.ok) {
-    console.error('Classifier Anthropic API error:', res.status, await res.text())
-    return { recognized: false }
-  }
-
-  const data = await res.json()
-  const text = Array.isArray(data?.content)
-    ? data.content
-        .filter((block: { type: string }) => block.type === 'text')
-        .map((block: { text: string }) => block.text)
-        .join('\n')
-    : ''
+  if (!result.ok) return { recognized: false }
+  const text = result.text
 
   try {
     const parsed = JSON.parse(stripCodeFences(text))

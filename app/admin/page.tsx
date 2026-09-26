@@ -17,6 +17,7 @@ import AdminCasesView from './components/AdminCasesView'
 import AdminCustomClaimsView from './components/AdminCustomClaimsView'
 import AdminWaitlistView from './components/AdminWaitlistView'
 import CaseDetailDrawer from './components/CaseDetailDrawer'
+import FinanceView from './components/finance/FinanceView'
 import type {
   AdminCaseRow,
   CustomClaimRow,
@@ -112,6 +113,8 @@ function AdminPageInner() {
     overrideTest?: 'live' | 'test' | 'all',
     overrideAgent?: string,
   ) {
+    // Finance loads its own data (metrics, invoices, settings) inside FinanceView.
+    if (which === 'finance') return
     setLoading(true)
     setLoadError('')
     try {
@@ -473,11 +476,13 @@ function AdminPageInner() {
           style={{
             display: 'flex',
             gap: 24,
+            flexWrap: 'wrap',
+            rowGap: 0,
             marginBottom: 24,
             borderBottom: '1px solid var(--border-subtle)',
           }}
         >
-          {(['queue', 'cases', 'claims', 'waitlist'] as Tab[]).map((t) => (
+          {(['queue', 'cases', 'claims', 'finance', 'waitlist'] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
@@ -502,6 +507,8 @@ function AdminPageInner() {
                 ? 'All Matters'
                 : t === 'claims'
                 ? 'Custom Claims'
+                : t === 'finance'
+                ? 'Finance'
                 : 'Waitlist Signups'}
               {tab === t && (
                 <motion.div
@@ -602,6 +609,8 @@ function AdminPageInner() {
               onStartIntake={(seedPrompt) => setLawyerIntakeSeed(seedPrompt)}
             />
           )}
+
+          {tab === 'finance' && <FinanceView />}
 
           {tab === 'waitlist' && (
             <AdminWaitlistView signups={signups} loading={loading} />

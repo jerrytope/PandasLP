@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { NEGOTIATION_ADVICE_PROMPT } from '@/lib/agents'
+import { callClaude } from '@/lib/claude'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 10 * 60 * 1000
@@ -98,31 +99,19 @@ ${body.notes?.trim() ? `\nLAWYER'S NOTES FOR THIS ADVICE: ${body.notes.trim()}` 
 
 Write the advice note now.`
 
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1500,
-        system: NEGOTIATION_ADVICE_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    })
-    if (!res.ok) {
-      console.error('Anthropic API error during advice draft:', res.status, await res.text())
-      return Response.json({ error: 'The drafting agent is temporarily unavailable. Please try again shortly.' }, { status: 502 })
-    }
-    const data = await res.json()
-    const advice: string = Array.isArray(data?.content)
-      ? data.content.filter((b: { type: string }) => b.type === 'text').map((b: { text: string }) => b.text).join('\n').trim()
-      : ''
-    if (!advice) {
-      return Response.json({ error: 'The agent returned an empty note. Please try again.' }, { status: 502 })
-    }
-    return Response.json({ advice })
-  } catch (err) {
-    console.error('Advice draft request failed:', err)
-    return Response.json({ error: 'Network error while contacting the drafting agent.' }, { status: 500 })
+  const result = await callClaude({
+    route: 'negotiation.advice',
+    system: NEGOTIATION_ADVICE_PROMPT,
+    messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 1500,
+    caseId: target.case_id,
+  })
+  if (!result.ok) {
+    return Response.json({ error: 'The drafting agent is temporarily unavailable. Please try again shortly.' }, { status: 502 })
   }
+  const advice = result.text.trim()
+  if (!advice) {
+    return Response.json({ error: 'The agent returned an empty note. Please try again.' }, { status: 502 })
+  }
+  return Response.json({ advice })
 }

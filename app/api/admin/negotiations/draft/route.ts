@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { NEGOTIATION_REPLY_PROMPT } from '@/lib/agents'
 import { parseReplyDraft } from '@/lib/replyLetter.js'
+import { callClaude } from '@/lib/claude'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 10 * 60 * 1000
@@ -123,44 +124,21 @@ ${instructionLines.join('\n')}
 
 Draft the reply now, in the house style and the three-part output format.`
 
-  try {
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 3000,
-        system: NEGOTIATION_REPLY_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    })
-
-    if (!anthropicRes.ok) {
-      const errBody = await anthropicRes.text()
-      console.error('Anthropic API error during negotiation draft:', anthropicRes.status, errBody)
-      return Response.json({ error: 'The drafting agent is temporarily unavailable. Please try again shortly.' }, { status: 502 })
-    }
-
-    const data = await anthropicRes.json()
-    const draft: string = Array.isArray(data?.content)
-      ? data.content
-          .filter((block: { type: string }) => block.type === 'text')
-          .map((block: { text: string }) => block.text)
-          .join('\n')
-      : ''
-
-    if (!draft.trim()) {
-      return Response.json({ error: 'The agent returned an empty draft. Please try again.' }, { status: 502 })
-    }
-
-    const parsed = parseReplyDraft(draft)
-    return Response.json({ draft: parsed.body, re: parsed.re, staffNote: parsed.staffNote, answeringId: answering?.id ?? null })
-  } catch (err) {
-    console.error('Negotiation draft request failed:', err)
-    return Response.json({ error: 'Network error while contacting the drafting agent.' }, { status: 500 })
+  // Uncached: drafted a few times a week at most, so a cache would expire unused (lib/claude.ts).
+  const result = await callClaude({
+    route: 'negotiation.draft',
+    system: NEGOTIATION_REPLY_PROMPT,
+    messages: [{ role: 'user', content: userMessage }],
+    maxTokens: 3000,
+    caseId,
+  })
+  if (!result.ok) {
+    return Response.json({ error: 'The drafting agent is temporarily unavailable. Please try again shortly.' }, { status: 502 })
   }
+  if (!result.text.trim()) {
+    return Response.json({ error: 'The agent returned an empty draft. Please try again.' }, { status: 502 })
+  }
+
+  const parsed = parseReplyDraft(result.text)
+  return Response.json({ draft: parsed.body, re: parsed.re, staffNote: parsed.staffNote, answeringId: answering?.id ?? null })
 }

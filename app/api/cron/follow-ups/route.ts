@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
 import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 import { lagosToday, NEGOTIATION_STATUS_LABEL, isNegotiationStatus } from '@/lib/negotiationStatus'
+import { formatKobo } from '@/lib/money'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 const RESPONSE_PERIOD_DAYS = 14
@@ -53,38 +54,82 @@ export async function GET(req: Request) {
     }
   }
 
-  const negotiationReminders = await sendNegotiationReminders()
+  const digest = await sendMorningDigest()
 
-  return Response.json({ ok: true, checked: cases?.length ?? 0, sent: results, negotiationReminders })
+  return Response.json({ ok: true, checked: cases?.length ?? 0, sent: results, digest })
 }
 
 function escapeHtml(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
-// One morning email to staff listing every negotiation next action that is due today or
-// overdue and hasn't been reminded about today. Rows are stamped with reminder_sent_at only
-// after the email actually sends, so a failed send is retried on the next run.
-async function sendNegotiationReminders(): Promise<{ due: number; emailed: boolean; error?: string }> {
+type DigestLine = { title: string; detail: string; when: string }
+
+// One morning email to staff with everything that needs chasing today:
+//   - negotiation next actions due today or overdue, each included once per day (rows are
+//     stamped with reminder_sent_at only after the email actually sends, so a failed send is
+//     retried on the next run);
+//   - sent invoices past their due date with a balance still owing, listed every day until
+//     they are paid or voided.
+async function sendMorningDigest(): Promise<{ negotiations: number; invoices: number; emailed: boolean; error?: string }> {
   const today = lagosToday()
 
-  const { data, error } = await supabaseAdmin
-    .from('case_negotiations')
-    .select('id, case_id, status, next_action, next_action_due, reminder_sent_at, cases!inner(document_title, case_number, is_test)')
-    .not('next_action', 'is', null)
-    .is('next_action_done_at', null)
-    .lte('next_action_due', today)
-    .eq('cases.is_test', false)
-    .order('next_action_due', { ascending: true })
+  const [negRes, invRes] = await Promise.all([
+    supabaseAdmin
+      .from('case_negotiations')
+      .select('id, case_id, status, next_action, next_action_due, reminder_sent_at, cases!inner(document_title, case_number, is_test)')
+      .not('next_action', 'is', null)
+      .is('next_action_done_at', null)
+      .lte('next_action_due', today)
+      .eq('cases.is_test', false)
+      .order('next_action_due', { ascending: true }),
+    supabaseAdmin
+      .from('invoices')
+      .select('id, invoice_number, client_name, total_kobo, amount_paid_kobo, due_date')
+      .in('status', ['sent', 'part_paid'])
+      .lt('due_date', today)
+      .order('due_date', { ascending: true }),
+  ])
+  if (negRes.error) console.error('Failed to load due negotiation actions:', negRes.error)
+  if (invRes.error) console.error('Failed to load overdue invoices:', invRes.error)
 
-  if (error) {
-    console.error('Failed to load due negotiation actions:', error)
-    return { due: 0, emailed: false, error: error.message }
-  }
+  const dueNegotiations = (negRes.data || []).filter((r) => !r.reminder_sent_at || lagosToday(new Date(r.reminder_sent_at)) !== today)
+  const overdueInvoices = invRes.data || []
+  const counts = { negotiations: dueNegotiations.length, invoices: overdueInvoices.length }
+  if (counts.negotiations === 0 && counts.invoices === 0) return { ...counts, emailed: false }
+  if (!isMailerConfigured()) return { ...counts, emailed: false, error: 'Mailer not configured.' }
 
-  const due = (data || []).filter((r) => !r.reminder_sent_at || lagosToday(new Date(r.reminder_sent_at)) !== today)
-  if (due.length === 0) return { due: 0, emailed: false }
-  if (!isMailerConfigured()) return { due: due.length, emailed: false, error: 'Mailer not configured.' }
+  const negotiationLines: DigestLine[] = dueNegotiations.map((r) => {
+    const c = (Array.isArray(r.cases) ? r.cases[0] : r.cases) as { document_title: string | null; case_number: number | null } | null
+    const status = isNegotiationStatus(r.status) ? `, ${NEGOTIATION_STATUS_LABEL[r.status]}` : ''
+    return {
+      title: `${c?.case_number != null ? `#${c.case_number} ` : ''}${c?.document_title || 'Untitled case'}`,
+      detail: r.next_action as string,
+      when: `${r.next_action_due < today ? `OVERDUE since ${r.next_action_due}` : 'due today'}${status}`,
+    }
+  })
+  const invoiceLines: DigestLine[] = overdueInvoices.map((i) => ({
+    title: `${i.invoice_number} · ${i.client_name}`,
+    detail: `${formatKobo(Math.max(0, Number(i.total_kobo) - Number(i.amount_paid_kobo)))} outstanding`,
+    when: `due ${i.due_date}`,
+  }))
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
+  const section = (heading: string, lines: DigestLine[]) =>
+    lines.length === 0
+      ? { text: '', html: '' }
+      : {
+          text: [`${heading}:`, ...lines.map((l) => `- ${l.title}: ${l.detail} (${l.when})`), ''].join('\n'),
+          html: `<p><strong>${escapeHtml(heading)}</strong></p><ul>${lines
+            .map((l) => `<li><strong>${escapeHtml(l.title)}</strong>: ${escapeHtml(l.detail)} <em>(${escapeHtml(l.when)})</em></li>`)
+            .join('')}</ul>`,
+        }
+  const neg = section('Negotiation follow-ups', negotiationLines)
+  const inv = section('Overdue invoices', invoiceLines)
+  const subjectParts = [
+    counts.negotiations ? `${counts.negotiations} follow-up${counts.negotiations === 1 ? '' : 's'} due` : '',
+    counts.invoices ? `${counts.invoices} invoice${counts.invoices === 1 ? '' : 's'} overdue` : '',
+  ].filter(Boolean)
 
   const recipients = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? GMAIL_USER)
     .split(',')
@@ -92,49 +137,24 @@ async function sendNegotiationReminders(): Promise<{ due: number; emailed: boole
     .filter(Boolean)
     .join(', ')
 
-  const lines = due.map((r) => {
-    const c = (Array.isArray(r.cases) ? r.cases[0] : r.cases) as { document_title: string | null; case_number: number | null } | null
-    const title = c?.document_title || 'Untitled case'
-    const ref = c?.case_number != null ? `#${c.case_number} ` : ''
-    const when = r.next_action_due < today ? `OVERDUE since ${r.next_action_due}` : 'due today'
-    const status = isNegotiationStatus(r.status) ? NEGOTIATION_STATUS_LABEL[r.status] : ''
-    return { title: `${ref}${title}`, action: r.next_action as string, when, status }
-  })
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://pandaslp.com.ng'
-  const text = [
-    `Negotiation follow-ups for ${today}:`,
-    '',
-    ...lines.map((l) => `- ${l.title}: ${l.action} (${l.when}${l.status ? `, ${l.status}` : ''})`),
-    '',
-    `Open the admin queue: ${siteUrl}/admin`,
-  ].join('\n')
-  const html = `<p>Negotiation follow-ups for <strong>${today}</strong>:</p><ul>${lines
-    .map(
-      (l) =>
-        `<li><strong>${escapeHtml(l.title)}</strong>: ${escapeHtml(l.action)} <em>(${escapeHtml(l.when)}${
-          l.status ? `, ${escapeHtml(l.status)}` : ''
-        })</em></li>`,
-    )
-    .join('')}</ul><p><a href="${siteUrl}/admin">Open the admin queue</a></p>`
-
   try {
     await sendMail({
       to: recipients,
-      subject: `${due.length} negotiation follow-up${due.length === 1 ? '' : 's'} due | Pandas LP`,
-      text,
-      html,
+      subject: `${subjectParts.join(', ')} | Pandas LP`,
+      text: [`Morning digest for ${today}`, '', neg.text, inv.text, `Open the admin: ${siteUrl}/admin`].filter((p) => p !== '').join('\n'),
+      html: `<p>Morning digest for <strong>${today}</strong></p>${neg.html}${inv.html}<p><a href="${siteUrl}/admin">Open the admin</a></p>`,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('Failed to send negotiation reminder email:', err)
-    return { due: due.length, emailed: false, error: message }
+    console.error('Failed to send morning digest:', err)
+    return { ...counts, emailed: false, error: message }
   }
 
-  await supabaseAdmin
-    .from('case_negotiations')
-    .update({ reminder_sent_at: new Date().toISOString() })
-    .in('id', due.map((r) => r.id))
-
-  return { due: due.length, emailed: true }
+  if (dueNegotiations.length) {
+    await supabaseAdmin
+      .from('case_negotiations')
+      .update({ reminder_sent_at: new Date().toISOString() })
+      .in('id', dueNegotiations.map((r) => r.id))
+  }
+  return { ...counts, emailed: true }
 }

@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { callClaude } from '@/lib/claude'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -62,28 +63,16 @@ export async function POST(req: Request) {
     : `Translate the following legal document text into ${SUPPORTED_LANGUAGES.find((l) => l.code === targetLanguage)?.label ?? targetLanguage}. Preserve the structure, numbering, and any **bold** markers exactly as they appear — do not add commentary, only output the translated text. Text:\n\n${text}`
 
   try {
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: prompt }],
-      }),
+    const result = await callClaude({
+      route: detectOnly ? 'translate.detect' : 'translate.text',
+      system: '',
+      messages: [{ role: 'user', content: prompt }],
+      maxTokens: 4096,
     })
-    if (!anthropicRes.ok) {
-      const errBody = await anthropicRes.text()
-      console.error('Anthropic API error during translation:', anthropicRes.status, errBody)
+    if (!result.ok) {
       return Response.json({ error: 'Translation is temporarily unavailable. Please try again shortly.' }, { status: 502 })
     }
-    const data = await anthropicRes.json()
-    const resultText: string = Array.isArray(data?.content)
-      ? data.content.filter((b: { type: string }) => b.type === 'text').map((b: { text: string }) => b.text).join('\n').trim()
-      : ''
+    const resultText = result.text.trim()
 
     if (detectOnly) {
       const code = SUPPORTED_LANGUAGES.some((l) => l.code === resultText) ? resultText : 'en'

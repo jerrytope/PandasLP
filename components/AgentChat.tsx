@@ -447,7 +447,8 @@ export default function AgentChat({
       const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: nextMessages, agentId: agent.id, ...(lawyerIntake ? { lawyerIntake: true } : {}) }),
+        // caseId lets the server count this turn's AI cost toward the matter (ownership is checked there).
+        body: JSON.stringify({ messages: nextMessages, agentId: agent.id, ...(caseIdRef.current ? { caseId: caseIdRef.current } : {}), ...(lawyerIntake ? { lawyerIntake: true } : {}) }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {

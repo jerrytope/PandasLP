@@ -3,8 +3,8 @@ export const runtime = 'nodejs'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { extractCounterFacts } from '@/lib/agentChatParsing'
+import { callClaude } from '@/lib/claude'
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const DOC_TYPES   = ['application/pdf']
@@ -77,30 +77,17 @@ export async function POST(req: Request) {
     : { type: 'image', source: { type: 'base64', media_type: mediaType, data: fileBase64 } }
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-beta': 'pdfs-2024-09-25',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        messages: [
-          { role: 'user', content: [fileBlock, { type: 'text', text: COUNTER_EXTRACT_PROMPT }] },
-        ],
-      }),
+    const result = await callClaude({
+      route: 'negotiation.extract',
+      system: '',
+      messages: [{ role: 'user', content: [fileBlock, { type: 'text', text: COUNTER_EXTRACT_PROMPT }] }],
+      maxTokens: 1024,
     })
-
-    const data = await res.json()
-    if (!res.ok) {
-      console.error('Anthropic extraction API error:', res.status, data.error?.message)
+    if (!result.ok) {
       return Response.json({ error: 'Extraction failed. Please try again, or fill the fields in by hand.' }, { status: 502 })
     }
 
-    const raw: string = data.content?.[0]?.text ?? ''
+    const raw = result.text
     const facts = extractCounterFacts(raw)
     if (!facts) {
       return Response.json({ error: 'Could not make sense of this file. Please fill the fields in by hand.' }, { status: 422 })

@@ -7,6 +7,7 @@ import { getAgent, type AgentId } from '@/lib/agents'
 import { getAgentPayment } from '@/lib/agentServiceMap'
 import { capHistory, type ChatMessage } from '@/lib/chatHistory'
 import { extractDocument } from '@/lib/agentChatParsing'
+import { callClaude } from '@/lib/claude'
 
 const RATE_LIMIT = 10
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -95,32 +96,17 @@ export async function POST(req: Request) {
 
   let responseText: string
   try {
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: agent.systemPrompt,
-        messages: capHistory(history).map((m) => ({ role: m.role, content: m.content })),
-      }),
+    const result = await callClaude({
+      route: 'document.regenerate',
+      system: agent.systemPrompt,
+      messages: capHistory(history).map((m) => ({ role: m.role, content: m.content })),
+      maxTokens: 4096,
+      caseId,
     })
-    if (!anthropicRes.ok) {
-      const errBody = await anthropicRes.text()
-      console.error('Anthropic API error during regeneration:', anthropicRes.status, errBody)
+    if (!result.ok) {
       return Response.json({ error: 'The legal agent is temporarily unavailable. Please try again shortly.' }, { status: 502 })
     }
-    const data = await anthropicRes.json()
-    responseText = Array.isArray(data?.content)
-      ? data.content
-          .filter((block: { type: string }) => block.type === 'text')
-          .map((block: { text: string }) => block.text)
-          .join('\n')
-      : ''
+    responseText = result.text
   } catch (err) {
     console.error('Regenerate-document request failed:', err)
     return Response.json({ error: 'Network error while contacting the legal agent.' }, { status: 500 })

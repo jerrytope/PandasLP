@@ -9,6 +9,8 @@ import AudioReader from '@/components/AudioReader'
 import TranslationPane from '@/components/TranslationPane'
 import RecoveryPanel from '@/components/RecoveryPanel'
 import NegotiationPanel from '@/components/NegotiationPanel'
+import InvoicesView from './finance/InvoicesView'
+import { useBillingSettings } from './finance/shared'
 import CaseReviewStepper from './CaseReviewStepper'
 import CaseActionMenu from './CaseActionMenu'
 import {
@@ -36,6 +38,7 @@ import {
   Scale,
   DollarSign,
   Send,
+  Receipt,
 } from 'lucide-react'
 
 interface CaseDetailDrawerProps {
@@ -59,7 +62,7 @@ interface CaseDetailDrawerProps {
   onReloadCase?: () => void
 }
 
-type DrawerTab = 'document' | 'interview' | 'evidence' | 'service' | 'negotiation'
+type DrawerTab = 'document' | 'interview' | 'evidence' | 'service' | 'negotiation' | 'billing'
 
 export default function CaseDetailDrawer({
   c,
@@ -415,6 +418,15 @@ export default function CaseDetailDrawer({
                   <Scale size={14} /> Recoveries & Counter
                 </button>
               )}
+
+              <button
+                type="button"
+                className={`btn btn-sm ${activeTab === 'billing' ? 'btn-primary' : 'btn-ghost'}`}
+                style={{ padding: '6px 14px', fontSize: 13, gap: 6 }}
+                onClick={() => setActiveTab('billing')}
+              >
+                <Receipt size={14} /> Invoices
+              </button>
             </div>
 
             {/* Tab Contents */}
@@ -690,6 +702,10 @@ export default function CaseDetailDrawer({
                   <NegotiationPanel caseId={c.id} caseTitle={c.document_title} caseNumber={c.case_number} recipientPhone={c.recipient_phone} />
                 </div>
               )}
+
+              {activeTab === 'billing' && (
+                <CaseInvoices caseId={c.id} clientEmail={c.client_email || c.userEmail || null} matter={c.document_title} />
+              )}
             </div>
           </div>
 
@@ -877,4 +893,10 @@ export default function CaseDetailDrawer({
       </div>
     </div>
   )
+}
+
+// Invoices for this matter, prefilled from the case so billing happens where the work is.
+function CaseInvoices({ caseId, clientEmail, matter }: { caseId: string; clientEmail: string | null; matter: string | null }) {
+  const { settings } = useBillingSettings()
+  return <InvoicesView settings={settings} caseId={caseId} defaults={{ clientEmail, matter }} compact />
 }

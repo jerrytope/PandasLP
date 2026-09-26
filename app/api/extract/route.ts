@@ -1,9 +1,9 @@
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { callClaude } from '@/lib/claude'
 
 export const runtime = 'nodejs'
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const DOC_TYPES   = ['application/pdf']
@@ -102,39 +102,21 @@ If this document is not relevant to a legal matter (e.g., it's a random image), 
 
 Document filename: ${filename}`
 
-  const anthropicBody = {
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1024,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          fileBlock,
-          { type: 'text', text: extractPrompt },
-        ],
-      },
-    ],
-  }
-
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-        'anthropic-beta': 'pdfs-2024-09-25',
-      },
-      body: JSON.stringify(anthropicBody),
+    // One-off per upload, so uncached (see lib/claude.ts). PDF input is generally available,
+    // so the old pdfs beta header is no longer needed.
+    const result = await callClaude({
+      route: 'evidence.extract',
+      system: '',
+      messages: [{ role: 'user', content: [fileBlock, { type: 'text', text: extractPrompt }] }],
+      maxTokens: 1024,
+      caseId: ownedCaseId,
     })
-
-    const data = await res.json()
-    if (!res.ok) {
-      console.error('Anthropic extraction API error:', res.status, data.error?.message)
+    if (!result.ok) {
       return Response.json({ error: 'Extraction failed. Please try again.' }, { status: 502 })
     }
 
-    const facts: string = data.content?.[0]?.text ?? 'No facts extracted.'
+    const facts: string = result.text || 'No facts extracted.'
 
     // Persist the actual file, not just Claude's summary of it — see case_evidence's own
     // comment in supabase-schema.sql for why this exists at all. Best-effort and after the

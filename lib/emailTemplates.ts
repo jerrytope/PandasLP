@@ -636,3 +636,45 @@ pandaslegalpractitioners@gmail.com
     `),
   }
 }
+
+export interface InvoiceEmailData {
+  clientName: string
+  invoiceNumber: string
+  matter: string | null
+  totalText: string
+  balanceText: string
+  dueText: string
+  paid: boolean
+}
+
+// The invoice email. The PDF on letterhead (lib/pdfGenerator.js buildInvoicePdf) is attached by
+// app/api/admin/invoices/send/route.ts; this is the covering note. A paid invoice goes out as
+// a receipt.
+export function getInvoiceEmail(d: InvoiceEmailData): { subject: string; html: string; text: string } {
+  const safe = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const matterLine = d.matter ? ` for ${d.matter}` : ''
+  const subject = d.paid ? `Receipt ${d.invoiceNumber} | Pandas LP` : `Invoice ${d.invoiceNumber} | Pandas LP`
+  const lead = d.paid
+    ? `Thank you. Your payment of ${d.totalText}${matterLine} has been received in full. Your receipt, ${d.invoiceNumber}, is attached.`
+    : `Please find attached invoice ${d.invoiceNumber}${matterLine}. The amount due is ${d.balanceText}, ${d.dueText}. Payment details are on the invoice; please quote the invoice number as your payment reference.`
+  return {
+    subject,
+    text: `Dear ${d.clientName},
+
+${lead}
+
+If you have any questions, reply to this email.
+
+Pandas LP
+pandaslegalpractitioners@gmail.com
++234 811 808 0189`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">
+        ${d.paid ? 'Payment received' : `Invoice ${safe(d.invoiceNumber)}`}
+      </h2>
+      <p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">Dear ${safe(d.clientName)},</p>
+      <p style="margin:0 0 20px;font-size:15px;color:#ABB1A2;line-height:1.6;">${safe(lead)}</p>
+      <p style="margin:0;font-size:15px;color:#ABB1A2;line-height:1.6;">If you have any questions, reply to this email.</p>
+    `),
+  }
+}

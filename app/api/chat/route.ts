@@ -4,6 +4,10 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { buildCurrentDateContext } from '@/lib/currentDateContext'
 import { isAdminEmail } from '@/lib/adminAuth'
+import { callClaude } from '@/lib/claude'
+
+// Stable for every conversation with a given agent, so it sits inside the cached system block.
+const DOCUMENT_CONTEXT_RULE = `DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`
 
 // Node runtime (not edge) — this route now needs supabaseAdmin for the auth check below,
 // and CLAUDE.md documents that Supabase admin calls require Node's runtime. This route
@@ -22,14 +26,14 @@ export async function POST(req: Request) {
     )
   }
 
-  let body: { messages?: ChatMessage[]; agentId?: string; lawyerIntake?: boolean }
+  let body: { messages?: ChatMessage[]; agentId?: string; lawyerIntake?: boolean; caseId?: string }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { messages, agentId, lawyerIntake } = body
+  const { messages, agentId, lawyerIntake, caseId } = body
 
   if (!agentId || typeof agentId !== 'string') {
     return Response.json({ error: 'Missing agentId.' }, { status: 400 })
@@ -88,46 +92,40 @@ export async function POST(req: Request) {
     )
   }
 
+  // Attribute this turn's AI cost to the matter, but only a matter the caller owns (or staff).
+  let usageCaseId: string | null = null
+  if (typeof caseId === 'string' && caseId) {
+    const { data: owned } = await supabaseAdmin.from('cases').select('id, user_id').eq('id', caseId).maybeSingle()
+    if (owned && (owned.user_id === callerData.user.id || isAdminEmail(callerData.user.email))) usageCaseId = owned.id
+  }
+
   try {
-    // Computed fresh per request from the server's actual clock — never hardcoded, never
-    // client-supplied, so it can't be spoofed or go stale. See lib/currentDateContext.ts.
+    // Prompt caching (see lib/claude.ts): the agent's instructions are identical for every
+    // client, so they are one cached block with a 1-hour lifetime; the conversation itself is
+    // cached turn by turn. Today's date changes, so it comes after the cached block — placed
+    // inside it, it would invalidate the cache every day and cost full price on every turn.
     const currentDateContext = buildCurrentDateContext(new Date())
+    const result = await callClaude({
+      route: `chat.${lawyerIntake ? 'lawyer-intake' : agent.id}`,
+      system: [
+        { text: `${lawyerIntake ? SMALL_CLAIMS_LAWYER_INTAKE_PROMPT : agent.systemPrompt}
 
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        system: `${lawyerIntake ? SMALL_CLAIMS_LAWYER_INTAKE_PROMPT : agent.systemPrompt}
-
-${currentDateContext}
-
-DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`,
-        messages: capHistory(messages).map((m) => ({ role: m.role, content: m.content })),
-      }),
+${DOCUMENT_CONTEXT_RULE}`, cache: '1h' },
+        { text: currentDateContext },
+      ],
+      messages: capHistory(messages).map((m) => ({ role: m.role, content: m.content })),
+      maxTokens: 4096,
+      cacheConversation: true,
+      caseId: usageCaseId,
     })
 
-    if (!anthropicRes.ok) {
-      const errBody = await anthropicRes.text()
-      console.error('Anthropic API error:', anthropicRes.status, errBody)
+    if (!result.ok) {
       return Response.json(
         { error: 'The legal agent is temporarily unavailable. Please try again shortly.' },
         { status: 502 },
       )
     }
-
-    const data = await anthropicRes.json()
-    const text = Array.isArray(data?.content)
-      ? data.content
-          .filter((block: { type: string }) => block.type === 'text')
-          .map((block: { text: string }) => block.text)
-          .join('\n')
-      : ''
+    const text = result.text
 
     return Response.json({ response: text })
   } catch (err) {
