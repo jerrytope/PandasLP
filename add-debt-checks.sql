@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS public.debt_checks (
 );
 CREATE INDEX IF NOT EXISTS idx_debt_checks_created_at ON public.debt_checks(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_debt_checks_status ON public.debt_checks(status);
+-- In case an earlier version of this script already created debt_checks without this column.
+ALTER TABLE public.debt_checks ADD COLUMN IF NOT EXISTS marketing_consent BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE public.debt_checks ENABLE ROW LEVEL SECURITY;
 
 
