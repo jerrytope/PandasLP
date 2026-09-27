@@ -38,3 +38,16 @@ export function getAttribution(): Attribution {
     return { source: null, sourceDetail: null }
   }
 }
+
+// Labels a visitor who arrived with no ?ref=/utm_* link by the page that converted them (e.g.
+// "debt-check"), so a case they go on to start is still attributed. Never overwrites a real
+// source captured earlier.
+export function setAttributionIfEmpty(source: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (window.localStorage.getItem(STORAGE_KEY)) return
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ source, sourceDetail: null } satisfies Attribution))
+  } catch {
+    // Storage blocked (private mode): the case is simply unattributed.
+  }
+}

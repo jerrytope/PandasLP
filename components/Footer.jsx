@@ -78,6 +78,7 @@ export default function Footer() {
           <div>
             <p className="footer-col-title">Company</p>
             <nav className="footer-links" aria-label="Company links">
+              <Link href="/debt-check">Free Debt Check</Link>
               <Link href="/blog">Legal Resources</Link>
               <a href="#how-it-works">How It Works</a>
               <a href="#pricing">Pricing</a>
@@ -118,7 +119,7 @@ export default function Footer() {
               </a>
               <a href="tel:+2348118080189">+234 811 808 0189</a>
               <span style={{ color: 'var(--text-3)', fontSize: 13 }}>
-                3B Elegbe Festival Drive, Oniru<br />Victoria Island, Lagos
+                3B Elegba Festival Drive, Oniru<br />Victoria Island, Lagos
               </span>
             </div>
             <div style={{ marginTop: 20 }}>

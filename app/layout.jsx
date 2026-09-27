@@ -105,7 +105,7 @@ const legalServiceJsonLd = {
   areaServed: { '@type': 'Country', name: 'Nigeria' },
   address: {
     '@type': 'PostalAddress',
-    streetAddress: '3B Elegbe Festival Drive, Oniru',
+    streetAddress: '3B Elegba Festival Drive, Oniru',
     addressLocality: 'Victoria Island, Lagos',
     addressRegion: 'Lagos',
     addressCountry: 'NG',
