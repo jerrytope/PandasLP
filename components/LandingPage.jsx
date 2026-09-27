@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import Reveal from './Reveal'
 import ChatPreview from './ChatPreview'
 import RecoveredCounter from './RecoveredCounter'
@@ -90,6 +91,16 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
               Court-ready documents from ₦10,000. Ten minutes of your time, then a licensed
               practitioner finishes the work and signs it.
             </p>
+
+            {/* Free debt check promo: the low-commitment first step for visitors not ready to start a case. */}
+            <Link href="/debt-check?ref=home-hero" className="lp-check">
+              <span className="lp-check-copy">
+                <span className="lp-check-kicker">Free · 1 minute</span>
+                <span className="lp-check-title">Check if your debt is recoverable today</span>
+                <span className="lp-check-sub">Seven quick questions. See how strong your case is and what it costs.</span>
+              </span>
+              <span className="lp-check-btn">Check my debt &rarr;</span>
+            </Link>
 
             <button type="button" className="lp-textlink" onClick={onStartLawyerConsult}>
               Or speak to a lawyer first &rarr;
