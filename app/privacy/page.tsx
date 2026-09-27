@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
             Privacy Policy
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 40 }}>
-            Last updated: 27 July 2026
+            Last updated: 27 September 2026
           </p>
 
           <div className="blog-content">
@@ -48,6 +48,8 @@ export default function PrivacyPolicyPage() {
               <li><strong>Account information</strong>: your email address (used for magic-link sign-in, no password stored)</li>
               <li><strong>Case details</strong>: whatever you tell our AI agent during the guided interview: names, amounts owed, dates, descriptions of the dispute, and any documents you upload (invoices, contracts, screenshots)</li>
               <li><strong>Contact information</strong>: a callback phone number, if you provide one for a lawyer to reach you</li>
+              <li><strong>Free debt check answers</strong>: if you use our debt check and ask a lawyer to contact you, your answers (who owes you, how much, what proof you have), your name, phone number and, optionally, email</li>
+              <li><strong>Consent records</strong>: when you agree to be contacted or to receive tips and news, we record what you agreed to, the exact wording you saw, when, and on which page, so we can show your choice was yours</li>
               <li><strong>Payment information</strong>: processed directly by Paystack; we receive confirmation of payment and the amount, never your card or bank details</li>
               <li><strong>Usage data</strong>: basic analytics (pages visited, which channel brought you to the site) via Google Analytics</li>
             </ul>
@@ -60,9 +62,13 @@ export default function PrivacyPolicyPage() {
               <li>Serve or file documents on your behalf, where you've asked us to</li>
               <li>Contact you about the progress of your case</li>
               <li>Verify payment and issue confirmations</li>
+              <li>Send you legal tips and news, <strong>only</strong> if you have separately ticked a box or subscribed to receive them</li>
               <li>Improve the site and understand which channels reach the people who need us</li>
             </ul>
             <p>We do not sell your data, and we do not use it to train any third-party AI model beyond the single request needed to draft your document.</p>
+
+            <h3>Marketing messages</h3>
+            <p>We only send tips and news to people who have asked for them. Agreeing to be contacted about your debt or case does not sign you up. You can stop marketing messages at any time: use the unsubscribe link in any email, reply STOP on WhatsApp, or email us. Stopping marketing never affects messages about a case you have with us.</p>
 
             <h2>3. Who We Share It With</h2>
             <p>We share data only where necessary to provide the service:</p>
@@ -76,6 +82,7 @@ export default function PrivacyPolicyPage() {
 
             <h2>4. How Long We Keep It</h2>
             <p>We retain your case data for as long as your matter could reasonably still be relevant, including any period during which a debt or judgment remains legally enforceable, and in any event no longer than necessary to comply with our own professional and regulatory obligations as a law firm. You can request deletion earlier; see Section 6.</p>
+            <p>We keep a record of each consent, and of any withdrawal, for as long as we rely on it and for a reasonable period afterwards, so we can show what you chose and when. If you unsubscribe, we keep a note of that so we don’t message you again.</p>
 
             <h2>5. Security</h2>
             <p>Your data is encrypted in transit (HTTPS) and at rest by our database provider. Access to case data is restricted to you, and to Pandas LP staff who need it to work on your matter. Payment is never handled directly by us.</p>

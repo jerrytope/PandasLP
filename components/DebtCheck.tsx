@@ -5,6 +5,7 @@ import Link from 'next/link'
 import s from './DebtCheck.module.css'
 import { captureAttribution, getAttribution, setAttributionIfEmpty } from '@/lib/attribution'
 import { trackEvent } from '@/lib/analytics'
+import { CONSENT_TEXT } from '@/lib/consent'
 import {
   ADMISSIONS,
   DEBTOR_TYPES,
@@ -320,6 +321,7 @@ function Result({ answers, headingRef, onRestart }: { answers: DebtCheckAnswers;
 function Callback({ answers, primary }: { answers: DebtCheckAnswers; primary: boolean }) {
   const [form, setForm] = useState({ name: '', phone: '', email: '', note: '', website: '' })
   const [consent, setConsent] = useState(false)
+  const [marketing, setMarketing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [sent, setSent] = useState(false)
@@ -337,11 +339,11 @@ function Callback({ answers, primary }: { answers: DebtCheckAnswers; primary: bo
       const res = await fetch('/api/debt-check', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ answers, ...form, consent, source: source ?? 'debt-check', sourceDetail }),
+        body: JSON.stringify({ answers, ...form, consent, marketingConsent: marketing, pageUrl: window.location.href, source: source ?? 'debt-check', sourceDetail }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || data.error) return setErr(data.error || 'Something went wrong. Please try again.')
-      trackEvent('debt_check_callback', { primary })
+      trackEvent('debt_check_callback', { primary, marketing })
       setSent(true)
     } catch {
       setErr('Network error. Please try again, or message us on WhatsApp.')
@@ -384,7 +386,11 @@ function Callback({ answers, primary }: { answers: DebtCheckAnswers; primary: bo
       <label className={s.honeypot} aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} /></label>
       <label className={s.consent}>
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-        <span>Pandas LP may contact me by phone, WhatsApp or email about this debt. My answers are kept private and used only for this.</span>
+        <span>{CONSENT_TEXT.matter_contact_v1} <span style={{ color: 'var(--text-3)' }}>(required)</span></span>
+      </label>
+      <label className={s.consent} style={{ marginTop: -4 }}>
+        <input type="checkbox" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
+        <span>{CONSENT_TEXT.marketing_v1} <span style={{ color: 'var(--text-3)' }}>(optional)</span></span>
       </label>
       {err && <p className={s.error} role="alert">{err}</p>}
       <button type="submit" className={primary ? s.primary : s.secondary} disabled={busy}>{busy ? 'Sending…' : 'Ask a lawyer to contact me'}</button>

@@ -7,14 +7,39 @@ import { STATES } from '@/lib/locations'
 import { LAGOS_DISTRICTS } from '@/lib/lagosDistricts'
 import { LAGOS_PROPERTY_DISTRICTS } from '@/lib/lagosPropertyDistricts'
 import { Check } from 'lucide-react'
+import { CONSENT_TEXT } from '@/lib/consent'
 
 export default function Footer() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-  function handleSubscribe(e) {
+  // Saves the sign-up as a consent record (see app/api/newsletter). Only says "subscribed" once
+  // the server has actually stored it.
+  async function handleSubscribe(e) {
     e.preventDefault()
-    if (email) { setSent(true); setEmail('') }
+    if (!email || busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, pageUrl: window.location.href }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) {
+        setError(data.error || 'Something went wrong. Please try again.')
+        return
+      }
+      setSent(true)
+      setEmail('')
+    } catch {
+      setError('Network error. Please try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -53,11 +78,17 @@ export default function Footer() {
                     autoComplete="email"
                     required
                   />
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={!email}>
-                    Subscribe
+                  <button type="submit" className="btn btn-primary btn-sm" disabled={!email || busy}>
+                    {busy ? 'Saving…' : 'Subscribe'}
                   </button>
                 </form>
               )}
+              {!sent && (
+                <p style={{ fontSize: 11.5, lineHeight: 1.45, color: 'var(--text-3)', marginTop: 8, maxWidth: 340 }}>
+                  {CONSENT_TEXT.newsletter_v1} <Link href="/privacy" style={{ color: 'inherit' }}>Privacy policy</Link>
+                </p>
+              )}
+              {error && <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)', marginTop: 6 }}>{error}</p>}
             </div>
           </div>
 

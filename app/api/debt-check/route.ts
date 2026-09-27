@@ -5,6 +5,7 @@ import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { LABELS, assessDebt, formatNairaPlain, normaliseNgPhone, parseAnswers } from '@/lib/debtCheck'
 import { isValidEmail } from '@/lib/invoices'
+import { recordConsent } from '@/lib/consentServer'
 
 const RATE_LIMIT = 5
 const RATE_WINDOW_MS = 10 * 60 * 1000
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Too many requests. Please wait a few minutes and try again.' }, { status: 429, headers: { 'retry-after': String(retryAfterSeconds) } })
   }
 
-  let body: { answers?: unknown; name?: unknown; phone?: unknown; email?: unknown; note?: unknown; consent?: unknown; source?: unknown; sourceDetail?: unknown; website?: unknown }
+  let body: { answers?: unknown; name?: unknown; phone?: unknown; email?: unknown; note?: unknown; consent?: unknown; marketingConsent?: unknown; pageUrl?: unknown; source?: unknown; sourceDetail?: unknown; website?: unknown }
   try {
     body = await req.json()
   } catch {
@@ -45,6 +46,9 @@ export async function POST(req: Request) {
   if (email && (email.length > 200 || !isValidEmail(email))) return Response.json({ error: 'That email address doesn’t look right.' }, { status: 400 })
   const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim().slice(0, 2000) : null
   if (body.consent !== true) return Response.json({ error: 'Please tick the box so we can contact you.' }, { status: 400 })
+  const marketingConsent = body.marketingConsent === true
+  const pageUrl = typeof body.pageUrl === 'string' ? body.pageUrl : null
+  const userAgent = req.headers.get('user-agent')
   const source = typeof body.source === 'string' && body.source.trim() ? body.source.trim().slice(0, 100) : null
   const sourceDetail = typeof body.sourceDetail === 'string' && body.sourceDetail.trim() ? body.sourceDetail.trim().slice(0, 500) : null
 
@@ -64,6 +68,7 @@ export async function POST(req: Request) {
       source,
       source_detail: sourceDetail,
       consent: true,
+      marketing_consent: marketingConsent,
     })
     .select('id')
     .single()
@@ -71,6 +76,12 @@ export async function POST(req: Request) {
     console.error('Failed to save debt check:', error)
     return Response.json({ error: 'We couldn’t save your details. Please try again, or message us on WhatsApp.' }, { status: 500 })
   }
+
+  // Proof of consent: one record per purpose, with the exact words shown. Marketing is only
+  // recorded when its own box was ticked. A failure here is logged but doesn't lose the lead.
+  const consentBase = { email, phone, source: 'debt_check', sourceId: data.id, pageUrl, userAgent }
+  await recordConsent({ ...consentBase, version: 'matter_contact_v1', granted: true })
+  if (marketingConsent) await recordConsent({ ...consentBase, version: 'marketing_v1', granted: true })
 
   // Staff are told straight away; a failed email must not lose the lead, which is already saved
   // and visible in the admin under Leads.
@@ -87,6 +98,7 @@ export async function POST(req: Request) {
         ['Can reach them?', LABELS.location[answers.location]],
         ['State', LABELS.state[answers.state]],
         ['Came from', source ?? 'direct / unknown'],
+        ['Marketing', marketingConsent ? 'Opted in to tips and news' : 'Not opted in (contact about this debt only)'],
       ]
       await sendMail({
         to: GMAIL_USER,

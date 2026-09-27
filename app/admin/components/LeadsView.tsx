@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { authedFetch } from '@/lib/supabaseClient'
+import ConsentPanel, { type ConsentData } from './ConsentPanel'
+import { marketingStatus } from '@/lib/consent'
 import { LABELS, LEAD_STATUSES, LEAD_STATUS_LABEL, agentOpener, formatNairaPlain, type DebtCheckAnswers, type LeadStatus } from '@/lib/debtCheck'
 
 interface LeadRow {
@@ -16,6 +18,7 @@ interface LeadRow {
   next_step: 'demand_letter' | 'property' | 'lawyer_review'
   note: string | null
   source: string | null
+  marketing_consent?: boolean
   status: LeadStatus
   staff_notes: string | null
   contacted_at: string | null
@@ -55,6 +58,19 @@ export default function LeadsView({ onStartIntake }: { onStartIntake: (seed: str
   const [leads, setLeads] = useState<LeadRow[] | null>(null)
   const [err, setErr] = useState('')
   const [filter, setFilter] = useState<Filter>('open')
+  const [consent, setConsent] = useState<ConsentData | null>(null)
+  const [consentErr, setConsentErr] = useState('')
+
+  async function loadConsent() {
+    try {
+      const res = await authedFetch('/api/admin/consents')
+      const data = await res.json()
+      if (!res.ok || data.error) return setConsentErr(data.error || 'Could not load consent records.')
+      setConsent(data)
+    } catch {
+      setConsentErr('Network error while loading consent records.')
+    }
+  }
 
   async function load() {
     setErr('')
@@ -69,6 +85,7 @@ export default function LeadsView({ onStartIntake }: { onStartIntake: (seed: str
   }
   useEffect(() => {
     load()
+    loadConsent()
   }, [])
 
   const all = leads ?? []
@@ -114,6 +131,8 @@ export default function LeadsView({ onStartIntake }: { onStartIntake: (seed: str
         </span>
       </div>
 
+      <ConsentPanel data={consent} error={consentErr} onChanged={loadConsent} />
+
       {err && <p role="alert" style={{ color: 'var(--danger)', margin: 0, fontSize: 13 }}>{err}</p>}
       {leads === null && !err && <p style={{ color: 'var(--text-3)', fontSize: 13, margin: 0 }}>Loading leads…</p>}
       {leads !== null && list.length === 0 && (
@@ -123,7 +142,7 @@ export default function LeadsView({ onStartIntake }: { onStartIntake: (seed: str
       )}
 
       {list.map((l) => (
-        <LeadCard key={l.id} lead={l} onChanged={(u) => setLeads((prev) => (prev ?? []).map((x) => (x.id === u.id ? u : x)))} onStartIntake={onStartIntake} />
+        <LeadCard key={l.id} lead={l} marketing={consent ? marketingStatus(consent.records, { email: l.email, phone: l.phone }) : null} onConsentChanged={loadConsent} onChanged={(u) => setLeads((prev) => (prev ?? []).map((x) => (x.id === u.id ? u : x)))} onStartIntake={onStartIntake} />
       ))}
     </div>
   )
@@ -142,13 +161,46 @@ function Pill({ bg, fg, children }: { bg: string; fg: string; children: React.Re
   return <span className="badge" style={{ background: bg, color: fg, fontSize: 11, fontWeight: 600 }}>{children}</span>
 }
 
-function LeadCard({ lead, onChanged, onStartIntake }: { lead: LeadRow; onChanged: (l: LeadRow) => void; onStartIntake: (seed: string) => void }) {
+function LeadCard({
+  lead,
+  marketing,
+  onChanged,
+  onConsentChanged,
+  onStartIntake,
+}: {
+  lead: LeadRow
+  marketing: 'granted' | 'withdrawn' | 'none' | null
+  onChanged: (l: LeadRow) => void
+  onConsentChanged: () => void
+  onStartIntake: (seed: string) => void
+}) {
   const [notes, setNotes] = useState(lead.staff_notes ?? '')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const a = lead.answers
   const firstName = lead.name.split(' ')[0]
   const waText = `Hello ${firstName}, this is Pandas LP. Thank you for taking our debt check about the ${formatNairaPlain(lead.amount_naira)} you are owed. Is now a good time to talk about the next steps?`
+
+  // They asked us to stop marketing (e.g. replied STOP). Adds a withdrawal record; their
+  // consent to be contacted about this debt is unaffected.
+  async function optOut() {
+    setBusy(true)
+    setErr('')
+    try {
+      const res = await authedFetch('/api/admin/consents', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: lead.email, phone: lead.phone, granted: false, note: 'Opt-out recorded from their lead' }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) return setErr(data.error || 'Could not record the opt-out.')
+      onConsentChanged()
+    } catch {
+      setErr('Network error.')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function patch(body: { status?: LeadStatus; staffNotes?: string }) {
     setBusy(true)
@@ -173,6 +225,9 @@ function LeadCard({ lead, onChanged, onStartIntake }: { lead: LeadRow; onChanged
           <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{formatNairaPlain(lead.amount_naira)}</span>
           <Pill {...VERDICT_STYLE[lead.verdict]}>{VERDICT_LABEL[lead.verdict]}</Pill>
           <Pill {...STATUS_STYLE[lead.status]}>{LEAD_STATUS_LABEL[lead.status]}</Pill>
+          {marketing === 'granted' && <Pill bg="rgba(22, 128, 61, 0.07)" fg="#16803d">Marketing: yes</Pill>}
+          {marketing === 'withdrawn' && <Pill bg="var(--bg-1)" fg="var(--text-3)">Marketing: opted out</Pill>}
+          {marketing === 'none' && <Pill bg="var(--bg-1)" fg="var(--text-3)">No marketing</Pill>}
         </div>
         <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{ago(lead.created_at)} · from {lead.source || 'direct / unknown'}</span>
       </div>
@@ -192,6 +247,11 @@ function LeadCard({ lead, onChanged, onStartIntake }: { lead: LeadRow; onChanged
         <a className="btn btn-sm" href={`tel:+${lead.phone}`} onClick={() => lead.status === 'new' && patch({ status: 'contacted' })}>Call +{lead.phone}</a>
         {lead.email && <a className="btn btn-sm" href={`mailto:${lead.email}`}>Email</a>}
         <button type="button" className="btn btn-sm" onClick={() => onStartIntake(agentOpener(a))}>Start intake for them</button>
+        {marketing === 'granted' && (
+          <button type="button" className="btn btn-sm" disabled={busy} onClick={optOut}>
+            Record marketing opt-out
+          </button>
+        )}
         <select
           id={`lead-status-${lead.id}`}
           className="input"
