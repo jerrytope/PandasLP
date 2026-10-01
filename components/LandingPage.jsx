@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Reveal from './Reveal'
 import ChatPreview from './ChatPreview'
+import HeroVideo from './HeroVideo'
 import RecoveredCounter from './RecoveredCounter'
 import HowItWorks from './HowItWorks'
 import Timeline from './Timeline'
@@ -144,6 +145,20 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
             </button>
           </div>
 
+          <HeroVideo />
+        </div>
+      </section>
+
+      {/* ══ PRODUCT ══ the real chat, moved down from the hero */}
+      <section className="lp-section lp-container" id="start" aria-label="How a matter starts">
+        <div className="lp-hero-grid">
+          <div>
+            <h2 className="lp-h2 lp-section-head">It starts with a few plain questions.</h2>
+            <p className="lp-lede">
+              Pick your problem and answer in your own words. A licensed practitioner reviews
+              everything before any letter is signed or served.
+            </p>
+          </div>
           <ChatPreview onOpenAgent={onOpenAgent} />
         </div>
       </section>
