@@ -6,6 +6,7 @@ import ChatPreview from './ChatPreview'
 import RecoveredCounter from './RecoveredCounter'
 import HowItWorks from './HowItWorks'
 import Timeline from './Timeline'
+import { safeJsonLd } from '@/lib/jsonLd'
 
 /* ─────────────────────────────────────────────────────────────
    Homepage.
@@ -56,6 +57,41 @@ const CLOCK = [
   { d: '15', t: 'We file', on: true },
 ]
 
+/* Every answer restates a fact already on this page (fees, signing, the
+   14-day clock, the free check). No outcome or speed promises. */
+const FAQS = [
+  {
+    q: 'What does Pandas LP do?',
+    a: 'Pandas LP is a licensed Nigerian law firm (CAC BN 9646741) handling debt recovery and property law: letters of demand, follow-ups, filing at the Small Claims Court, notices to quit, tenancy and lease documents, deeds of assignment and property searches.',
+  },
+  {
+    q: 'How much does a letter of demand cost?',
+    a: 'A letter of demand is ₦10,000 if you serve it yourself, or ₦25,000 if we serve it for you. The Day 7 and Day 14 follow-ups are included. Court filing fees, if the matter goes further, are set by the court.',
+  },
+  {
+    q: 'Who prepares and signs the documents?',
+    a: 'Each document is drafted from the firm’s template, then reviewed and signed by a licensed legal practitioner before it goes anywhere. You read the draft before you pay.',
+  },
+  {
+    q: 'What happens if the debtor still does not pay?',
+    a: 'After the letter is served, a follow-up goes out on Day 7 and the response window closes on Day 14. If the debt is still unpaid, the matter can move to filing at the Small Claims Court.',
+  },
+  {
+    q: 'How much do property documents cost?',
+    a: 'Each tenancy or lease document is ₦25,000. Deeds transferring title are invoiced by the firm at 2.5% of the consideration.',
+  },
+  {
+    q: 'I am not sure my debt is worth chasing. Where do I start?',
+    a: 'Use the free debt check. It is seven quick questions, takes about a minute, and shows how strong your case looks and what it would cost.',
+  },
+]
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQS.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+}
+
 /* The cheapest thing anyone can actually buy, pulled out of the list and given
    the weight. It used to be the third row of six, which meant the single most
    persuasive number on the page was the one nobody could find. */
@@ -80,9 +116,10 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
       <section className="lp-hero lp-container" aria-label="Pandas LP">
         <div className="lp-hero-grid">
           <div className="lp-hero-copy">
-            <div className="lp-eyebrow">Debt recovery and property law &nbsp;·&nbsp; Lagos</div>
-
+            {/* The kicker sits inside the h1 so the heading carries the brand and the
+                practice areas for search; it is styled exactly like the old eyebrow. */}
             <h1 className="lp-h1">
+              <span className="lp-eyebrow lp-h1-kicker">Pandas LP &nbsp;·&nbsp; Debt recovery and property law in Nigeria</span>
               Tell us what happened.<br />
               <span className="lp-em">We take it from there.</span>
             </h1>
@@ -193,6 +230,22 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ══ FAQ ══ plain <details>, so the answers are in the server HTML */}
+      <section className="lp-section lp-muted" id="faq" aria-label="Questions">
+        <div className="lp-container">
+          <h2 className="lp-h2 lp-section-head">Questions people ask first.</h2>
+          <div className="lp-faq">
+            {FAQS.map((f) => (
+              <details key={f.q} className="lp-faq-item">
+                <summary>{f.q}</summary>
+                <p>{f.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }} />
       </section>
 
       {/* ══ CTA ══ */}

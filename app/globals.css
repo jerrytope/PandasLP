@@ -1742,6 +1742,17 @@ h1, h2, h3, h4, h5, h6 {
 
 .lp-h1 { font-size: clamp(36px, 4.6vw, 60px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 500; margin: 20px 0 22px; }
 .lp-em { font-style: italic; font-weight: 400; }
+.lp-h1-kicker { display: block; line-height: 1.6; letter-spacing: 0.18em; font-weight: 400; margin-bottom: 20px; }
+
+/* Homepage FAQ */
+.lp-faq { max-width: 760px; border-top: 1px solid var(--border-subtle); }
+.lp-faq-item { border-bottom: 1px solid var(--border-subtle); }
+.lp-faq-item summary { cursor: pointer; list-style: none; padding: 18px 32px 18px 0; position: relative; font-size: 17px; font-weight: 600; color: var(--text-1); }
+.lp-faq-item summary::-webkit-details-marker { display: none; }
+.lp-faq-item summary::after { content: '+'; position: absolute; right: 4px; top: 16px; font-size: 20px; color: var(--text-3); }
+.lp-faq-item[open] summary::after { content: '−'; }
+.lp-faq-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lp-faq-item p { margin: 0 0 18px; max-width: 64ch; line-height: 1.6; color: var(--text-2); }
 .lp-h2 { font-size: clamp(25px, 2.8vw, 36px); line-height: 1.12; letter-spacing: -0.028em; font-weight: 500; }
 .lp-section-head { margin-bottom: 34px; }
 .lp-lede { font-size: clamp(16px, 1.3vw, 18px); line-height: 1.55; color: #3A3A38; max-width: 46ch; }
