@@ -113,39 +113,48 @@ const FEES = [
 export default function LandingPage({ onOpenAgent, onStartLawyerConsult }) {
   return (
     <>
-      {/* ══ HERO + PRODUCT ══ */}
-      <section className="lp-hero lp-container" aria-label="Pandas LP">
-        <div className="lp-hero-grid">
-          <div className="lp-hero-copy">
-            {/* The kicker sits inside the h1 so the heading carries the brand and the
-                practice areas for search; it is styled exactly like the old eyebrow. */}
-            <h1 className="lp-h1">
-              <span className="lp-eyebrow lp-h1-kicker">Pandas LP &nbsp;·&nbsp; Debt recovery and property law in Nigeria</span>
-              Tell us what happened.<br />
-              <span className="lp-em">We take it from there.</span>
-            </h1>
+      {/* ══ HERO ══ full-bleed film with the page's key messages on it.
+          Debt recovery is the main action; the free debt check is a
+          secondary way in for visitors not ready to start. */}
+      <section className="lp-hero-full" aria-label="Pandas LP">
+        <HeroVideo />
+        <div className="lp-hero-shade" aria-hidden="true" />
+        <div className="lp-container lp-hero-inner">
+          {/* The kicker sits inside the h1 so the heading carries the brand and the
+              practice areas for search. */}
+          <h1 className="lp-h1">
+            <span className="lp-eyebrow lp-h1-kicker">Pandas LP &nbsp;·&nbsp; Debt recovery and property law in Nigeria</span>
+            Tell us what happened.<br />
+            <span className="lp-em">We take it from there.</span>
+          </h1>
 
-            <p className="lp-lede">
-              Court-ready documents from ₦10,000. Ten minutes of your time, then a licensed
-              practitioner finishes the work and signs it.
-            </p>
+          <p className="lp-lede">
+            Recover money you are owed with a letter of demand from ₦10,000, reviewed and
+            signed by a licensed practitioner. Day 7 and Day 14 follow-ups are included.
+          </p>
 
-            {/* Free debt check promo: the low-commitment first step for visitors not ready to start a case. */}
-            <Link href="/debt-check?ref=home-hero" className="lp-check">
-              <span className="lp-check-copy">
-                <span className="lp-check-kicker">Free · 1 minute</span>
-                <span className="lp-check-title">Check if your debt is recoverable today</span>
-                <span className="lp-check-sub">Seven quick questions. See how strong your case is and what it costs.</span>
-              </span>
-              <span className="lp-check-btn">Check my debt &rarr;</span>
-            </Link>
-
-            <button type="button" className="lp-textlink" onClick={onStartLawyerConsult}>
-              Or speak to a lawyer first &rarr;
+          <div className="lp-hero-actions">
+            <button type="button" className="lp-cta lp-cta-gold" onClick={() => onOpenAgent(DEBT_AGENT)}>
+              Start a debt recovery &rarr;
+            </button>
+            <button type="button" className="lp-cta lp-cta-ghost" onClick={() => onOpenAgent(PROPERTY_AGENT)}>
+              I have a property matter
             </button>
           </div>
 
-          <HeroVideo />
+          <p className="lp-hero-sub">
+            Not sure it is worth chasing?{' '}
+            <Link href="/debt-check?ref=home-hero">Take the free 1-minute debt check &rarr;</Link>
+            <span className="lp-hero-sep" aria-hidden="true">·</span>
+            <button type="button" onClick={onStartLawyerConsult}>Speak to a lawyer first &rarr;</button>
+          </p>
+
+          <ul className="lp-hero-proof">
+            <li>Signed by a licensed practitioner</li>
+            <li>You read the draft before you pay</li>
+            <li>No retainer. No hourly rate.</li>
+            <li>CAC BN 9646741</li>
+          </ul>
         </div>
       </section>
 

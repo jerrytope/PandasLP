@@ -5,10 +5,10 @@ import { useEffect, useRef } from 'react'
 /* ─────────────────────────────────────────────────────────────
    Homepage hero film: a client opening a letter in her studio.
 
-   Muted, looping, no controls, and decorative (the h1 carries the
-   meaning). The poster is the first frame, so the hero never sits
-   empty while the video loads, and it is all that visitors who ask
-   for reduced motion ever see.
+   Full-bleed background behind the hero copy. Muted, looping, no
+   controls, and decorative (the h1 carries the meaning). The poster
+   is the first frame, so the hero never sits empty while the video
+   loads, and it is all that visitors who ask for reduced motion see.
    ───────────────────────────────────────────────────────────── */
 
 export default function HeroVideo() {
@@ -32,19 +32,10 @@ export default function HeroVideo() {
   }, [])
 
   return (
-    <div className="lp-hero-film">
-      <video
-        ref={ref}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        poster="/img/hero-poster.jpg"
-        aria-hidden="true"
-        tabIndex={-1}
-      >
-        <source src="/video/hero.webm" type="video/webm" />
-        <source src="/video/hero.mp4" type="video/mp4" />
+    <div className="lp-hero-bg" aria-hidden="true">
+      <video ref={ref} muted loop playsInline preload="metadata" poster="/img/hero-wide-poster.jpg" tabIndex={-1}>
+        <source src="/video/hero-wide.webm" type="video/webm" />
+        <source src="/video/hero-wide.mp4" type="video/mp4" />
       </video>
     </div>
   )

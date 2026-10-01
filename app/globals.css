@@ -1761,9 +1761,40 @@ h1, h2, h3, h4, h5, h6 {
 /* Hero sits beside the live product preview */
 .lp-hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) 480px; gap: 64px; align-items: center; }
 .lp-hero-copy { padding-bottom: 8px; }
-.lp-hero-film { position: relative; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden; background: #2a2622 url('/img/hero-poster.jpg') center / cover no-repeat; box-shadow: 0 24px 60px -28px rgba(23, 32, 44, 0.45); }
-.lp-hero-film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-@media (max-width: 1080px) { .lp-hero-film { aspect-ratio: 1 / 1; max-width: 560px; width: 100%; } }
+
+/* A section that is also the container keeps the container's side padding.
+   Without this, .lp-section's "padding: 64px 0" wins and those sections sit
+   32px left of every other section on the page. */
+.lp-section.lp-container { padding-left: 32px; padding-right: 32px; }
+
+/* ── Full-bleed hero ── */
+.lp-hero-full { position: relative; overflow: hidden; margin-top: 68px; min-height: min(calc(100vh - 68px), 760px); display: flex; align-items: center; background: #1b1a18 url('/img/hero-wide-poster.jpg') 70% center / cover no-repeat; color: #FAFAF8; }
+.lp-hero-bg, .lp-hero-bg video { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lp-hero-bg video { object-fit: cover; object-position: 70% center; display: block; }
+.lp-hero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(16, 18, 22, 0.86) 0%, rgba(16, 18, 22, 0.72) 38%, rgba(16, 18, 22, 0.18) 72%, rgba(16, 18, 22, 0.05) 100%), linear-gradient(0deg, rgba(16, 18, 22, 0.45) 0%, rgba(16, 18, 22, 0) 30%); }
+.lp-hero-inner { position: relative; z-index: 1; padding-top: 72px; padding-bottom: 64px; }
+.lp-hero-full .lp-h1 { color: #FAFAF8; max-width: 760px; font-size: clamp(38px, 4.9vw, 68px); }
+.lp-hero-full .lp-h1-kicker { color: rgba(250, 250, 248, 0.72); }
+.lp-hero-full .lp-lede { color: rgba(250, 250, 248, 0.84); max-width: 50ch; }
+.lp-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.lp-cta-gold { background: var(--accent); color: #fff; }
+.lp-cta-gold:hover { background: var(--accent-deep); }
+.lp-hero-sub { margin-top: 18px; font-size: 15px; color: rgba(250, 250, 248, 0.78); }
+.lp-hero-sub a, .lp-hero-sub button { color: #FAFAF8; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(250, 250, 248, 0.4); background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
+.lp-hero-sub a:hover, .lp-hero-sub button:hover { text-decoration-color: var(--accent); }
+.lp-hero-sep { margin: 0 10px; opacity: 0.5; }
+.lp-hero-proof { list-style: none; margin: 40px 0 0; padding: 18px 0 0; border-top: 1px solid rgba(250, 250, 248, 0.22); display: flex; flex-wrap: wrap; gap: 8px 28px; max-width: 760px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(250, 250, 248, 0.7); }
+@media (max-width: 1080px) {
+  .lp-hero-full { min-height: 0; }
+  .lp-hero-inner { padding-top: 56px; padding-bottom: 48px; }
+  .lp-hero-shade { background: linear-gradient(180deg, rgba(16, 18, 22, 0.55) 0%, rgba(16, 18, 22, 0.78) 55%, rgba(16, 18, 22, 0.9) 100%); }
+  .lp-hero-bg video { object-position: 78% center; }
+}
+@media (max-width: 640px) {
+  .lp-section.lp-container { padding-left: 20px; padding-right: 20px; }
+  .lp-hero-actions .lp-cta { width: 100%; text-align: center; }
+  .lp-hero-sep { display: block; height: 6px; overflow: hidden; color: transparent; }
+}
 .lp-textlink { background: none; border: none; padding: 10px 2px 0; text-align: left; font-size: 15px; color: var(--text-2); }
 .lp-textlink:hover { color: var(--text-1); }
 
