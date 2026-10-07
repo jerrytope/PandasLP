@@ -76,7 +76,7 @@ export interface CaseEvidenceRow {
   url: string | null
 }
 
-export type Tab = 'queue' | 'cases' | 'claims' | 'waitlist' | 'finance' | 'leads'
+export type Tab = 'overview' | 'queue' | 'cases' | 'brands' | 'claims' | 'waitlist' | 'finance' | 'leads'
 
 export type CaseAction =
   | 'markReviewed'

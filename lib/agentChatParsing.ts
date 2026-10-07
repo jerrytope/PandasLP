@@ -69,6 +69,23 @@ export function extractDocument(content: string): { visible: string; doc: DraftD
   }
 }
 
+// The lawyer-intake prompt (SMALL_CLAIMS_LAWYER_INTAKE_PROMPT in lib/agents.ts) lists facts it
+// still needs under this heading instead of guessing them. Returns those questions, one per
+// bullet, or [] if the section isn't there.
+export function extractOutstandingQuestions(content: string): string[] {
+  const start = content.search(/OUTSTANDING QUESTIONS FOR YOUR CLIENT/i)
+  if (start < 0) return []
+  const after = content.slice(start).split('\n').slice(1)
+  const questions: string[] = []
+  for (const line of after) {
+    const bullet = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.+)$/)
+    if (bullet) questions.push(bullet[1].trim())
+    else if (questions.length > 0 && line.trim() === '') break
+    else if (questions.length > 0) break
+  }
+  return questions
+}
+
 export function extractOptions(content: string): { visible: string; options: string[] } {
   const match = content.match(OPTIONS_BLOCK_RE)
   if (!match) return { visible: content, options: [] }

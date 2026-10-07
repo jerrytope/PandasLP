@@ -2,16 +2,15 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { supabase, authedFetch } from '@/lib/supabaseClient'
+import { authedFetch } from '@/lib/supabaseClient'
 import { AGENTS } from '@/lib/agents'
 import { getAgentPayment } from '@/lib/agentServiceMap'
 import AgentChat from '@/components/AgentChat'
 
 // Subcomponents
-import AdminHeader from './components/AdminHeader'
-import AdminStatsOverview from './components/AdminStatsOverview'
+import { useAdminShell } from './components/shell/AdminShellContext'
+import { parseFinanceSub, parseSection, sectionHref, sectionToTab } from './components/shell/adminSections'
+import AdminOverview from './components/AdminOverview'
 import AdminQueueView from './components/AdminQueueView'
 import AdminCasesView from './components/AdminCasesView'
 import AdminCustomClaimsView from './components/AdminCustomClaimsView'
@@ -19,6 +18,7 @@ import AdminWaitlistView from './components/AdminWaitlistView'
 import CaseDetailDrawer from './components/CaseDetailDrawer'
 import FinanceView from './components/finance/FinanceView'
 import LeadsView from './components/LeadsView'
+import BrandsView from './components/brands/BrandsView'
 import type {
   AdminCaseRow,
   CustomClaimRow,
@@ -40,14 +40,13 @@ function AdminPageInner() {
   const searchParams = useSearchParams()
   const deepLinkCaseId = searchParams.get('caseId')
 
-  // Auth & Permissions
-  const [checkedAuth, setCheckedAuth] = useState(false)
-  const [accessDenied, setAccessDenied] = useState(false)
-  const [adminUserEmail, setAdminUserEmail] = useState<string | null>(null)
-  const [adminUserId, setAdminUserId] = useState<string | null>(null)
+  // Signed-in check and the "Access Restricted" screen live in the shell (app/admin/layout.tsx).
+  const { userId: adminUserId, setTopbarMeta, denyAccess } = useAdminShell()
 
-  // Active Navigation Tab
-  const [tab, setTab] = useState<Tab>(deepLinkCaseId ? 'cases' : 'queue')
+  // Active section comes from the URL (/admin?section=…), set by the sidebar's links.
+  const section = parseSection(searchParams.get('section'), Boolean(deepLinkCaseId))
+  const tab: Tab = sectionToTab(section)
+  const financeSub = parseFinanceSub(searchParams.get('sub'))
 
   // Data Stores
   const [cases, setCases] = useState<AdminCaseRow[]>([])
@@ -77,25 +76,16 @@ function AdminPageInner() {
   // Offline Lawyer Intake Session
   const [lawyerIntakeSeed, setLawyerIntakeSeed] = useState<string | null>(null)
 
-  // Auth bootstrap
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace('/')
-        return
-      }
-      setAdminUserId(session.user.id)
-      setAdminUserEmail(session.user.email ?? null)
-      setCheckedAuth(true)
-    })
-  }, [router])
-
   // Tab data loader
   useEffect(() => {
-    if (!checkedAuth) return
     loadTab(tab)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkedAuth, tab])
+  }, [tab])
+
+  // "N cases loaded" in the top bar, on the sections that show cases.
+  useEffect(() => {
+    if (tab === 'overview' || tab === 'queue' || tab === 'cases') setTopbarMeta(`${cases.length} cases loaded`)
+  }, [tab, cases.length, setTopbarMeta])
 
   // Handle deep link scroll and auto-drawer selection
   useEffect(() => {
@@ -114,15 +104,16 @@ function AdminPageInner() {
     overrideTest?: 'live' | 'test' | 'all',
     overrideAgent?: string,
   ) {
-    // Finance and Leads load their own data inside their views.
-    if (which === 'finance' || which === 'leads') return
+    // Finance, Leads and Brands load their own data inside their views.
+    if (which === 'finance' || which === 'leads' || which === 'brands') return
     setLoading(true)
     setLoadError('')
     try {
-      if (which === 'queue') {
+      // Overview's KPI cards use the same data as the queue: every live case.
+      if (which === 'queue' || which === 'overview') {
         const res = await authedFetch('/api/admin/cases')
         if (res.status === 403) {
-          setAccessDenied(true)
+          denyAccess()
           return
         }
         const data = await res.json()
@@ -142,7 +133,7 @@ function AdminPageInner() {
 
         const res = await authedFetch(`/api/admin/cases?${params.toString()}`)
         if (res.status === 403) {
-          setAccessDenied(true)
+          denyAccess()
           return
         }
         const data = await res.json()
@@ -155,7 +146,7 @@ function AdminPageInner() {
       } else if (which === 'claims') {
         const res = await authedFetch('/api/admin/custom-claims')
         if (res.status === 403) {
-          setAccessDenied(true)
+          denyAccess()
           return
         }
         const data = await res.json()
@@ -167,7 +158,7 @@ function AdminPageInner() {
       } else {
         const res = await authedFetch('/api/admin/waitlist')
         if (res.status === 403) {
-          setAccessDenied(true)
+          denyAccess()
           return
         }
         const data = await res.json()
@@ -402,266 +393,154 @@ function AdminPageInner() {
     }
   }
 
-  if (!checkedAuth) return null
-
-  if (accessDenied) {
-    return (
-      <div
-        style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'var(--bg-0)',
-          color: 'var(--text-1)',
-          padding: 24,
-        }}
-      >
-        <div className="card" style={{ maxWidth: 420, textAlign: 'center', padding: '36px 28px' }}>
-          <h2 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 24 }}>
-            Access Restricted
-          </h2>
-          <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.6 }}>
-            This command center is restricted to authorized Pandas LP legal practitioners and staff.
-          </p>
-          <Link
-            href="/dashboard"
-            className="btn btn-primary"
-            style={{ marginTop: 20, display: 'inline-flex' }}
-          >
-            Return to Client Dashboard
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-1)' }}>
-      {/* Top Header */}
-      <AdminHeader userEmail={adminUserEmail} casesCount={cases.length} />
-
-      <main className="container" style={{ paddingTop: 36, paddingBottom: 96 }}>
-        {/* Page Title & Quick Action Strip */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div>
-            <span className="label-mono" style={{ color: 'var(--accent)' }}>Legal Operations</span>
-            <h1
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(26px, 3.5vw, 36px)',
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                marginTop: 4,
-              }}
-            >
-              Command Center
-            </h1>
-          </div>
-        </div>
-
-        {/* Global KPI and SLA Overview */}
-        <AdminStatsOverview
-          cases={cases}
-          onSelectFilter={(status) => {
-            setFilterStatus(status)
-            setTab('cases')
-            loadTab('cases', status)
-          }}
-        />
-
-        {/* Navigation Tabs */}
+    <>
+      {/* Error Alert Box */}
+      {loadError && (
         <div
-          role="tablist"
-          aria-label="Admin operational sections"
+          role="alert"
+          className="card"
           style={{
+            borderColor: 'var(--danger)',
+            marginBottom: 20,
+            padding: '14px 18px',
             display: 'flex',
-            gap: 24,
-            flexWrap: 'wrap',
-            rowGap: 0,
-            marginBottom: 24,
-            borderBottom: '1px solid var(--border-subtle)',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
           }}
         >
-          {(['queue', 'leads', 'cases', 'claims', 'finance', 'waitlist'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              style={{
-                position: 'relative',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '12px 4px',
-                fontSize: 14,
-                fontWeight: 600,
-                color: tab === t ? 'var(--accent)' : 'var(--text-2)',
-                transition: 'color 0.2s',
-              }}
-            >
-              {t === 'queue'
-                ? 'Action Queue'
-                : t === 'leads'
-                ? 'Leads'
-                : t === 'cases'
-                ? 'All Matters'
-                : t === 'claims'
-                ? 'Custom Claims'
-                : t === 'finance'
-                ? 'Finance'
-                : 'Waitlist Signups'}
-              {tab === t && (
-                <motion.div
-                  layoutId="admin-tab-underline"
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    bottom: -1,
-                    height: 2,
-                    background: 'var(--accent)',
-                  }}
-                  transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-                />
-              )}
-            </button>
-          ))}
+          <span style={{ color: 'var(--danger)', fontSize: 14 }}>{loadError}</span>
+          <button type="button" className="btn btn-sm" onClick={() => setLoadError('')}>
+            Dismiss
+          </button>
         </div>
+      )}
 
-        {/* Error Alert Box */}
-        {loadError && (
-          <div
-            role="alert"
-            className="card"
-            style={{
-              borderColor: 'var(--danger)',
-              marginBottom: 20,
-              padding: '14px 18px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 12,
-            }}
-          >
-            <span style={{ color: 'var(--danger)', fontSize: 14 }}>{loadError}</span>
-            <button type="button" className="btn btn-sm" onClick={() => setLoadError('')}>
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* Tab Content Views */}
-        <div role="tabpanel">
-          {tab === 'queue' && (
-            <AdminQueueView
-              cases={cases}
-              loading={loading}
-              updatingId={updatingId}
-              deletingId={deletingId}
-              confirmDeleteId={confirmDeleteId}
-              regeneratingId={regeneratingId}
-              togglingTestId={togglingTestId}
-              onAction={handleStatusAction}
-              onDeleteAction={handleDeleteAction}
-              onRegenerateDocument={handleRegenerateDocument}
-              onToggleTest={handleToggleTest}
-              onOpenDrawer={(c) => setSelectedCase(c)}
-            />
-          )}
-
-          {tab === 'cases' && (
-            <AdminCasesView
-              cases={cases}
-              loading={loading}
-              updatingId={updatingId}
-              deletingId={deletingId}
-              confirmDeleteId={confirmDeleteId}
-              regeneratingId={regeneratingId}
-              togglingTestId={togglingTestId}
-              filterAgent={filterAgent}
-              filterTest={filterTest}
-              filterStatus={filterStatus}
-              deepLinkCaseId={deepLinkCaseId}
-              onAgentChange={(agentId) => {
-                setFilterAgent(agentId)
-                loadTab('cases', undefined, undefined, agentId)
-              }}
-              onTestFilterChange={(testFilter) => {
-                setFilterTest(testFilter)
-                loadTab('cases', undefined, testFilter)
-              }}
-              onStatusChange={(status) => {
-                setFilterStatus(status)
-                loadTab('cases', status)
-              }}
-              onAction={handleStatusAction}
-              onDeleteAction={handleDeleteAction}
-              onRegenerateDocument={handleRegenerateDocument}
-              onToggleTest={handleToggleTest}
-              onOpenDrawer={(c) => setSelectedCase(c)}
-            />
-          )}
-
-          {tab === 'claims' && (
-            <AdminCustomClaimsView
-              claims={claims}
-              loading={loading}
-              onStartIntake={(seedPrompt) => setLawyerIntakeSeed(seedPrompt)}
-            />
-          )}
-
-          {tab === 'finance' && <FinanceView />}
-
-          {tab === 'leads' && <LeadsView onStartIntake={(seed) => setLawyerIntakeSeed(seed)} />}
-
-          {tab === 'waitlist' && (
-            <AdminWaitlistView signups={signups} loading={loading} />
-          )}
-        </div>
-
-        {/* Offline Agent Intake Chat Session */}
-        {lawyerIntakeSeed !== null && adminUserId && (
-          <AgentChat
-            lawyerIntake
-            agent={AGENTS['small-claims']}
-            amount={getAgentPayment('small-claims').amount}
-            paymentDescription={getAgentPayment('small-claims').description}
-            userId={adminUserId}
-            initialAutoMessage={lawyerIntakeSeed || undefined}
-            onClose={() => setLawyerIntakeSeed(null)}
-            onApproved={() => {
-              setLawyerIntakeSeed(null)
-              setTab('cases')
-              loadTab('cases')
+      {/* Section Content Views */}
+      <div>
+        {tab === 'overview' && (
+          <AdminOverview
+            cases={cases}
+            loading={loading}
+            onSelectFilter={(status) => {
+              // The matters loader reads filterStatus when the URL change below switches section.
+              setFilterStatus(status)
+              router.push(sectionHref('matters'))
             }}
           />
         )}
 
-        {/* Side-by-Side Legal Case Drawer */}
-        <CaseDetailDrawer
-          c={selectedCase}
-          onClose={() => setSelectedCase(null)}
-          updatingId={updatingId}
-          deletingId={deletingId}
-          confirmDeleteId={confirmDeleteId}
-          regeneratingId={regeneratingId}
-          togglingTestId={togglingTestId}
-          secondReviewingId={secondReviewingId}
-          savingClientEmailId={savingClientEmailId}
-          savingRecipientPhoneId={savingRecipientPhoneId}
-          onAction={handleStatusAction}
-          onDeleteAction={handleDeleteAction}
-          onRegenerateDocument={handleRegenerateDocument}
-          onToggleTest={handleToggleTest}
-          onSecondReview={handleSecondReview}
-          onSaveClientEmail={handleSaveClientEmail}
-          onSaveRecipientPhone={handleSaveRecipientPhone}
-          onReloadCase={handleReloadCase}
+        {tab === 'queue' && (
+          <AdminQueueView
+            cases={cases}
+            loading={loading}
+            updatingId={updatingId}
+            deletingId={deletingId}
+            confirmDeleteId={confirmDeleteId}
+            regeneratingId={regeneratingId}
+            togglingTestId={togglingTestId}
+            onAction={handleStatusAction}
+            onDeleteAction={handleDeleteAction}
+            onRegenerateDocument={handleRegenerateDocument}
+            onToggleTest={handleToggleTest}
+            onOpenDrawer={(c) => setSelectedCase(c)}
+          />
+        )}
+
+        {tab === 'cases' && (
+          <AdminCasesView
+            cases={cases}
+            loading={loading}
+            updatingId={updatingId}
+            deletingId={deletingId}
+            confirmDeleteId={confirmDeleteId}
+            regeneratingId={regeneratingId}
+            togglingTestId={togglingTestId}
+            filterAgent={filterAgent}
+            filterTest={filterTest}
+            filterStatus={filterStatus}
+            deepLinkCaseId={deepLinkCaseId}
+            onAgentChange={(agentId) => {
+              setFilterAgent(agentId)
+              loadTab('cases', undefined, undefined, agentId)
+            }}
+            onTestFilterChange={(testFilter) => {
+              setFilterTest(testFilter)
+              loadTab('cases', undefined, testFilter)
+            }}
+            onStatusChange={(status) => {
+              setFilterStatus(status)
+              loadTab('cases', status)
+            }}
+            onAction={handleStatusAction}
+            onDeleteAction={handleDeleteAction}
+            onRegenerateDocument={handleRegenerateDocument}
+            onToggleTest={handleToggleTest}
+            onOpenDrawer={(c) => setSelectedCase(c)}
+          />
+        )}
+
+        {tab === 'claims' && (
+          <AdminCustomClaimsView
+            claims={claims}
+            loading={loading}
+            onStartIntake={(seedPrompt) => setLawyerIntakeSeed(seedPrompt)}
+          />
+        )}
+
+        {tab === 'finance' && (
+          <FinanceView sub={financeSub} onSubChange={(s) => router.push(sectionHref('finance', s))} />
+        )}
+
+        {tab === 'brands' && <BrandsView />}
+
+        {tab === 'leads' && <LeadsView onStartIntake={(seed) => setLawyerIntakeSeed(seed)} />}
+
+        {tab === 'waitlist' && (
+          <AdminWaitlistView signups={signups} loading={loading} />
+        )}
+      </div>
+
+      {/* Offline Agent Intake Chat Session */}
+      {lawyerIntakeSeed !== null && adminUserId && (
+        <AgentChat
+          lawyerIntake
+          agent={AGENTS['small-claims']}
+          amount={getAgentPayment('small-claims').amount}
+          paymentDescription={getAgentPayment('small-claims').description}
+          userId={adminUserId}
+          initialAutoMessage={lawyerIntakeSeed || undefined}
+          onClose={() => setLawyerIntakeSeed(null)}
+          onApproved={() => {
+            setLawyerIntakeSeed(null)
+            // Switching section reloads its data (see the loader effect above).
+            router.push(sectionHref('matters'))
+          }}
         />
-      </main>
-    </div>
+      )}
+
+      {/* Side-by-Side Legal Case Drawer */}
+      <CaseDetailDrawer
+        c={selectedCase}
+        onClose={() => setSelectedCase(null)}
+        updatingId={updatingId}
+        deletingId={deletingId}
+        confirmDeleteId={confirmDeleteId}
+        regeneratingId={regeneratingId}
+        togglingTestId={togglingTestId}
+        secondReviewingId={secondReviewingId}
+        savingClientEmailId={savingClientEmailId}
+        savingRecipientPhoneId={savingRecipientPhoneId}
+        onAction={handleStatusAction}
+        onDeleteAction={handleDeleteAction}
+        onRegenerateDocument={handleRegenerateDocument}
+        onToggleTest={handleToggleTest}
+        onSecondReview={handleSecondReview}
+        onSaveClientEmail={handleSaveClientEmail}
+        onSaveRecipientPhone={handleSaveRecipientPhone}
+        onReloadCase={handleReloadCase}
+      />
+    </>
   )
 }

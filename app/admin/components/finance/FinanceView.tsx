@@ -1,16 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BillingSettingsForm from './BillingSettingsForm'
 import FinanceOverview from './FinanceOverview'
 import InvoicesView from './InvoicesView'
 import { useBillingSettings } from './shared'
+import type { FinanceSub as Sub } from '../shell/adminSections'
 
-type Sub = 'overview' | 'invoices' | 'settings'
+interface FinanceViewProps {
+  /** Controlled by the URL (/admin?section=finance&sub=…) when given; see app/admin/page.tsx. */
+  sub?: Sub
+  onSubChange?: (sub: Sub) => void
+}
 
-export default function FinanceView() {
-  const [sub, setSub] = useState<Sub>('overview')
+export default function FinanceView({ sub: controlledSub, onSubChange }: FinanceViewProps = {}) {
+  const [localSub, setLocalSub] = useState<Sub>('overview')
+  const sub = controlledSub ?? localSub
+  const setSub = onSubChange ?? setLocalSub
   const { settings, reload } = useBillingSettings()
+
+  // Billing settings are refreshed when moving to Overview or Invoices — whether that came
+  // from the tabs below or from the sidebar's Finance links. Skipped on first render, which
+  // useBillingSettings already loads for.
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    if (sub !== 'settings') reload()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sub])
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
@@ -21,10 +41,7 @@ export default function FinanceView() {
             type="button"
             role="tab"
             aria-selected={sub === s}
-            onClick={() => {
-              setSub(s)
-              if (s !== 'settings') reload()
-            }}
+            onClick={() => setSub(s)}
             style={{
               all: 'unset', cursor: 'pointer', padding: '8px 12px', fontSize: 13, marginBottom: -1,
               fontWeight: sub === s ? 600 : 500,

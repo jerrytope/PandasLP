@@ -41,6 +41,12 @@ ADMIN_EMAILS               — Comma-separated staff allowlist checked by lib/ad
 GOOGLE_REVIEW_URL          — Link included in the resolution email (lib/sendCaseEmail.ts) once a case closes. Omitted gracefully if unset — no fabricated URL.
 ALLOW_STUB_PAYMENTS        — Set to "true" to allow stub (unverified) payments in real production (VERCEL_ENV === 'production'). Dangerous if left on — it means /api/verify-payment trusts the client-reported amount instead of checking with Paystack. Should not be set in normal operation; see app/api/verify-payment/route.ts.
 NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-consultation flow (components/LawyerConsult.jsx).
+GOOGLE_OAUTH_CLIENT_ID     — OAuth client (Web application) from the firm's Google Cloud project. Brand sheets, see "Brand sheets" below.
+GOOGLE_OAUTH_CLIENT_SECRET — Its secret. Server-only.
+GOOGLE_BRANDS_ROOT_FOLDER_ID — Drive folder (in the connected account) that holds every brand's folder.
+GOOGLE_SHEET_TEMPLATE_ID   — The "Brand Template" sheet copied for each brand. Row 1 must be the 17 headers in lib/brandSheet.ts.
+GOOGLE_TOKEN_ENCRYPTION_KEY — 64 hex chars (32 random bytes). Encrypts the stored Google refresh token and signs the OAuth state.
+GOOGLE_FAKE_WORKSPACE      — "true" = in-memory pretend Google for local development (refused in production). Remove once the real Drive is connected.
 ```
 
 ---
@@ -78,8 +84,37 @@ NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-cons
 
 ### Payments
 - `app/api/verify-payment/route.ts` — Node runtime. The only place a case is ever marked `paid`. Requires the caller's session to own the case, then independently confirms the transaction with Paystack's `/transaction/verify` endpoint (or, if `PAYSTACK_SECRET_KEY` is still a placeholder, accepts the stub checkout's result — there's no real gateway to check against yet). Compares the verified amount to `cases.expected_amount` and rejects a mismatch. For `small-claims`, `delivery_option` (`self-serve` vs `pandas-serves`) is derived from the verified amount, never trusted from the client.
-- `cases.expected_amount` — set in `AgentChat.tsx` when a document is finalized (`newDoc.price ?? amount`), i.e. the price actually quoted for that case. This is what `/api/verify-payment` checks the real payment against.
+- `cases.expected_amount` — set ONLY by `app/api/save-document/route.ts` when a document is drafted (or re-drafted/translated) before payment. The AI's `PRICE:` line may only pick one of the fees in `lib/casePricing.ts` (`resolveCasePrice`); anything else is rejected with a 422. Judgment enforcement is computed from `cases.judgment_amount`, and flat-fee agents ignore the AI's figure. This is what `/api/verify-payment` checks the real payment against, and a case without one can't be paid. If you add an agent or change a fee, update `lib/casePricing.ts` too. TypeScript's exhaustive `never` check flags a new `AgentId` with no rule.
+- `lock-case-columns.sql` (also `supabase/migrations/…_lock_case_columns.sql`) — column-level privileges. The browser (`authenticated` role) may only INSERT `user_id, agent_id, source, source_detail, parent_case_id, judgment_amount` and UPDATE `client_phone, client_email, recipient_phone` on `cases`, and may only INSERT into `messages`. Everything else (status, price, payment, review fields, document text) goes through API routes using the service-role key. A new column the browser must write needs an explicit `GRANT`, otherwise the write fails with "permission denied for table cases".
+- `lib/paystackVerify.ts` — the shared server-side payment check, used by every route that takes money (`/api/verify-payment` for cases, `/api/custom-claim` for the custom-claim routing fee). `verifyPayment()` asks Paystack (or accepts the stub checkout when there's no real key and it isn't production) and checks the amount against the server's expected price, never the browser's. `claimPaymentReference()` records each accepted reference in `payment_references` (primary key = reference), so one payment can't be replayed to pay for a second case or claim. Any new paid flow must call both.
 - `components/PaymentForm.jsx` / `lib/paystackHelper.js` — client-side checkout only (real Paystack Inline or the stub timeout). Never itself marks anything paid — always hands the result to `AgentChat.tsx`'s `handlePaymentDone`, which calls `/api/verify-payment`.
+
+### Brand sheets (B2B loan recovery) — in progress
+**Progress is tracked in `plans/`**: a README with a status table, plus one checklist file per phase. When a phase item is finished, tick its box and update the README's status table in the same change.
+
+Lenders ("brands") send borrowers in bulk through their own Google Sheet, one borrower per row. The plan is in four phases; **phase 1 is built**: database, Google connection, Brands admin and the create-brand flow. Still to come: phase 2 (the sync job: Case IDs, validation, drafting with the existing lawyer-intake agent), phase 3 (review and serve hooks, borrower reminders) and phase 4 (change flags, brand court approval, monthly billing).
+- `add-brands.sql`: `brands`, `brand_cases` (one per borrower, `case_ref` like `LAPO-0001` is the identity, never the row number), `brand_case_events` (audit log; its partial unique index on one-time events is the "never process twice" guarantee) and `brand_change_flags`. Also `google_connection`, plus `cases.brand_id`. `allocate_brand_case_ref()` hands out Case IDs atomically. **The database is the source of truth, not the sheet.**
+- `lib/brandSheet.ts`: the fixed 17-column layout, which columns are the brand's and which are the app's, status labels, and header validation.
+- `lib/google/`: `oauth.ts` connects the firm's own Google account once. Service accounts can't own files in an ordinary Drive, so every sheet is created as that account. `googleWorkspace.ts` (the real Drive/Sheets REST calls, plain `fetch`) and `fakeWorkspace.ts` (in memory) both implement `BrandWorkspace`. `runSetupSteps` saves each step as it succeeds, so a failed setup resumes on "Retry setup". Sheets and folders are shared with named emails only, never by link. The Case ID column, the header row and the 6 agent columns are protected.
+- **Edit / delete:**
+  - Edit changes the name, contacts, fee and active flag. Removed contacts lose Drive access, added ones are invited, and a rename renames the folder and sheet. **The code is never editable**, because it's in every Case ID.
+  - Delete is only allowed for a brand with **no borrowers**. It moves the Drive folder to the bin (30 days) and needs the code typed to confirm. A brand with borrowers can only be deactivated, which keeps the records but stops syncing.
+- **Phase 2, the sync** (`lib/brandSync.ts`; plan in `plans/phase-2-sync-and-drafting.md`; schema additions in `add-brand-sync.sql`, which adds `brands.address`, `brands.owner_user_id`, `brand_cases.last_error`, `attempts` and `letter_file_id`):
+  - **Schedule:** `vercel.json` calls `app/api/cron/brand-sheets` every 15 minutes, but it only runs once `firm_settings.brand_sync_interval_minutes` has passed. "Sync now" is `POST /api/admin/brands/sync`.
+  - **One run at a time:** `runBrandSync` takes a lease (`brand_sync_lease_until`).
+  - **Per brand:**
+    1. assign Case IDs, re-reading the sheet before writing them
+    2. claim New rows with a conditional `status='new'` → `'checking'` update
+    3. check them with `checkBorrower` (`lib/brandRows.ts`, pure) and `workspace.checkDocument`
+    4. draft with `draftBrandLetter` (`lib/brandLetter.ts`): the existing `SMALL_CLAIMS_LAWYER_INTAKE_PROMPT` with the row's facts relayed. OUTSTANDING QUESTIONS become Missing Documents.
+    5. insert the unique `letter_drafted` event **before** saving
+    6. create a `cases` row (owner is `brands.owner_user_id`; status `document_ready`; `expected_amount` = brand fee)
+    7. upload a DRAFT `.docx` to Letters
+    8. rewrite the drifted agent cells from the database
+  - **Rows:** found by Case ID, re-read straight before every write. Cells are read UNFORMATTED (dates arrive as serials, typed dates are read day-first).
+  - **Tests:** `brandSync.integration.test.ts` runs against the local database and skips if it isn't running.
+- `lib/brands.ts`, `app/api/admin/brands/route.ts` (list/create/update/retry/delete), `app/api/admin/google/{connect,callback}`, UI in `app/admin/components/brands/BrandsView.tsx` (sidebar "Brands").
+- One-time Google setup for the owner: create the Drive folder and template sheet, then a Cloud project with the Sheets and Drive APIs enabled. Set up the OAuth consent screen as External, with the drive and spreadsheets scopes, **published to Production** (in Testing, tokens expire after 7 days). Create a Web OAuth client with redirect URIs `http://localhost:3000/api/admin/google/callback` and `https://pandaslp.com.ng/api/admin/google/callback`. Set the env vars, then Admin → Brands → Connect Google Drive.
 
 ### Blog
 - `lib/blogPosts.ts` — 4 debt recovery articles as TypeScript objects with inline HTML content.
@@ -91,7 +126,12 @@ NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-cons
 - `lib/agentServiceMap.ts` — Maps AgentId → service. `getAgentPayment(agentId)` returns `{amount, description, kind}`.
 
 ### Design System
-- `app/globals.css` — Navy + gold design system (rebranded from an earlier dark-green/amber palette — if you see hardcoded `rgba(245,166,35,...)`, `rgba(62,207,142,...)`, or `rgba(8,12,10,...)` anywhere, that's leftover old-palette drift, not intentional). Core tokens: `--bg-0 #182A3A`, `--bg-1 #1F3446`, `--bg-2 #28455A`, `--accent #D6BB80` (glow `rgba(214,187,128,0.3)`), `--accent-hover #C7A968`, `--secondary #8FAEC6`, `--danger #EF4444`, `--text-1 #F3EFE3`, `--ease-out cubic-bezier(0.16,1,0.3,1)`. Legacy aliases (`--bg`, `--surface`, `--border`) map onto these so older component CSS didn't need touching.
+- `app/globals.css` — Light ivory + gold design system (it was navy + gold before that, and dark-green/amber before that; hardcoded `rgba(245,166,35,...)`, `rgba(62,207,142,...)` or `rgba(8,12,10,...)` anywhere is leftover old-palette drift). Core tokens: `--bg-0 #FAFAF8` (canvas), `--bg-1 #F5F3F0`, `--bg-2 #FFFFFF` (cards), `--border-subtle #E8E4DF`, `--accent #B8860B`, `--text-1 #1A1A1A`, `--text-2 #6B6B6B`, `--text-3 #7D7A72`, `--ease-out cubic-bezier(0.16,1,0.3,1)`. Fonts come from `app/layout.jsx` as `--font-display` / `--font-mono`. Legacy aliases (`--bg`, `--surface`, `--border`) map onto these so older component CSS didn't need touching. The old navy (`#182A3A`) survives only as the admin sidebar, defined in `app/admin/components/shell/AdminShell.module.css`.
+
+### Admin panel layout
+- `app/admin/layout.tsx` wraps every `/admin/*` page in `AdminShell` (`app/admin/components/shell/`): a navy left sidebar, a sticky top bar, and the content area. On screens under 1024px the sidebar becomes an off-canvas drawer.
+- The shell does the one signed-in check for the whole admin. Pages get the user, `setTopbarMeta` and `denyAccess` (call it on a 403) from `useAdminShell()`. Staff status is still decided only by the server (`lib/adminAuth.ts`).
+- `/admin` is a single page. The visible section comes from `?section=overview|queue|leads|matters|claims|finance|waitlist` (and `&sub=invoices|settings` for Finance). `adminSections.ts` holds the list. `?caseId=` with no section opens All Matters, which keeps the staff email "review" links working. A new section means adding it to `adminSections.ts`, an icon in `AdminSidebar.tsx`, and a branch in `app/admin/page.tsx`.
 - `components/Reveal.jsx` — IntersectionObserver scroll reveal wrapper. Props: `delay` (ms).
 
 ---
@@ -149,6 +189,9 @@ npm install
 #   https://pandaslp.com.ng/auth/callback
 npm run dev
 ```
+
+### Local database (optional, recommended for development)
+`supabase/` holds a local Supabase setup (Docker + `npx supabase`). `npx supabase start` runs Postgres/Auth/Storage locally and applies `supabase/migrations/` — copies of the root `supabase-schema.sql` + `add-*.sql`/`fix-*.sql` files, in order. A new root SQL migration must also be copied into `supabase/migrations/` (next timestamp) or the local DB won't have it. `project_id` in `supabase/config.toml` must stay a plain name (`pandaslp`) — the folder name `NAIJACLAI.-APP` is an invalid hostname and breaks startup. Locally: API `http://127.0.0.1:54321`, Studio (DB browser) `:54323`, magic-link emails land in Mailpit `:54324` instead of a real inbox.
 
 ---
 

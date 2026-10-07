@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { getGoogleConnectionStatus, googleConfigStatus } from '@/lib/google/oauth'
 
 const RATE_LIMIT = 30
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -27,6 +28,8 @@ export async function GET(req: Request) {
   if (authResult instanceof Response) return authResult
 
   const paystackConfigured = !isPlaceholder(process.env.PAYSTACK_SECRET_KEY) && !isPlaceholder(process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY)
+  const googleConfig = googleConfigStatus()
+  const googleConn = googleConfig.configured ? await getGoogleConnectionStatus() : null
 
   const checks = [
     {
@@ -88,6 +91,18 @@ export async function GET(req: Request) {
       label: 'ChatGPT plugin key',
       ok: Boolean(process.env.PLUGIN_API_KEY),
       detail: process.env.PLUGIN_API_KEY ? 'Set.' : 'Unset — /api/plugin/intake 503s; the ChatGPT Actions integration is dark.',
+    },
+    {
+      key: 'google_drive',
+      label: 'Google Drive (brand sheets)',
+      ok: Boolean(googleConn?.connected && !googleConn.lastError),
+      detail: !googleConfig.configured
+        ? `Not set up — brands can't get sheets. Missing: ${googleConfig.missing.join(', ')}.`
+        : !googleConn?.connected
+          ? 'Env vars set, but no Google account connected yet — Admin → Brands → Connect Google Drive.'
+          : googleConn.lastError
+            ? `Connected as ${googleConn.accountEmail}, but the last call failed: ${googleConn.lastError}`
+            : `Connected as ${googleConn.accountEmail}.`,
     },
     {
       key: 'allow_stub_payments',
