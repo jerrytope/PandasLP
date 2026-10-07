@@ -5,27 +5,10 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 import { getNewOrderAlertEmail } from '@/lib/emailTemplates'
 import { buildDemandLetterDocxBuffer } from '@/lib/docxGenerator.js'
+import { verifyPayment, claimPaymentReference, releasePaymentReference } from '@/lib/paystackVerify'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 5 * 60 * 1000
-
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY
-const AMOUNT_TOLERANCE_NAIRA = 1 // guard against float/kobo rounding, not a real discount
-
-function isPaystackConfigured() {
-  return Boolean(PAYSTACK_SECRET_KEY) && !PAYSTACK_SECRET_KEY.includes('placeholder')
-}
-
-// Stub mode (no real PAYSTACK_SECRET_KEY) trusts the client-reported amount entirely — fine
-// for local/preview testing, not fine if it's ever live on the real production domain. This
-// is a deliberate, explicit opt-in so an accidentally-unset key fails loudly instead of
-// silently giving away the service for free. Set ALLOW_STUB_PAYMENTS=true only if you
-// genuinely want production running in test mode for a short window.
-function stubPaymentsAllowedHere() {
-  const isRealProduction = process.env.VERCEL_ENV === 'production'
-  if (!isRealProduction) return true
-  return process.env.ALLOW_STUB_PAYMENTS === 'true'
-}
 
 export async function POST(req: Request) {
   const { allowed, retryAfterSeconds } = checkRateLimit(`verify-payment:${getClientIp(req)}`, RATE_LIMIT, RATE_WINDOW_MS)
@@ -76,51 +59,28 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, amount: caseData.amount_paid, alreadyPaid: true })
   }
 
+  // Set only by /api/save-document (server-side, from lib/casePricing.ts) — the browser has no
+  // write access to this column (see lock-case-columns.sql), so it is safe to check the
+  // payment against. No price on record means no saved document to pay for, and 0 means the
+  // firm invoices the fee directly; neither may be paid through here. This used to skip the
+  // amount check entirely when expected_amount was null, accepting any amount at all.
   const expectedAmount: number | null = caseData.expected_amount ?? null
-
-  let verifiedAmount: number
-  let verifiedReference: string
-
-  if (!isPaystackConfigured()) {
-    // No live Paystack secret key yet — this project is still in test mode
-    // (NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is a placeholder too, see lib/paystackHelper.js), so
-    // PaymentForm's stub checkout never moved real money. There is nothing to verify against;
-    // trust the client-reported amount ONLY because no real gateway is wired up at all. The
-    // moment a real PAYSTACK_SECRET_KEY is set, this branch stops being reachable in practice
-    // (isPaystackConfigured() becomes true) and every payment is independently verified below.
-    if (!stub) {
-      return Response.json({ error: 'Payment gateway is not configured.' }, { status: 503 })
-    }
-    if (!stubPaymentsAllowedHere()) {
-      return Response.json(
-        { error: 'Payments are not yet configured on this site. Please try again shortly.' },
-        { status: 503 },
-      )
-    }
-    verifiedAmount = amount
-    verifiedReference = reference
-  } else {
-    const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
-      headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
-    })
-    const verifyData = await verifyRes.json().catch(() => null)
-
-    if (!verifyRes.ok || !verifyData?.status || !verifyData.data) {
-      return Response.json({ error: 'Could not verify payment with Paystack.' }, { status: 502 })
-    }
-    if (verifyData.data.status !== 'success') {
-      return Response.json({ error: 'Payment was not successful.' }, { status: 402 })
-    }
-
-    verifiedAmount = verifyData.data.amount / 100 // kobo → naira
-    verifiedReference = verifyData.data.reference
+  if (expectedAmount === null || expectedAmount <= 0) {
+    return Response.json({ error: 'There is no confirmed price for this case yet.' }, { status: 409 })
   }
 
-  if (expectedAmount !== null && Math.abs(verifiedAmount - expectedAmount) > AMOUNT_TOLERANCE_NAIRA) {
-    return Response.json(
-      { error: `Amount paid (₦${verifiedAmount}) does not match the quoted price (₦${expectedAmount}).` },
-      { status: 400 },
-    )
+  const verified = await verifyPayment({ reference, expectedAmount, clientAmount: amount, stub })
+  if (verified.ok === false) {
+    return Response.json({ error: verified.error }, { status: verified.status })
+  }
+  const verifiedAmount = verified.amount
+  const verifiedReference = verified.reference
+
+  // One payment pays for one case. Before this, a single real payment's reference could be
+  // replayed against any number of other cases at the same price.
+  const claimed = await claimPaymentReference(verifiedReference, 'case', verifiedAmount, caseId)
+  if (claimed.ok === false) {
+    return Response.json({ error: claimed.error }, { status: claimed.status })
   }
 
   // Delivery option for small-claims is normally already set on the case row (AgentChat.tsx's
@@ -144,6 +104,8 @@ export async function POST(req: Request) {
     .eq('id', caseId)
 
   if (updateErr) {
+    // Free the reference so the client's retry with the same payment isn't refused as reused.
+    await releasePaymentReference(verifiedReference)
     return Response.json({ error: 'Payment verified but failed to update the case.' }, { status: 500 })
   }
 

@@ -20,6 +20,8 @@ export default function App() {
   const [step, setStep] = useState('landing')
   const [customClaim, setCustomClaim] = useState(null)
   const [paymentContext, setPaymentContext] = useState(null)
+  const [claimSubmitting, setClaimSubmitting] = useState(false)
+  const [claimError, setClaimError] = useState('')
 
   // Auth
   const [user, setUser] = useState(null)
@@ -96,7 +98,6 @@ export default function App() {
       .insert({
         user_id: user.id,
         agent_id: 'judgment-enforcement',
-        status: 'draft',
         parent_case_id: enforcementSource.id,
         judgment_amount: judgmentAmount,
       })
@@ -127,18 +128,44 @@ export default function App() {
     setStep('payment')
   }
 
-  function handlePaymentSuccess() {
-    if (customClaim) {
-      fetch('/api/custom-claim', {
+  // The server confirms the payment with Paystack before saving the claim (see
+  // app/api/custom-claim/route.ts), so the confirmation screen only shows once it has —
+  // this used to fire-and-forget and show "Submitted" whether or not the claim was saved.
+  async function handlePaymentSuccess(response) {
+    if (!customClaim || claimSubmitting) return
+    setClaimSubmitting(true)
+    setClaimError('')
+    try {
+      const res = await fetch('/api/custom-claim', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...customClaim, amountPaid: paymentContext?.amount ?? 0 }),
-      }).catch((err) => console.error('Failed to submit custom claim:', err))
+        body: JSON.stringify({
+          ...customClaim,
+          reference: response.reference,
+          amount: paymentContext?.amount,
+          stub: Boolean(response.stub),
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.error) {
+        setClaimError(
+          `${data.error || 'We could not confirm your payment.'} If you were charged, email pandaslegalpractitioners@gmail.com with payment reference ${response.reference}.`,
+        )
+        return
+      }
+      setStep('custom-confirmation')
+    } catch (err) {
+      console.error('Failed to submit custom claim:', err)
+      setClaimError(
+        `Network error. If you were charged, email pandaslegalpractitioners@gmail.com with payment reference ${response.reference}.`,
+      )
+    } finally {
+      setClaimSubmitting(false)
     }
-    setStep('custom-confirmation')
   }
 
   function handlePaymentBack() {
+    setClaimError('')
     setStep('custom-claim')
   }
 
@@ -179,6 +206,8 @@ export default function App() {
             description={paymentContext.description}
             onSuccess={handlePaymentSuccess}
             onBack={handlePaymentBack}
+            busy={claimSubmitting}
+            error={claimError}
           />
         )}
 

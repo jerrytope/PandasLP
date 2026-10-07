@@ -247,7 +247,8 @@ export default function AgentChat({
         : getAttribution()
       const { data, error: dbErr } = await supabase
         .from('cases')
-        .insert({ user_id: userId, agent_id: agent.id, status: 'draft', source, source_detail: sourceDetail })
+        // status is left to the column default ('draft') — the browser isn't allowed to set it.
+        .insert({ user_id: userId, agent_id: agent.id, source, source_detail: sourceDetail })
         .select('id, case_number, created_at')
         .single()
 
@@ -295,40 +296,32 @@ export default function AgentChat({
     if (msgErr) console.error('Failed to save conversation turn:', msgErr)
 
     if (newDoc) {
-      // Provisional — /api/update-case-status recalculates this from the real "served" date
-      // once staff mark the letter served. 14 days matches the response period stated in the
-      // letter itself (see lib/agents.ts) and Form SCA 1's actual demand-letter requirement.
-      const deadline =
-        agent.id === 'small-claims'
-          ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-          : null
-
-      // Recorded now, before payment, so /api/verify-payment can trust it instead of
-      // re-deriving from the paid amount — a discount applied later must never be able to
-      // silently reclassify a pandas-serves purchase as self-serve.
-      const deliveryOption =
-        agent.id === 'small-claims' ? ((newDoc.price ?? amount) >= 25000 ? 'pandas-serves' : 'self-serve') : null
-
-      const { error: docErr } = await supabase
-        .from('cases')
-        .update({
-          document_title: newDoc.title,
-          document_body: newDoc.body,
-          status: 'document_ready',
-          expected_amount: newDoc.price ?? amount,
-          ...(deadline ? { deadline_at: deadline } : {}),
-          ...(deliveryOption ? { delivery_option: deliveryOption } : {}),
-        })
-        .eq('id', id)
-
-      if (docErr) {
-        console.error('Failed to save document to case:', docErr)
-        return false
-      }
-
-      trackEvent('document_ready', { agent_id: agent.id, amount: newDoc.price ?? amount })
+      const confirmedPrice = await saveDocument(id, newDoc)
+      if (confirmedPrice === null) return false
+      trackEvent('document_ready', { agent_id: agent.id, amount: confirmedPrice })
     }
     return true
+  }
+
+  // The browser can't write a document or its price to the case itself (see
+  // lock-case-columns.sql) — /api/save-document does, and decides the price server-side from
+  // lib/casePricing.ts. Returns that confirmed price, or null if the save failed. The preview
+  // then shows the confirmed price, so the client is asked to pay exactly what
+  // /api/verify-payment will check against.
+  async function saveDocument(id: string, doc: DraftDocument): Promise<number | null> {
+    const res = await authedFetch('/api/save-document', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ caseId: id, title: doc.title, body: doc.body, price: doc.price }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || typeof data.expectedAmount !== 'number') {
+      console.error('Failed to save document to case:', data.error ?? res.status)
+      return null
+    }
+    const confirmedPrice: number = data.expectedAmount
+    setDraftDoc((prev) => (prev && prev.body === doc.body ? { ...prev, price: confirmedPrice } : prev))
+    return confirmedPrice
   }
 
   async function saveClientPhone(phone: string) {
@@ -636,10 +629,9 @@ export default function AgentChat({
       setError("We couldn't save the translated document. Please try again before paying.")
       return
     }
-    const { error: docErr } = await supabase.from('cases').update({ document_body: translatedBody }).eq('id', caseInfo.id)
-    setDocSaveFailed(Boolean(docErr))
-    if (docErr) {
-      console.error('Failed to save translated document:', docErr)
+    const saved = (await saveDocument(caseInfo.id, newDoc).catch(() => null)) !== null
+    setDocSaveFailed(!saved)
+    if (!saved) {
       setError("We couldn't save the translated document. Please try again before paying — your progress may not persist on refresh otherwise.")
     }
   }
