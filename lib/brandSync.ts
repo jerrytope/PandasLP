@@ -3,7 +3,8 @@
 //   2. picks up New rows — claiming each in the database first, so no other run can take it,
 //   3. checks the borrower's details and documents (Missing Documents if anything's absent),
 //   4. drafts the demand letter with the existing lawyer-intake agent (lib/brandLetter.ts),
-//   5. rewrites the app's columns in the sheet from the database, the source of truth.
+//   5. sends the borrower reminders that are due (Day 7, Day 14: lib/brandServing.ts),
+//   6. rewrites the app's columns in the sheet from the database, the source of truth.
 //
 // "NEVER TWICE" — how a borrower can't be processed twice even if two runs overlap:
 //   - runBrandSync takes a lease (firm_settings.brand_sync_lease_until), so runs don't overlap;
@@ -15,7 +16,7 @@
 // only straight after re-reading the sheet (brands sort and delete rows).
 
 import { supabaseAdmin } from './supabaseAdmin'
-import { columnLetter, BRAND_CASE_STATUS_LABELS, type BrandCaseStatus } from './brandSheet'
+import { columnLetter, BRAND_CASE_STATUS_LABELS } from './brandSheet'
 import {
   agentCellsDiffer,
   agentCellsFor,
@@ -25,13 +26,15 @@ import {
   parseSheetValues,
   sheetDateTime,
   snapshotHash,
-  type BrandCaseState,
   type SheetRow,
 } from './brandRows'
 import { draftBrandLetter, type BrandDrafter } from './brandLetter'
 import { buildDemandLetterDocxBuffer } from './docxGenerator.js'
 import { getBrandWorkspace, type BrandWorkspace } from './google/workspace'
 import type { CellWrite } from './google/workspaceTypes'
+import { CASE_FIELDS, logEvent, setStatus, writeAgentCells, type BrandCaseRecord, type BrandRecord } from './brandStore'
+import { retryFinalLetters, sendDueReminders, type Mailer } from './brandServing'
+import { isMailerConfigured, sendMail } from './mailer'
 
 /** A row stuck in Checking this long belongs to a run that died; it goes back to New. */
 const STALE_CLAIM_MS = 30 * 60 * 1000
@@ -49,6 +52,8 @@ export interface SyncDeps {
   maxDraftsPerBrand: number
   /** Stop starting new drafts after this time (ms since epoch), so a run ends inside its time limit. */
   deadline: number
+  /** Sends the borrower reminders (lib/brandServing.ts). */
+  mail: Mailer
 }
 
 export interface BrandSyncReport {
@@ -56,42 +61,13 @@ export interface BrandSyncReport {
   code: string
   assigned: number
   drafted: number
+  reminded: number
   missing: number
   failed: number
   flagged: number
   skipped?: string
   error?: string
 }
-
-interface BrandRecord {
-  id: string
-  code: string
-  name: string
-  address: string | null
-  contact_emails: string[]
-  per_letter_fee_kobo: number
-  sheet_id: string | null
-  sheet_tab_id: number | null
-  letters_folder_id: string | null
-  setup_completed_at: string | null
-  owner_user_id: string | null
-  active: boolean
-}
-
-interface BrandCaseRecord extends BrandCaseState {
-  id: string
-  case_ref: string
-  case_id: string | null
-  snapshot_hash: string | null
-  claimed_at: string | null
-  attempts: number
-  letter_file_id: string | null
-  /** The brand's columns as they were when the row was picked up. */
-  borrower: Record<string, string> | null
-}
-
-const CASE_FIELDS =
-  'id, case_ref, status, case_id, snapshot_hash, borrower, claimed_at, attempts, letter_url, letter_file_id, served_at, day7_sent_at, day14_sent_at, updated_at'
 
 export function defaultSyncDeps(now = new Date()): SyncDeps {
   return {
@@ -100,14 +76,11 @@ export function defaultSyncDeps(now = new Date()): SyncDeps {
     now: () => new Date(),
     maxDraftsPerBrand: 5,
     deadline: now.getTime() + 240_000,
+    mail: async (opts) => {
+      if (!isMailerConfigured()) throw new Error('Email is not set up (GMAIL_APP_PASSWORD).')
+      return sendMail(opts)
+    },
   }
-}
-
-// ── Small database helpers ────────────────────────────────────────────────
-
-async function logEvent(c: { id: string; case_ref: string }, eventType: string, detail: Record<string, unknown> = {}, actor = 'system') {
-  const { error } = await supabaseAdmin.from('brand_case_events').insert({ brand_case_id: c.id, case_ref: c.case_ref, event_type: eventType, detail, actor })
-  if (error) console.error(`Failed to log ${eventType} for ${c.case_ref}:`, error.message)
 }
 
 /** One open flag per (brand, case, kind) — a problem isn't re-flagged on every run. */
@@ -125,45 +98,11 @@ async function flagOnce(brandId: string, kind: string, caseRef: string, detail: 
   return true
 }
 
-async function setStatus(c: BrandCaseRecord, status: BrandCaseStatus, extra: Record<string, unknown> = {}) {
-  const { error } = await supabaseAdmin.from('brand_cases').update({ status, ...extra }).eq('id', c.id)
-  if (error) throw new Error(`Could not update ${c.case_ref}: ${error.message}`)
-  await logEvent(c, 'status_changed', { from: c.status, to: status })
-  c.status = status
-}
-
-/** Re-read the sheet and map Case ID → row number, ignoring Case IDs that appear twice. */
-async function locateRows(ws: BrandWorkspace, brand: BrandRecord): Promise<Map<string, number>> {
-  const parsed = parseSheetValues(await ws.readSheet(brand.sheet_id!, brand.sheet_tab_id!))
-  if (parsed.ok === false) throw new Error(parsed.error)
-  const seen = new Map<string, number[]>()
-  for (const r of parsed.rows) {
-    const ref = r.values['Case ID']
-    if (ref) seen.set(ref, [...(seen.get(ref) ?? []), r.rowNumber])
-  }
-  return new Map([...seen].filter(([, rows]) => rows.length === 1).map(([ref, rows]) => [ref, rows[0]]))
-}
-
-/** Writes each borrower's app-owned cells, finding their rows by Case ID straight before writing. */
-async function writeAgentCells(ws: BrandWorkspace, brand: BrandRecord, cases: BrandCaseRecord[]) {
-  if (cases.length === 0) return
-  const rowOf = await locateRows(ws, brand)
-  const writes: CellWrite[] = []
-  for (const c of cases) {
-    const row = rowOf.get(c.case_ref)
-    if (!row) continue
-    for (const [header, value] of Object.entries(agentCellsFor(c))) {
-      writes.push({ row, column: columnLetter(header as keyof ReturnType<typeof agentCellsFor>), value })
-    }
-  }
-  await ws.writeCells(brand.sheet_id!, brand.sheet_tab_id!, writes)
-}
-
 // ── One brand ─────────────────────────────────────────────────────────────
 
 export async function syncBrand(brandId: string, deps: SyncDeps): Promise<BrandSyncReport> {
   const { data: brand } = await supabaseAdmin.from('brands').select('*').eq('id', brandId).single<BrandRecord>()
-  const report: BrandSyncReport = { brandId, code: brand?.code ?? '?', assigned: 0, drafted: 0, missing: 0, failed: 0, flagged: 0 }
+  const report: BrandSyncReport = { brandId, code: brand?.code ?? '?', assigned: 0, drafted: 0, reminded: 0, missing: 0, failed: 0, flagged: 0 }
   if (!brand) return { ...report, skipped: 'Brand not found.' }
   if (!brand.active) return { ...report, skipped: 'Inactive.' }
   if (!brand.setup_completed_at || !brand.sheet_id || brand.sheet_tab_id === null) return { ...report, skipped: 'Google setup not finished.' }
@@ -321,7 +260,26 @@ export async function syncBrand(brandId: string, deps: SyncDeps): Promise<BrandS
       }
     }
 
-    // ── 6. The sheet's app columns ← the database ──
+    // ── 6. Approved letters whose FINAL copy didn't reach Drive; borrower reminders ──
+    const { data: activeRows } = await supabaseAdmin
+      .from('brand_cases')
+      .select(CASE_FIELDS)
+      .eq('brand_id', brand.id)
+      .in('status', ['lawyer_approved', 'served', 'day7_sent'])
+    const active = (activeRows ?? []) as BrandCaseRecord[]
+    await retryFinalLetters(active, ws)
+    if (active.some((c) => c.served_at)) {
+      const now = parseSheetValues(await ws.readSheet(brand.sheet_id, brand.sheet_tab_id))
+      if (now.ok === false) throw new Error(now.error)
+      const counts = new Map<string, number>()
+      for (const r of now.rows) if (r.values['Case ID']) counts.set(r.values['Case ID'], (counts.get(r.values['Case ID']) ?? 0) + 1)
+      const single = new Map(now.rows.filter((r) => counts.get(r.values['Case ID']) === 1).map((r) => [r.values['Case ID'], r]))
+      const reminders = await sendDueReminders(brand, active, single, deps)
+      report.reminded += reminders.sent
+      report.failed += reminders.failed
+    }
+
+    // ── 7. The sheet's app columns ← the database ──
     const { data: latest } = await supabaseAdmin.from('brand_cases').select(CASE_FIELDS).eq('brand_id', brand.id)
     const fresh = parseSheetValues(await ws.readSheet(brand.sheet_id, brand.sheet_tab_id))
     if (fresh.ok === false) throw new Error(fresh.error)

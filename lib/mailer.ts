@@ -19,8 +19,10 @@ function getTransporter() {
   })
 }
 
-interface SendMailOptions {
+export interface SendMailOptions {
   to: string
+  /** Copied in, visible to the recipient (e.g. the brand on a borrower's reminder). */
+  cc?: string | string[]
   replyTo?: string
   subject: string
   text: string

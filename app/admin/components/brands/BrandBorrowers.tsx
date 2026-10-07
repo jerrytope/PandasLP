@@ -14,6 +14,7 @@ interface BorrowerRow {
   letter_url: string | null
   last_error: string | null
   attempts: number
+  awaiting_brand_decision_at: string | null
   updated_at: string
 }
 
@@ -112,6 +113,9 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
                       <a href={c.letter_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                         Letter <ExternalLink size={12} aria-hidden="true" />
                       </a>
+                    )}
+                    {c.awaiting_brand_decision_at && (
+                      <div style={{ color: 'var(--warning)', fontWeight: 600 }}>Awaiting the brand’s decision</div>
                     )}
                     {c.status === 'missing_documents' && c.missing_items.length > 0 && (
                       <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--text-2)' }}>

@@ -5,6 +5,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { isAdminEmail } from '@/lib/adminAuth'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
 import { getReviewChecklist } from '@/lib/reviewChecklists'
+import { approveBrandLetter, brandWorkspaceOrNull, recordBrandServed } from '@/lib/brandServing'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -121,7 +122,10 @@ export async function POST(req: Request) {
       )
     }
   } else {
-    const requiredStatus = REQUIRED_PRIOR_STATUS[action]
+    // A brand borrower's matter is never paid per letter (the brand is invoiced monthly), so
+    // review and serving start from document_ready instead. Everything else stays the same.
+    const brandPrePayment = Boolean(caseData.brand_id) && (action === 'markReviewed' || action === 'markServed')
+    const requiredStatus = brandPrePayment ? 'document_ready' : REQUIRED_PRIOR_STATUS[action]
     if (caseData.status !== requiredStatus) {
       return Response.json(
         { error: `This case must be "${requiredStatus}" before it can move to the next stage (it's currently "${caseData.status}").` },
@@ -155,7 +159,9 @@ export async function POST(req: Request) {
     }
   }
 
-  const update: Record<string, unknown> = { status: NEXT_STATUS[action] }
+  // Reviewing doesn't move the stage on, whichever stage that is (paid, or document_ready for a brand).
+  const nextStatus = action === 'markReviewed' ? caseData.status : NEXT_STATUS[action]
+  const update: Record<string, unknown> = { status: nextStatus }
   if (action === 'markReviewed') {
     update.reviewed_at = new Date().toISOString()
     update.reviewed_by = callerData.user.email
@@ -190,8 +196,6 @@ export async function POST(req: Request) {
     return Response.json({ error: `Failed to update case status.${detail}` }, { status: 500 })
   }
 
-  const nextStatus = NEXT_STATUS[action]
-
   // Audit trail — fire-and-forget, same reasoning as the emails below: a failed log write
   // must never fail or roll back a status change that already succeeded. Skipped for
   // markReviewed/sendReviewedDocument since status doesn't actually change (paid -> paid
@@ -225,6 +229,15 @@ export async function POST(req: Request) {
       return Response.json({ error: result.error }, { status: result.status })
     }
     await supabaseAdmin.from('cases').update({ reviewed_document_sent_at: new Date().toISOString() }).eq('id', caseId)
+  }
+
+  // A brand borrower: approval makes the letter billable and final in the brand's Drive;
+  // serving updates the borrower's record and the brand's sheet (lib/brandServing.ts).
+  if (caseData.brand_id && action === 'markReviewed') {
+    await approveBrandLetter(caseId, callerData.user.email ?? 'staff', { workspace: brandWorkspaceOrNull(), now: () => new Date() })
+  }
+  if (caseData.brand_id && action === 'markServed') {
+    await recordBrandServed(caseId, callerData.user.email ?? 'staff', { workspace: brandWorkspaceOrNull(), now: () => new Date() })
   }
 
   if (RESOLUTION_STAGES.has(nextStatus) && !caseData.resolution_email_sent) {

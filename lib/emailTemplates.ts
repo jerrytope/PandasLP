@@ -57,7 +57,7 @@ export interface NewOrderAlertEmailData {
   hasEditableDraftAttached?: boolean
 }
 
-function baseWrapper(content: string) {
+export function baseWrapper(content: string) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

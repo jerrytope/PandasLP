@@ -24,6 +24,10 @@ export interface AdminCaseRow {
   reviewed_by: string | null
   reviewed_document_sent_at: string | null
   source: string | null
+  /** For a brand borrower's matter: its Case ID, e.g. MONIE-0001. */
+  source_detail: string | null
+  /** Set when the matter is a borrower from a brand's sheet (B2B loan recovery). */
+  brand_id: string | null
   is_test: boolean
   review_checklist: Record<string, boolean> | null
   second_reviewer_email: string | null
@@ -113,8 +117,16 @@ export const NEXT_ACTION: Record<string, { action: CaseAction; label: string } |
   judgment_obtained: { action: 'markClosed', label: 'Close Case' },
 }
 
+/**
+ * In the review-and-serve stage: paid, or a brand borrower's drafted letter (brands are
+ * invoiced monthly, so their letters are reviewed and served before any payment).
+ */
+export function inReviewStage(c: Pick<AdminCaseRow, 'status' | 'brand_id'>): boolean {
+  return c.status === 'paid' || (Boolean(c.brand_id) && c.status === 'document_ready')
+}
+
 export function nextActionFor(c: AdminCaseRow): { action: CaseAction; label: string } | undefined {
-  if (c.status === 'paid') {
+  if (inReviewStage(c)) {
     return c.reviewed_at
       ? { action: 'markServed', label: 'Mark Served' }
       : { action: 'markReviewed', label: 'Review & Verify Checklist' }

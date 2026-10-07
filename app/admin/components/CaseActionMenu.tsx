@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { downloadTextDocument } from '@/lib/pdfGenerator'
 import { downloadDemandLetterDocx } from '@/lib/docxGenerator'
-import type { AdminCaseRow, CaseAction } from './types'
+import { inReviewStage, type AdminCaseRow, type CaseAction } from './types'
 import { Download, RefreshCw, Trash2, CheckCircle2, ShieldAlert, MoreVertical } from 'lucide-react'
 
 interface CaseActionMenuProps {
@@ -34,7 +34,7 @@ export default function CaseActionMenu({
   const [downloadingDocx, setDownloadingDocx] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
-  const canDownloadReviewCopy = c.status === 'paid'
+  const canDownloadReviewCopy = inReviewStage(c)
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>

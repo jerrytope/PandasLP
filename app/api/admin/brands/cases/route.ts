@@ -9,13 +9,31 @@ export async function GET(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  const brandId = new URL(req.url).searchParams.get('brandId')
-  if (!brandId) return Response.json({ error: 'Missing brandId.' }, { status: 400 })
+  const params = new URL(req.url).searchParams
+  // One borrower and their timeline, for the case drawer of a brand matter.
+  const caseId = params.get('caseId')
+  if (caseId) {
+    const { data: bc } = await supabaseAdmin
+      .from('brand_cases')
+      .select('id, case_ref, status, borrower, letter_url, last_error, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, billable_at, brands(name, code)')
+      .eq('case_id', caseId)
+      .maybeSingle()
+    if (!bc) return Response.json({ brandCase: null, events: [] })
+    const { data: events } = await supabaseAdmin
+      .from('brand_case_events')
+      .select('id, event_type, detail, actor, created_at')
+      .eq('brand_case_id', bc.id)
+      .order('created_at', { ascending: true })
+    return Response.json({ brandCase: bc, events: events ?? [] })
+  }
+
+  const brandId = params.get('brandId')
+  if (!brandId) return Response.json({ error: 'Missing brandId or caseId.' }, { status: 400 })
 
   const [{ data: cases, error }, { data: flags }] = await Promise.all([
     supabaseAdmin
       .from('brand_cases')
-      .select('id, case_ref, status, case_id, borrower, missing_items, letter_url, last_error, attempts, served_at, day7_sent_at, day14_sent_at, created_at, updated_at')
+      .select('id, case_ref, status, case_id, borrower, missing_items, letter_url, last_error, attempts, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, created_at, updated_at')
       .eq('brand_id', brandId)
       .order('case_ref', { ascending: true }),
     supabaseAdmin

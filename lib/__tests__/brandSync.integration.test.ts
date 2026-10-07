@@ -49,7 +49,7 @@ describe.skipIf(!reachable)('brand sync against the local database', () => {
     if (borrower.fullName === 'Ask Me') return { ok: false, kind: 'needs_info', questions: ['Is there a guarantor?'] }
     return { ok: true, doc: { title: 'Letter of Demand', body: `Our Ref: {{REF_NUMBER}}\nDear ${borrower.fullName}, pay ₦${borrower.amountOutstanding}.` } }
   }
-  const deps = () => ({ workspace: drive.workspace(), draft, now: () => new Date(), maxDraftsPerBrand: 10, deadline: Date.now() + 60_000 })
+  const deps = () => ({ workspace: drive.workspace(), draft, now: () => new Date(), maxDraftsPerBrand: 10, deadline: Date.now() + 60_000, mail: async () => {} })
 
   const borrowerRow = (name: string, extra: Record<string, string | number> = {}) => ({
     'Borrower Full Name': name,

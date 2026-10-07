@@ -13,11 +13,13 @@ import InvoicesView from './finance/InvoicesView'
 import { useBillingSettings } from './finance/shared'
 import CaseReviewStepper from './CaseReviewStepper'
 import CaseActionMenu from './CaseActionMenu'
+import BrandCaseTimeline from './brands/BrandCaseTimeline'
 import {
   formatDate,
   STAGE_LABEL,
   STAGE_BADGE_STYLE,
   nextActionFor,
+  inReviewStage,
   type AdminCaseRow,
   type CaseAction,
   type CaseMessage,
@@ -446,7 +448,7 @@ export default function CaseDetailDrawer({
                         lineHeight: 1.7,
                       }}
                     >
-                      {c.status !== 'paid' || !c.reviewed_at ? (
+                      {!inReviewStage(c) || !c.reviewed_at ? (
                         <div
                           style={{
                             marginBottom: 14,
@@ -851,8 +853,11 @@ export default function CaseDetailDrawer({
               </div>
             </div>
 
-            {/* Review & Stamping Stepper (if Paid) */}
-            {c.status === 'paid' && (
+            {/* A brand borrower: where they are, and everything that has happened to them */}
+            {c.brand_id && <BrandCaseTimeline caseId={c.id} />}
+
+            {/* Review & Stamping Stepper (if Paid, or a brand borrower's drafted letter) */}
+            {inReviewStage(c) && (
               <CaseReviewStepper
                 c={c}
                 updatingId={updatingId}

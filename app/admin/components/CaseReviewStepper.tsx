@@ -5,7 +5,7 @@ import { authedFetch } from '@/lib/supabaseClient'
 import { getReviewChecklist, isHighRiskDocument } from '@/lib/reviewChecklists'
 import { buildStampedDocument } from '@/lib/pdfGenerator'
 import { formatDate, type AdminCaseRow, type CaseAction } from './types'
-import { Check, CheckCircle2, FileCheck, Send, MessageSquare, AlertCircle, Eye, Upload } from 'lucide-react'
+import { Check, CheckCircle2, FileCheck, Send, MessageSquare, AlertCircle, Eye, Upload, Mail } from 'lucide-react'
 
 interface CaseReviewStepperProps {
   c: AdminCaseRow
@@ -41,6 +41,9 @@ export default function CaseReviewStepper({
   // Step 3 state (Dispatch)
   const [dispatchingWhatsApp, setDispatchingWhatsApp] = useState(false)
   const [whatsAppError, setWhatsAppError] = useState('')
+  const [servingByEmail, setServingByEmail] = useState(false)
+  const [serveEmailError, setServeEmailError] = useState('')
+  const isBrand = Boolean(c.brand_id)
 
   const isReviewed = Boolean(c.reviewed_at)
   const hasStamp = c.hasStampedDocument || stampUploaded
@@ -137,6 +140,30 @@ export default function CaseReviewStepper({
       setWhatsAppError('Network error while dispatching.')
     } finally {
       setDispatchingWhatsApp(false)
+    }
+  }
+
+  // A brand borrower: email the stamped letter to the borrower (the brand copied), which also
+  // marks the matter served. See app/api/admin/brands/serve/route.ts.
+  async function serveBorrowerByEmail() {
+    setServingByEmail(true)
+    setServeEmailError('')
+    try {
+      const res = await authedFetch('/api/admin/brands/serve', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ caseId: c.id }),
+      })
+      const data = await res.json()
+      if (!res.ok || data.error) {
+        setServeEmailError(data.error || 'Could not serve the letter.')
+        return
+      }
+      onReloadCase?.()
+    } catch {
+      setServeEmailError('Network error. Check the borrower’s timeline before trying again.')
+    } finally {
+      setServingByEmail(false)
     }
   }
 
@@ -472,10 +499,26 @@ export default function CaseReviewStepper({
         </div>
 
         <p style={{ fontSize: 12.5, color: 'var(--text-2)', marginBottom: 10 }}>
-          Deliver the finalized document to the client via email, and formally serve the debtor via verified WhatsApp dispatch.
+          {isBrand
+            ? 'Serve the borrower: email the stamped letter (the brand is copied), or serve by WhatsApp and then Mark Served. Day 7 and Day 14 reminders follow automatically.'
+            : 'Deliver the finalized document to the client via email, and formally serve the debtor via verified WhatsApp dispatch.'}
         </p>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          {/* Serve a brand's borrower by email */}
+          {isBrand && isReviewed && (
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              disabled={!hasStamp || servingByEmail}
+              onClick={serveBorrowerByEmail}
+              title={!hasStamp ? 'Upload or attach practicing stamp before serving' : undefined}
+            >
+              <Mail size={13} strokeWidth={2} />
+              {servingByEmail ? 'Serving…' : 'Serve Borrower by Email'}
+            </button>
+          )}
+
           {/* Email Send to Customer */}
           {c.status === 'paid' && isReviewed && (
             <button
@@ -510,6 +553,9 @@ export default function CaseReviewStepper({
           )}
         </div>
 
+        {serveEmailError && (
+          <div role="alert" style={{ marginTop: 6, fontSize: 12, color: 'var(--danger)' }}>{serveEmailError}</div>
+        )}
         {whatsAppError && (
           <div style={{ marginTop: 6, fontSize: 12, color: 'var(--danger)' }}>{whatsAppError}</div>
         )}

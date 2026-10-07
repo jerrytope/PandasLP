@@ -37,6 +37,12 @@ export async function sendCaseEmail(caseId: string, options: SendCaseEmailOption
     return { ok: false, error: 'Case not found.', status: 404 }
   }
 
+  // The client follow-ups (Day 0/7/14) are written for a client who served their own letter.
+  // A brand borrower's matter has its own reminders, to the borrower (lib/brandServing.ts).
+  if (options.type === 'follow_up' && caseData.brand_id) {
+    return { ok: false, error: 'Brand borrowers get their own reminders, not the client follow-ups.', status: 409 }
+  }
+
   // A lawyer-intake case (see app/admin/page.tsx's Custom Claims tab) is owned by the staff
   // member who ran the session, not the actual client — the client never has a Supabase
   // account for auth.admin.getUserById to resolve at all. client_email, captured directly

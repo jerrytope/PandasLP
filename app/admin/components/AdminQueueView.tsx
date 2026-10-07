@@ -1,6 +1,6 @@
 'use client'
 
-import { DAY_MS, type AdminCaseRow, type CaseAction } from './types'
+import { DAY_MS, inReviewStage, type AdminCaseRow, type CaseAction } from './types'
 import CaseCard from './CaseCard'
 import NegotiationFollowUps from './NegotiationFollowUps'
 import { AlertTriangle, Clock, Scale, Inbox } from 'lucide-react'
@@ -38,7 +38,7 @@ export default function AdminQueueView({
 
   // 1. Unserved paid cases
   const unserved = cases
-    .filter((c) => c.status === 'paid' && !c.is_test)
+    .filter((c) => inReviewStage(c) && !c.is_test)
     .sort((a, b) => new Date(a.paid_at ?? a.created_at).getTime() - new Date(b.paid_at ?? b.created_at).getTime())
 
   // 2. Cases past deadline

@@ -8,6 +8,7 @@ interface SyncReport {
   code: string
   assigned: number
   drafted: number
+  reminded?: number
   missing: number
   failed: number
   flagged: number
@@ -30,6 +31,7 @@ function describe(r: SyncReport): string {
   const parts = [
     r.assigned && `${r.assigned} new Case ID${r.assigned === 1 ? '' : 's'}`,
     r.drafted && `${r.drafted} letter${r.drafted === 1 ? '' : 's'} drafted`,
+    r.reminded && `${r.reminded} reminder${r.reminded === 1 ? '' : 's'} sent`,
     r.missing && `${r.missing} missing documents`,
     r.failed && `${r.failed} failed (will retry)`,
     r.flagged && `${r.flagged} flagged`,

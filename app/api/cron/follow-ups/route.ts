@@ -28,6 +28,8 @@ export async function GET(req: Request) {
     .from('cases')
     .select('id, deadline_at, email_day7_sent, email_day14_sent')
     .eq('status', 'letter_served')
+    // Brand borrowers get their own reminders (lib/brandServing.ts), sent to the borrower.
+    .is('brand_id', null)
     .or('email_day7_sent.eq.false,email_day14_sent.eq.false')
 
   if (error) {
