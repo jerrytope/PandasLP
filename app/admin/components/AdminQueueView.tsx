@@ -2,6 +2,7 @@
 
 import { DAY_MS, inReviewStage, type AdminCaseRow, type CaseAction } from './types'
 import CaseCard from './CaseCard'
+import AwaitingBrandDecision from './brands/AwaitingBrandDecision'
 import NegotiationFollowUps from './NegotiationFollowUps'
 import { AlertTriangle, Clock, Scale, Inbox } from 'lucide-react'
 
@@ -61,6 +62,9 @@ export default function AdminQueueView({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* Negotiation next actions falling due — undertakings, reply deadlines */}
       <NegotiationFollowUps cases={cases} onOpenDrawer={onOpenDrawer} />
+
+      {/* Brand borrowers past Day 14: the brand decides on court */}
+      <AwaitingBrandDecision cases={cases} onOpenDrawer={onOpenDrawer} />
 
       {/* SECTION 1: Awaiting Review or Serving */}
       <section>

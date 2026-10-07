@@ -95,3 +95,37 @@ export function getBorrowerEmail(d: BorrowerEmailData): { subject: string; text:
   `)
   return { subject, text, html }
 }
+
+// ── To the brand (our client) ─────────────────────────────────────────────
+
+export interface BrandEditNotice {
+  caseRef: string
+  column: string
+  oldValue: string
+  newValue: string
+}
+
+/**
+ * The brand changed rows we had already started work on. Nothing was done with the change:
+ * the row is locked, and updates belong in the Notes column.
+ */
+export function getBrandEditNoticeEmail(brandName: string, edits: BrandEditNotice[]): { subject: string; text: string; html: string } {
+  const show = (v: string) => (v ? `"${v}"` : '(empty)')
+  const lines = edits.map((e) => `${e.caseRef}: ${e.column} changed from ${show(e.oldValue)} to ${show(e.newValue)}`)
+  const intro = `We noticed changes to ${edits.length === 1 ? 'a row' : `${edits.length} rows`} in your Pandas LP sheet that we had already started working on:`
+  const explain = [
+    'We have not acted on these changes. Once we start work on a borrower, their row is locked, because the letter of demand is based on the details as they were.',
+    'Please put any updates or corrections in the Notes column of that row instead. Our team will review each change and contact you if anything needs to happen.',
+  ]
+  const text = [`Dear ${brandName} team,`, '', intro, '', ...lines.map((l) => `- ${l}`), '', ...explain.flatMap((p) => [p, '']), 'Pandas LP', `${GMAIL_USER} · ${FIRM_PHONE}`].join('\n')
+  const p = (s: string) => `<p style="margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;">${escapeHtml(s)}</p>`
+  const html = baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">Changes to rows we're already handling</h2>
+      ${p(`Dear ${brandName} team,`)}
+      ${p(intro)}
+      <ul style="margin:0 0 14px;padding-left:18px;font-size:14px;color:#F3EFE3;line-height:1.6;">${lines.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>
+      ${explain.map(p).join('\n      ')}
+      <p style="margin:0;font-size:15px;color:#ABB1A2;line-height:1.6;">Pandas LP<br/>${escapeHtml(GMAIL_USER)} · ${FIRM_PHONE}</p>
+  `)
+  return { subject: `Changes to rows we're already handling | ${brandName}`, text, html }
+}

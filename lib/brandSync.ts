@@ -34,6 +34,7 @@ import { getBrandWorkspace, type BrandWorkspace } from './google/workspace'
 import type { CellWrite } from './google/workspaceTypes'
 import { CASE_FIELDS, logEvent, setStatus, writeAgentCells, type BrandCaseRecord, type BrandRecord } from './brandStore'
 import { retryFinalLetters, sendDueReminders, type Mailer } from './brandServing'
+import { checkRowChanges } from './brandExceptions'
 import { isMailerConfigured, sendMail } from './mailer'
 
 /** A row stuck in Checking this long belongs to a run that died; it goes back to New. */
@@ -182,6 +183,11 @@ export async function syncBrand(brandId: string, deps: SyncDeps): Promise<BrandS
         report.assigned++
       }
     }
+
+    // ── 1b. Rows the brand changed after we started on them, and rows that have gone ──
+    // Flagged for staff, never reprocessed (lib/brandExceptions.ts).
+    const changes = await checkRowChanges(brand, [...cases.values()], rowsByRef, deps)
+    report.flagged += changes.flagged
 
     // ── 2. Recover claims left by a run that died ──
     const staleBefore = new Date(deps.now().getTime() - STALE_CLAIM_MS).toISOString()

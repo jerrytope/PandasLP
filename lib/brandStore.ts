@@ -33,12 +33,16 @@ export interface BrandCaseRecord extends BrandCaseState {
   letter_file_id: string | null
   final_letter_at: string | null
   awaiting_brand_decision_at: string | null
+  court_approved_at: string | null
+  row_missing_since: string | null
+  /** The Notes cell as last seen (the brand may keep updating Notes; each change is logged). */
+  last_notes: string | null
   /** The brand's columns as they were when the row was picked up. */
   borrower: Record<string, string> | null
 }
 
 export const CASE_FIELDS =
-  'id, brand_id, case_ref, status, case_id, snapshot_hash, borrower, claimed_at, attempts, letter_url, letter_file_id, final_letter_at, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, updated_at'
+  'id, brand_id, case_ref, status, case_id, snapshot_hash, borrower, claimed_at, attempts, letter_url, letter_file_id, final_letter_at, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, court_approved_at, row_missing_since, last_notes, updated_at'
 
 export async function logEvent(c: { id: string; case_ref: string }, eventType: string, detail: Record<string, unknown> = {}, actor = 'system') {
   const { error } = await supabaseAdmin.from('brand_case_events').insert({ brand_case_id: c.id, case_ref: c.case_ref, event_type: eventType, detail, actor })

@@ -22,14 +22,16 @@ interface FlagRow {
   id: string
   kind: string
   case_ref: string | null
+  column_name: string | null
+  old_value: string | null
   new_value: string | null
 }
 
 const FLAG_TEXT: Record<string, string> = {
   unknown_case_id: 'has a Case ID the app never issued (typed in by hand?) — not processed',
   duplicate_case_id: 'appears on more than one row — not processed until only one is left',
-  edited_after_processing: 'was edited after it was picked up',
-  row_missing: 'is no longer in the sheet',
+  edited_after_processing: 'was edited after we started on it. Nothing was done with the change, and the brand has been asked to use Notes.',
+  row_missing: 'is no longer in the sheet. The borrower’s record is kept.',
 }
 
 const MAX_ATTEMPTS = 3
@@ -70,15 +72,10 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
   return (
     <div style={{ display: 'grid', gap: 10 }}>
       {flags.length > 0 && (
-        <div style={{ display: 'grid', gap: 4 }}>
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--danger)', textTransform: 'uppercase' }}>Needs attention</div>
           {flags.map((f) => (
-            <div key={f.id} style={{ fontSize: 13, color: 'var(--danger)', display: 'flex', gap: 6 }}>
-              <AlertTriangle size={14} aria-hidden="true" style={{ marginTop: 2, flexShrink: 0 }} />
-              <span>
-                <strong>{f.case_ref}</strong> {FLAG_TEXT[f.kind] ?? f.kind}
-                {f.new_value ? ` (${f.new_value})` : ''}
-              </span>
-            </div>
+            <FlagItem key={f.id} flag={f} onResolved={load} />
           ))}
         </div>
       )}
@@ -114,7 +111,7 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
                         Letter <ExternalLink size={12} aria-hidden="true" />
                       </a>
                     )}
-                    {c.awaiting_brand_decision_at && (
+                    {c.awaiting_brand_decision_at && c.status === 'day14_sent' && (
                       <div style={{ color: 'var(--warning)', fontWeight: 600 }}>Awaiting the brand’s decision</div>
                     )}
                     {c.status === 'missing_documents' && c.missing_items.length > 0 && (
@@ -142,6 +139,79 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
           </table>
         </div>
       )}
+    </div>
+  )
+}
+
+// One flag, and the staff decision on it (with a note). See resolveFlag in lib/brandExceptions.ts.
+function FlagItem({ flag, onResolved }: { flag: FlagRow; onResolved: () => Promise<void> }) {
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const edited = flag.kind === 'edited_after_processing'
+  const resolvable = edited || flag.kind === 'row_missing'
+  const show = (v: string | null) => (v ? `“${v}”` : '(empty)')
+
+  async function decide(decision: 'accept' | 'keep' | 'noted') {
+    setBusy(true)
+    setError('')
+    try {
+      const res = await authedFetch('/api/admin/brands/cases', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'resolve_flag', flagId: flag.id, decision, note }),
+      })
+      const data = await res.json()
+      if (!res.ok) return setError(data.error || 'Could not resolve.')
+      await onResolved()
+    } catch {
+      setError('Network error.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div style={{ fontSize: 13, display: 'grid', gap: 6, padding: '8px 10px', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)' }}>
+      <div style={{ color: 'var(--danger)', display: 'flex', gap: 6 }}>
+        <AlertTriangle size={14} aria-hidden="true" style={{ marginTop: 2, flexShrink: 0 }} />
+        <span>
+          <strong>{flag.case_ref}</strong> {FLAG_TEXT[flag.kind] ?? flag.kind}
+          {!edited && flag.new_value ? ` (${flag.new_value})` : ''}
+        </span>
+      </div>
+      {edited && (
+        <div style={{ color: 'var(--text-2)' }}>
+          {flag.column_name}: {show(flag.old_value)} → <strong style={{ color: 'var(--text-1)' }}>{show(flag.new_value)}</strong>
+        </div>
+      )}
+      {resolvable && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <input
+            className="input"
+            placeholder="Note: what was decided, and why"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            style={{ flex: '1 1 220px', fontSize: 12, minHeight: 32, padding: '4px 10px' }}
+            aria-label={`Note on ${flag.case_ref}`}
+          />
+          {edited ? (
+            <>
+              <button type="button" className="btn btn-sm" disabled={busy || note.trim().length < 3} onClick={() => decide('accept')} title="The new value becomes the record (e.g. reminders go to a corrected email)">
+                Accept new value
+              </button>
+              <button type="button" className="btn btn-sm" disabled={busy || note.trim().length < 3} onClick={() => decide('keep')}>
+                Keep original
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn btn-sm" disabled={busy || note.trim().length < 3} onClick={() => decide('noted')}>
+              Mark resolved
+            </button>
+          )}
+        </div>
+      )}
+      {error && <div role="alert" style={{ color: 'var(--danger)' }}>{error}</div>}
     </div>
   )
 }

@@ -66,7 +66,8 @@ export interface BillingSettings {
   usd_ngn_rate: number | null
 }
 
-const MAX_ITEMS = 30
+// High enough for a brand's monthly invoice (one line per letter, lib/brandBilling.ts).
+const MAX_ITEMS = 500
 const MAX_LINE_KOBO = 100_000_000_000 // ₦1bn per line: a typo guard, not a business limit
 
 export function validateItems(raw: unknown): { ok: true; items: InvoiceItem[] } | { ok: false; error: string } {

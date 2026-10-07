@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { lagosToday } from '@/lib/negotiationStatus'
 import { addDaysYmd, computeTotals, isValidEmail, validateItems, INVOICE_STATUSES, type InvoiceStatus } from '@/lib/invoices'
 import { INVOICE_COLUMNS, caseRefFor, loadBillingSettings, normaliseInvoice } from '@/lib/billing'
+import { releaseVoidedInvoice } from '@/lib/brandBilling'
 
 const YMD = /^\d{4}-\d{2}-\d{2}$/
 const RATE_WINDOW_MS = 10 * 60 * 1000
@@ -172,6 +173,8 @@ export async function PATCH(req: Request) {
       .select(INVOICE_COLUMNS)
       .single()
     if (error || !data) return Response.json({ error: `Could not void the invoice.${error ? ` (${error.message})` : ''}` }, { status: 500 })
+    // A brand's monthly invoice: its letters go back to "not yet billed", for the next invoice.
+    await releaseVoidedInvoice(body.id, authResult.user.email ?? 'staff')
     return Response.json({ ok: true, invoice: normaliseInvoice(data) })
   }
 

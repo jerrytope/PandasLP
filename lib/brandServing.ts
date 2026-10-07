@@ -91,9 +91,11 @@ export async function approveBrandLetter(caseId: string, reviewer: string, deps:
   const c = await loadBrandCaseByMatter(caseId)
   if (!c) return
   const at = deps.now().toISOString()
+  const brand = await loadBrand(c.brand_id)
   const { data: won } = await supabaseAdmin
     .from('brand_cases')
-    .update({ status: 'lawyer_approved', billable_at: at, last_error: null })
+    // The fee is fixed now, so a fee change later in the month doesn't reprice this letter.
+    .update({ status: 'lawyer_approved', billable_at: at, billable_fee_kobo: brand?.per_letter_fee_kobo ?? null, last_error: null })
     .eq('id', c.id)
     .eq('status', 'letter_drafted')
     .select('id')

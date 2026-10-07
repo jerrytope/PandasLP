@@ -7,6 +7,7 @@ import { BRAND_CASE_STATUS_LABELS, type BrandCaseStatus } from '@/lib/brandSheet
 import { formatDate } from '../types'
 
 interface BrandCaseInfo {
+  id: string
   case_ref: string
   status: BrandCaseStatus
   borrower: Record<string, string> | null
@@ -17,6 +18,10 @@ interface BrandCaseInfo {
   day14_sent_at: string | null
   awaiting_brand_decision_at: string | null
   billable_at: string | null
+  court_approved_at: string | null
+  court_approved_by: string | null
+  court_approval_note: string | null
+  court_approval_evidence_url: string | null
   brands: { name: string; code: string } | null
 }
 
@@ -64,6 +69,24 @@ function describe(e: EventRow): string {
       return `${d.kind === 'day14' ? 'Day 14' : 'Day 7'} reminder failed, will retry: ${d.error ?? ''}`
     case 'awaiting_brand_decision':
       return 'Response period over: waiting for the brand’s decision'
+    case 'court_approved':
+      return `Brand’s written approval to go to court recorded: ${d.note ?? ''}`
+    case 'outcome':
+      return `Marked ${label(d.outcome)}${d.note ? `: ${d.note}` : ''}`
+    case 'edited_after_processing':
+      return `The brand edited ${d.column ?? 'a column'} after we started (${d.from || '(empty)'} → ${d.to || '(empty)'}); not acted on`
+    case 'notes_updated':
+      return `The brand updated Notes: “${d.to ?? ''}”`
+    case 'flag_resolved':
+      return `Flag resolved (${d.decision ?? ''}): ${d.note ?? ''}`
+    case 'row_missing':
+      return 'The row disappeared from the brand’s sheet'
+    case 'row_back':
+      return 'The row is back in the sheet'
+    case 'billed':
+      return `Billed on invoice ${d.invoice_number ?? ''}`
+    case 'unbilled':
+      return 'Back to unbilled (its invoice was voided)'
     default:
       return e.event_type
   }
@@ -77,6 +100,8 @@ export default function BrandCaseTimeline({ caseId }: { caseId: string }) {
   const [info, setInfo] = useState<BrandCaseInfo | null>(null)
   const [events, setEvents] = useState<EventRow[]>([])
   const [error, setError] = useState('')
+  const [version, setVersion] = useState(0)
+  const reload = () => setVersion((v) => v + 1)
 
   useEffect(() => {
     let cancelled = false
@@ -92,7 +117,7 @@ export default function BrandCaseTimeline({ caseId }: { caseId: string }) {
     return () => {
       cancelled = true
     }
-  }, [caseId])
+  }, [caseId, version])
 
   if (error) return <p role="alert" style={{ color: 'var(--danger)', fontSize: 13, margin: 0 }}>{error}</p>
   if (!info) return null
@@ -112,7 +137,7 @@ export default function BrandCaseTimeline({ caseId }: { caseId: string }) {
         <span className="badge">{label(info.status)}</span>
       </div>
 
-      {info.awaiting_brand_decision_at && (
+      {info.awaiting_brand_decision_at && info.status === 'day14_sent' && !info.court_approved_at && (
         <div style={{ fontSize: 13, color: 'var(--warning)', display: 'flex', gap: 6 }}>
           <AlertTriangle size={14} aria-hidden="true" style={{ marginTop: 2, flexShrink: 0 }} />
           Awaiting the brand’s decision since {formatDate(info.awaiting_brand_decision_at)}. Nothing goes to court without their written approval.
@@ -133,6 +158,9 @@ export default function BrandCaseTimeline({ caseId }: { caseId: string }) {
         )}
       </div>
 
+      <CourtApproval info={info} onDone={reload} />
+      <Outcomes info={info} onDone={reload} />
+
       {events.length > 0 && (
         <ol style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 4, fontSize: 12.5, color: 'var(--text-2)' }}>
           {events.map((e) => (
@@ -143,6 +171,149 @@ export default function BrandCaseTimeline({ caseId }: { caseId: string }) {
           ))}
         </ol>
       )}
+    </div>
+  )
+}
+
+async function post(body: Record<string, unknown>): Promise<string | null> {
+  try {
+    const res = await authedFetch('/api/admin/brands/cases', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const data = await res.json()
+    return res.ok ? null : data.error || 'Something went wrong.'
+  } catch {
+    return 'Network error.'
+  }
+}
+
+const COURT_STAGES: BrandCaseStatus[] = ['served', 'day7_sent', 'day14_sent', 'disputed']
+
+// Nothing goes to court without the brand's written approval: a note and a copy (PDF or image).
+function CourtApproval({ info, onDone }: { info: BrandCaseInfo; onDone: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [note, setNote] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  if (info.court_approved_at) {
+    return (
+      <div style={{ fontSize: 13, color: '#16a34a' }}>
+        ✓ Brand’s written approval to go to court recorded by {info.court_approved_by} on {formatDate(info.court_approved_at)}: {info.court_approval_note}{' '}
+        {info.court_approval_evidence_url && (
+          <a href={info.court_approval_evidence_url} target="_blank" rel="noopener noreferrer">
+            View copy
+          </a>
+        )}
+      </div>
+    )
+  }
+  if (!COURT_STAGES.includes(info.status)) return null
+
+  async function submit() {
+    if (!file) return
+    if (file.size > 3 * 1024 * 1024) return setError('File too large. Maximum size is 3 MB.')
+    setBusy(true)
+    setError('')
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve((reader.result as string).split(',')[1])
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+    const err = await post({ action: 'court_approval', brandCaseId: info.id, note, fileBase64: base64 })
+    setBusy(false)
+    if (err) return setError(err)
+    setOpen(false)
+    onDone()
+  }
+
+  return (
+    <div style={{ fontSize: 13, display: 'grid', gap: 6 }}>
+      <div style={{ color: 'var(--text-2)' }}>Court filing is blocked until the brand’s written approval is recorded.</div>
+      {!open ? (
+        <div>
+          <button type="button" className="btn btn-sm" onClick={() => setOpen(true)}>
+            Record brand’s written approval
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gap: 6 }}>
+          <input
+            className="input"
+            placeholder="Who approved it, and when (e.g. email from Ade, Head of Recoveries, 3 Nov)"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            style={{ fontSize: 12, minHeight: 34 }}
+            aria-label="Approval note"
+          />
+          <input
+            type="file"
+            accept="application/pdf,image/png,image/jpeg"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            aria-label="Copy of the approval (PDF or image)"
+          />
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button type="button" className="btn btn-primary btn-sm" disabled={busy || !file || note.trim().length < 5} onClick={submit}>
+              {busy ? 'Saving…' : 'Save approval'}
+            </button>
+            <button type="button" className="btn btn-sm" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      {error && <div role="alert" style={{ color: 'var(--danger)' }}>{error}</div>}
+    </div>
+  )
+}
+
+// Mirrors OUTCOME_FROM in lib/brandExceptions.ts (the server checks it again).
+const OUTCOME_FROM: Record<'paid' | 'disputed' | 'closed', BrandCaseStatus[]> = {
+  paid: ['letter_drafted', 'lawyer_approved', 'served', 'day7_sent', 'day14_sent', 'disputed'],
+  disputed: ['served', 'day7_sent', 'day14_sent'],
+  closed: ['new', 'missing_documents', 'letter_drafted', 'lawyer_approved', 'served', 'day7_sent', 'day14_sent', 'paid', 'disputed'],
+}
+
+// Paid, Disputed or Closed. Reminders stop for all three.
+function Outcomes({ info, onDone }: { info: BrandCaseInfo; onDone: () => void }) {
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const options = (Object.keys(OUTCOME_FROM) as (keyof typeof OUTCOME_FROM)[]).filter((o) => OUTCOME_FROM[o].includes(info.status))
+  if (options.length === 0) return null
+
+  async function mark(outcome: string) {
+    setBusy(true)
+    setError('')
+    const err = await post({ action: 'outcome', brandCaseId: info.id, outcome, note })
+    setBusy(false)
+    if (err) return setError(err)
+    setNote('')
+    onDone()
+  }
+
+  return (
+    <div style={{ display: 'grid', gap: 6, fontSize: 13 }}>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          className="input"
+          placeholder="Note (optional): e.g. paid in full by transfer on 3 Nov"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          style={{ flex: '1 1 220px', fontSize: 12, minHeight: 32, padding: '4px 10px' }}
+          aria-label="Outcome note"
+        />
+        {options.map((o) => (
+          <button key={o} type="button" className="btn btn-sm" disabled={busy} onClick={() => mark(o)}>
+            Mark {BRAND_CASE_STATUS_LABELS[o]}
+          </button>
+        ))}
+      </div>
+      {error && <div role="alert" style={{ color: 'var(--danger)' }}>{error}</div>}
     </div>
   )
 }

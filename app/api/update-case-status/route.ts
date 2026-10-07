@@ -6,6 +6,7 @@ import { isAdminEmail } from '@/lib/adminAuth'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
 import { getReviewChecklist } from '@/lib/reviewChecklists'
 import { approveBrandLetter, brandWorkspaceOrNull, recordBrandServed } from '@/lib/brandServing'
+import { courtFilingAllowed } from '@/lib/brandExceptions'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -142,6 +143,15 @@ export async function POST(req: Request) {
   // letter go out just because the status machinery allowed the click.
   if (action === 'markServed' && !caseData.reviewed_at) {
     return Response.json({ error: 'This document must be reviewed before it can be marked served.' }, { status: 409 })
+  }
+
+  // A brand borrower goes to court only with the brand's written approval on file
+  // (Admin → the matter → "Record brand's written approval"; lib/brandExceptions.ts).
+  if (action === 'markFiled' && caseData.brand_id && !(await courtFilingAllowed(caseId))) {
+    return Response.json(
+      { error: 'The brand’s written approval to go to court hasn’t been recorded. Record it on this matter first.' },
+      { status: 409 },
+    )
   }
 
   // reviewed_at used to be a single click with nothing substantive behind it — a claude-council

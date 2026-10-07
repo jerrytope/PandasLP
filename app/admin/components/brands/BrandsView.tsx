@@ -9,6 +9,7 @@ import { BRAND_CASE_STATUS_LABELS, type BrandCaseStatus } from '@/lib/brandSheet
 import { useAdminShell } from '../shell/AdminShellContext'
 import BrandSyncPanel from './BrandSyncPanel'
 import BrandBorrowers from './BrandBorrowers'
+import BrandBilling from './BrandBilling'
 
 interface BrandRow {
   id: string
@@ -405,6 +406,7 @@ function BrandCard({
   const ready = Boolean(brand.setup_completed_at)
   const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view')
   const [showBorrowers, setShowBorrowers] = useState(false)
+  const [showBilling, setShowBilling] = useState(false)
   const [busy, setBusy] = useState(false)
   const [confirmCode, setConfirmCode] = useState('')
   const [edit, setEdit] = useState<EditForm>(() => toEditForm(brand))
@@ -634,8 +636,20 @@ function BrandCard({
             {showBorrowers ? 'Hide borrowers' : 'Show borrowers'}
           </button>
         )}
+        {ready && (
+          <button
+            type="button"
+            className="btn btn-sm"
+            style={{ fontSize: 12, padding: '4px 10px' }}
+            onClick={() => setShowBilling((v) => !v)}
+            aria-expanded={showBilling}
+          >
+            {showBilling ? 'Hide billing' : 'Billing'}
+          </button>
+        )}
       </div>
 
+      {showBilling && <BrandBilling brandId={brand.id} />}
       {showBorrowers && <BrandBorrowers brandId={brand.id} />}
     </div>
   )
