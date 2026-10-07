@@ -35,3 +35,6 @@ next-env.d.ts
 # (the .mp4 itself is what ships). Caught once already bloating a commit by ~700MB; this
 # stops it from happening again on the next render pass.
 campaign/*-film/frames-*/
+plans/
+supabase
+plans/

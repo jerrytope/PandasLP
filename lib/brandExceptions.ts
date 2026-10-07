@@ -196,7 +196,8 @@ export async function setOutcome(brandCaseId: string, outcome: Outcome, note: st
 
 // ── Court approval ────────────────────────────────────────────────────────
 
-// Sent base64 in a JSON body, which Vercel caps at 4.5 MB: 3 MB of file is about 4 MB of body.
+// Sent base64 in a JSON body, about 4/3 of the file's size. Serverless hosts cap request
+// bodies (AWS Lambda at 6 MB), so 3 MB of file (about 4 MB of body) fits anywhere.
 export const EVIDENCE_MAX_BYTES = 3 * 1024 * 1024
 // Private, and (unlike case-documents, PDF only) takes images too.
 const EVIDENCE_BUCKET = 'case-evidence'

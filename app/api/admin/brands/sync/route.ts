@@ -1,4 +1,5 @@
 export const runtime = 'nodejs'
+// Same time budget as the scheduled sync (app/api/cron/brand-sheets/route.ts).
 export const maxDuration = 300
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'

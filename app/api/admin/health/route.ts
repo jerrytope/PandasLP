@@ -1,5 +1,6 @@
 export const runtime = 'nodejs'
 
+import { appEnv, isProduction } from '@/lib/appEnv'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { getGoogleConnectionStatus, googleConfigStatus } from '@/lib/google/oauth'
@@ -107,16 +108,16 @@ export async function GET(req: Request) {
     {
       key: 'allow_stub_payments',
       label: 'ALLOW_STUB_PAYMENTS (should be unset in production)',
-      ok: process.env.VERCEL_ENV !== 'production' || process.env.ALLOW_STUB_PAYMENTS !== 'true',
+      ok: !isProduction() || process.env.ALLOW_STUB_PAYMENTS !== 'true',
       detail:
-        process.env.VERCEL_ENV === 'production' && process.env.ALLOW_STUB_PAYMENTS === 'true'
+        isProduction() && process.env.ALLOW_STUB_PAYMENTS === 'true'
           ? 'DANGER: set to true in production — /api/verify-payment is trusting client-reported amounts instead of checking with Paystack.'
           : 'Not active in production — normal.',
     },
   ]
 
   return Response.json({
-    env: process.env.VERCEL_ENV ?? 'unknown (not running on Vercel)',
+    env: appEnv(),
     checked_at: new Date().toISOString(),
     all_ok: checks.every((c) => c.ok),
     checks,

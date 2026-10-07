@@ -15,7 +15,7 @@ This is NOT a document template tool. Pandas LP is a law firm that can represent
 | AI | Anthropic Claude API (`claude-sonnet-4-6`, `max_tokens: 4096`), Edge Runtime |
 | Auth | Supabase Auth — email magic link (no password) |
 | Database | Supabase PostgreSQL — `cases` + `messages` tables with RLS |
-| Email | Nodemailer + Gmail SMTP — follow-up emails at Day 0 / Day 7 / Day 14 after letter served (Vercel Cron drives Day 7/14, see app/api/cron/follow-ups) |
+| Email | Nodemailer + Gmail SMTP — follow-up emails at Day 0 / Day 7 / Day 14 after letter served (a scheduler drives Day 7/14, see "Hosting and scheduled jobs" below) |
 | PDF | jsPDF v4 — vector panda logo, letterhead, watermark, rich text |
 | Payments | Paystack Inline (stub when key is placeholder), independently verified server-side before a case is marked paid |
 | Fonts | next/font/google — Bricolage Grotesque (display), Inter (body), DM Mono (mono) |
@@ -35,11 +35,13 @@ NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY — Paystack public key (client-side checkout)
 PAYSTACK_SECRET_KEY        — Paystack secret key (server-side only — verifies payments in app/api/verify-payment/route.ts). Placeholder = stub mode, same as the public key.
 NEXT_PUBLIC_SITE_URL       — Production URL (https://pandaslp.com.ng)
 NEXT_PUBLIC_GA_MEASUREMENT_ID — GA4 Measurement ID (G-XXXXXXX). Unset = analytics script doesn't render at all (see app/layout.jsx).
-CRON_SECRET                — Bearer token Vercel Cron sends to app/api/cron/follow-ups. Any random string.
+CRON_SECRET                — Bearer token the scheduler sends to app/api/cron/* (see "Hosting and scheduled jobs"). Any long random string.
+APP_ENV                    — production | staging | development (lib/appEnv.ts). Set APP_ENV=production on the live server. If unset, a production build counts as production (fails safe: no stub payments, no fake Google Drive).
+SITE_URL                   — Only for scripts/run-scheduled-job.mjs: the base URL to call (falls back to NEXT_PUBLIC_SITE_URL).
 PLUGIN_API_KEY             — Fixed key checked against the x-plugin-key header on app/api/plugin/intake. Pasted into the OpenAI Action's own auth config once that's set up. Unset = the route 503s.
-ADMIN_EMAILS               — Comma-separated staff allowlist checked by lib/adminAuth.ts (isAdminEmail/requireAdmin). Singular ADMIN_EMAIL is also accepted as a fallback — the Vercel env var was originally set up under that name. Change requires a redeploy to take effect.
+ADMIN_EMAILS               — Comma-separated staff allowlist checked by lib/adminAuth.ts (isAdminEmail/requireAdmin). Singular ADMIN_EMAIL is also accepted as a fallback — the env var was originally set up under that name. Change requires a redeploy to take effect.
 GOOGLE_REVIEW_URL          — Link included in the resolution email (lib/sendCaseEmail.ts) once a case closes. Omitted gracefully if unset — no fabricated URL.
-ALLOW_STUB_PAYMENTS        — Set to "true" to allow stub (unverified) payments in real production (VERCEL_ENV === 'production'). Dangerous if left on — it means /api/verify-payment trusts the client-reported amount instead of checking with Paystack. Should not be set in normal operation; see app/api/verify-payment/route.ts.
+ALLOW_STUB_PAYMENTS        — Set to "true" to allow stub (unverified) payments in real production (isProduction() in lib/appEnv.ts). Dangerous if left on — it means /api/verify-payment trusts the client-reported amount instead of checking with Paystack. Should not be set in normal operation; see app/api/verify-payment/route.ts.
 NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-consultation flow (components/LawyerConsult.jsx).
 GOOGLE_OAUTH_CLIENT_ID     — OAuth client (Web application) from the firm's Google Cloud project. Brand sheets, see "Brand sheets" below.
 GOOGLE_OAUTH_CLIENT_SECRET — Its secret. Server-only.
@@ -50,6 +52,12 @@ GOOGLE_FAKE_WORKSPACE      — "true" = in-memory pretend Google for local devel
 ```
 
 ---
+
+## Hosting and scheduled jobs
+Not hosted at the moment. Vercel has been dropped; the plan is AWS. Code: github.com/jerrytope/PandasLP (private). The app has no host-specific code:
+- **Environment:** `lib/appEnv.ts` (`appEnv()`, `isProduction()`), driven by `APP_ENV`. Never read a host's own variable (such as `VERCEL_ENV`) for this.
+- **Scheduled jobs:** two URLs, called with `Authorization: Bearer $CRON_SECRET`. The schedule lives in `scripts/run-scheduled-job.mjs`: `follow-ups` daily at 07:00 UTC (`0 7 * * *`), `brand-sheets` every 15 minutes (`*/15 * * * *`). Any scheduler works: a crontab line like `npm run job -- follow-ups` with `SITE_URL` and `CRON_SECRET` set, or EventBridge Scheduler / an API destination calling the URL with that header. The script exits non-zero on failure.
+- **Long requests:** the brand sync routes set `maxDuration = 300`. A plain Node server (`next start`) has no limit; a host with a request time limit must allow 300 s for them.
 
 ## Key Files
 
@@ -78,7 +86,7 @@ GOOGLE_FAKE_WORKSPACE      — "true" = in-memory pretend Google for local devel
 ### Dashboard & Follow-up
 - `app/dashboard/page.tsx` — Case history. Visual 4-step timeline (Paid → Served → Filed → Judgment Won). Mark as Served button (triggers Day 0 email + sets 14-day deadline — see "14-day response period" below for why 14, not 7). Escalate to Court Filing CTA (appears when deadline passes). Enforce Judgment CTA (appears after judgment won).
 - `app/api/send-email/route.ts` — Session-triggered sends (payment-confirmed, the Day 0 "mark served" email). Requires the caller's session to match the case's owner. Thin wrapper around `lib/sendCaseEmail.ts`.
-- `app/api/cron/follow-ups/route.ts` — Vercel Cron hits this daily (see `vercel.json`), authenticated via `CRON_SECRET` (not a user session — there is no user for a scheduled job). Finds every `letter_served` case whose Day 7 or Day 14 checkpoint is due and hasn't been sent yet, and sends it. This is the only thing that makes the "escalating follow-up, zero effort from you" promise on the homepage actually true — without it, Day 7/14 emails would need a human to remember to trigger them manually, which defeats the point.
+- `app/api/cron/follow-ups/route.ts` — The scheduler calls this daily (see "Hosting and scheduled jobs"), authenticated via `CRON_SECRET` (not a user session — there is no user for a scheduled job). Finds every `letter_served` case whose Day 7 or Day 14 checkpoint is due and hasn't been sent yet, and sends it. This is the only thing that makes the "escalating follow-up, zero effort from you" promise on the homepage actually true — without it, Day 7/14 emails would need a human to remember to trigger them manually, which defeats the point.
 - `lib/sendCaseEmail.ts` — Shared email-sending logic (resolve recipient, build template, send, mark `email_dayN_sent`) used by both `/api/send-email` (session-triggered) and `/api/cron/follow-ups` (system-triggered), so there's one implementation instead of two copies drifting apart.
 - `lib/emailTemplates.ts` — HTML email templates for Day 0, Day 7, Day 14 follow-ups.
 
@@ -100,7 +108,7 @@ Lenders ("brands") send borrowers in bulk through their own Google Sheet, one bo
   - Edit changes the name, contacts, fee and active flag. Removed contacts lose Drive access, added ones are invited, and a rename renames the folder and sheet. **The code is never editable**, because it's in every Case ID.
   - Delete is only allowed for a brand with **no borrowers**. It moves the Drive folder to the bin (30 days) and needs the code typed to confirm. A brand with borrowers can only be deactivated, which keeps the records but stops syncing.
 - **Phase 2, the sync** (`lib/brandSync.ts`; plan in `plans/phase-2-sync-and-drafting.md`; schema additions in `add-brand-sync.sql`, which adds `brands.address`, `brands.owner_user_id`, `brand_cases.last_error`, `attempts` and `letter_file_id`):
-  - **Schedule:** `vercel.json` calls `app/api/cron/brand-sheets` every 15 minutes, but it only runs once `firm_settings.brand_sync_interval_minutes` has passed. "Sync now" is `POST /api/admin/brands/sync`.
+  - **Schedule:** the scheduler calls `app/api/cron/brand-sheets` every 15 minutes, but it only runs once `firm_settings.brand_sync_interval_minutes` has passed. "Sync now" is `POST /api/admin/brands/sync`.
   - **One run at a time:** `runBrandSync` takes a lease (`brand_sync_lease_until`).
   - **Per brand:**
     1. assign Case IDs, re-reading the sheet before writing them
@@ -123,7 +131,7 @@ Lenders ("brands") send borrowers in bulk through their own Google Sheet, one bo
   - The case drawer shows `BrandCaseTimeline` (all events) for a brand matter. Tests: `brandServing.integration.test.ts` (local database, including the real status route) and `brandEmails.test.ts`.
 - **Phase 4, exceptions and billing** (schema `add-brand-billing.sql`: `brand_cases.billable_fee_kobo`, `invoices.brand_id`, `brand_change_flags.resolution`):
   - `lib/brandExceptions.ts`. `checkRowChanges` runs in every sync: from `letter_drafted` on, a change to the brand's columns is flagged (`edited_after_processing`, old and new value), never reprocessed, and the brand is emailed once per new change. Notes changes are logged (`notes_updated`). A vanished row is flagged `row_missing` and auto-closed if it comes back. `resolveFlag`: accept (the new value replaces it in `brand_cases.borrower` and the hash) or keep (the same value is never flagged again).
-  - Outcomes: `setOutcome` (paid, disputed, closed; allowed stages in `OUTCOME_FROM`). Court: `recordCourtApproval` (note plus a PDF/PNG/JPG, type sniffed, at most 3 MB because of Vercel's 4.5 MB body limit, stored in the private `case-evidence` bucket since `case-documents` only takes PDFs). `courtFilingAllowed` is checked by `markFiled` in `app/api/update-case-status`.
+  - Outcomes: `setOutcome` (paid, disputed, closed; allowed stages in `OUTCOME_FROM`). Court: `recordCourtApproval` (note plus a PDF/PNG/JPG, type sniffed, at most 3 MB so the base64 body fits serverless request limits (AWS Lambda: 6 MB), stored in the private `case-evidence` bucket since `case-documents` only takes PDFs). `courtFilingAllowed` is checked by `markFiled` in `app/api/update-case-status`.
   - `lib/brandBilling.ts`: `createBrandInvoice(brandId, 'YYYY-MM')` makes a draft invoice, one line per approved, unbilled letter up to the end of that Lagos month, at `billable_fee_kobo`. Letters are claimed with a conditional `billed_invoice_id IS NULL` update; voiding the invoice (`/api/admin/invoices` PATCH) calls `releaseVoidedInvoice`.
   - API: `/api/admin/brands/cases` (POST actions `retry`, `outcome`, `court_approval`, `resolve_flag`; GET `?awaiting=1`), `/api/admin/brands/billing`. UI: flags in `BrandBorrowers`, outcome and court approval in `BrandCaseTimeline`, `AwaitingBrandDecision` in the Action Queue, `BrandBilling` on each brand card. Tests: `brandExceptions.integration.test.ts`, `brandBilling.test.ts`.
 - `lib/brands.ts`, `app/api/admin/brands/route.ts` (list/create/update/retry/delete), `app/api/admin/google/{connect,callback}`, UI in `app/admin/components/brands/BrandsView.tsx` (sidebar "Brands").

@@ -4,6 +4,7 @@
 // Callers get one through getBrandWorkspace() and never talk to Google directly.
 
 import { googleConfigStatus } from './oauth'
+import { isProduction } from '../appEnv'
 import { createGoogleWorkspace } from './googleWorkspace'
 import { getFakeWorkspace } from './fakeWorkspace'
 import type { BrandWorkspace } from './workspaceTypes'
@@ -23,7 +24,7 @@ export class WorkspaceNotConfiguredError extends Error {
  * in-memory fake (local development only — it is refused in production).
  */
 export function getBrandWorkspace(): BrandWorkspace {
-  if (process.env.GOOGLE_FAKE_WORKSPACE === 'true' && process.env.VERCEL_ENV !== 'production') {
+  if (process.env.GOOGLE_FAKE_WORKSPACE === 'true' && !isProduction()) {
     return getFakeWorkspace()
   }
   const status = googleConfigStatus()

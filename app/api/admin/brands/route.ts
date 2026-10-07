@@ -1,5 +1,6 @@
 export const runtime = 'nodejs'
 
+import { isProduction } from '@/lib/appEnv'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
@@ -42,7 +43,7 @@ export async function GET(req: Request) {
   const openFlags: Record<string, number> = {}
   for (const f of flagRows ?? []) openFlags[f.brand_id] = (openFlags[f.brand_id] ?? 0) + 1
 
-  const fake = process.env.GOOGLE_FAKE_WORKSPACE === 'true' && process.env.VERCEL_ENV !== 'production'
+  const fake = process.env.GOOGLE_FAKE_WORKSPACE === 'true' && !isProduction()
   return Response.json({
     brands: (brands ?? []).map((b) => ({ ...b, case_counts: counts[b.id] ?? {}, open_flags: openFlags[b.id] ?? 0 })),
     google: { ...google, ...googleConfigStatus(), fake },

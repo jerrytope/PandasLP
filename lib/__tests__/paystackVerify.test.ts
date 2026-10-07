@@ -23,7 +23,7 @@ function paystackReplies(data: Record<string, unknown>) {
 
 describe('verifyPayment', () => {
   beforeEach(() => {
-    delete process.env.VERCEL_ENV
+    delete process.env.APP_ENV
     delete process.env.ALLOW_STUB_PAYMENTS
   })
   afterEach(() => vi.unstubAllGlobals())
@@ -75,7 +75,7 @@ describe('verifyPayment', () => {
     })
 
     it('refuses stub payments in real production unless explicitly allowed', async () => {
-      process.env.VERCEL_ENV = 'production'
+      process.env.APP_ENV = 'production'
       expect(await verifyPayment({ reference: 's-3', expectedAmount: 10000, clientAmount: 10000, stub: true })).toMatchObject({
         ok: false,
         status: 503,

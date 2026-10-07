@@ -9,10 +9,9 @@ import { formatKobo } from '@/lib/money'
 const DAY_MS = 24 * 60 * 60 * 1000
 const RESPONSE_PERIOD_DAYS = 14
 
-// Vercel Cron calls this on a schedule (see vercel.json) with an
-// `Authorization: Bearer $CRON_SECRET` header it sets automatically from the env var of the
-// same name — this is the only auth check available since there's no user session for a
-// scheduled job. Without this route, "Day 7 / Day 14 follow-up" was only ever a manual
+// The scheduler calls this daily (see scripts/run-scheduled-job.mjs for the schedule and how to
+// call it) with an `Authorization: Bearer $CRON_SECRET` header — the only auth check available,
+// since there's no user session for a scheduled job. Without this route, "Day 7 / Day 14 follow-up" was only ever a manual
 // per-case button; nothing actually watched the clock.
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET

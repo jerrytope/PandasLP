@@ -9,6 +9,7 @@
 //   2. A payment pays for ONE thing. Without claimPaymentReference(), one real ₦25,000
 //      payment's reference could be replayed to mark any number of ₦25,000 cases paid.
 
+import { isProduction } from './appEnv'
 import { supabaseAdmin } from './supabaseAdmin'
 
 const AMOUNT_TOLERANCE_NAIRA = 1 // guard against float/kobo rounding, not a real discount
@@ -30,8 +31,7 @@ export function isPaystackConfigured(): boolean {
 // silently giving away the service for free. Set ALLOW_STUB_PAYMENTS=true only if you
 // genuinely want production running in test mode for a short window.
 export function stubPaymentsAllowedHere(): boolean {
-  const isRealProduction = process.env.VERCEL_ENV === 'production'
-  if (!isRealProduction) return true
+  if (!isProduction()) return true
   return process.env.ALLOW_STUB_PAYMENTS === 'true'
 }
 
