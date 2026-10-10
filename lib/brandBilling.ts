@@ -60,7 +60,7 @@ const LETTER_FIELDS = 'id, case_ref, borrower, billable_at, billable_fee_kobo'
 
 /** Approved letters not on any invoice, approved before the end of `month` (earlier ones missed are included). */
 export async function unbilledLetters(brandId: string, month?: string): Promise<BillableLetter[]> {
-  let q = supabaseAdmin.from('brand_cases').select(LETTER_FIELDS).eq('brand_id', brandId).not('billable_at', 'is', null).is('billed_invoice_id', null)
+  let q = supabaseAdmin.from('brand_cases').select(LETTER_FIELDS).eq('brand_id', brandId).eq('is_test', false).not('billable_at', 'is', null).is('billed_invoice_id', null)
   if (month) {
     const range = lagosMonthRange(month)
     if (!range) return []

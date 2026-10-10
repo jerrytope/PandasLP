@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { isMailerConfigured, sendMail } from '@/lib/mailer'
 import { brandWorkspaceOrNull, loadServedPdf, serveBrandCaseByEmail } from '@/lib/brandServing'
+import { deliverForMatter } from '@/lib/brandWebhooks'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -32,5 +33,6 @@ export async function POST(req: Request) {
     loadServedPdf,
   })
   if (result.ok === false) return Response.json({ error: result.error }, { status: result.status })
+  await deliverForMatter(body.caseId) // an API brand hears straight away (lib/brandWebhooks.ts)
   return Response.json({ ok: true, servedAt: result.servedAt })
 }

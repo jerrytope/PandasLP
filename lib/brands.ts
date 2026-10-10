@@ -200,7 +200,8 @@ export async function deleteBrand(brandId: string): Promise<{ ok: true } | { ok:
   if (error || !brand) return { ok: false, status: 404, error: 'Brand not found.' }
 
   const [{ count: borrowers }, { count: matters }] = await Promise.all([
-    supabaseAdmin.from('brand_cases').select('id', { count: 'exact', head: true }).eq('brand_id', brandId),
+    // Test-key borrowers (the API sandbox) are not records; they go with the brand.
+    supabaseAdmin.from('brand_cases').select('id', { count: 'exact', head: true }).eq('brand_id', brandId).eq('is_test', false),
     supabaseAdmin.from('cases').select('id', { count: 'exact', head: true }).eq('brand_id', brandId),
   ])
   if ((borrowers ?? 0) > 0 || (matters ?? 0) > 0) {
@@ -219,6 +220,9 @@ export async function deleteBrand(brandId: string): Promise<{ ok: true } | { ok:
   }
 
   await supabaseAdmin.from('brand_change_flags').delete().eq('brand_id', brandId)
+  const { data: testDocs } = await supabaseAdmin.from('brand_case_documents').select('storage_path, brand_cases!inner(brand_id)').eq('brand_cases.brand_id', brandId)
+  if (testDocs?.length) await supabaseAdmin.storage.from('case-evidence').remove(testDocs.map((d) => d.storage_path))
+  await supabaseAdmin.from('brand_cases').delete().eq('brand_id', brandId).eq('is_test', true)
   const { error: delErr } = await supabaseAdmin.from('brands').delete().eq('id', brandId)
   if (delErr) return { ok: false, status: 500, error: `Drive folder is in the bin, but the brand could not be removed: ${delErr.message}` }
   return { ok: true }

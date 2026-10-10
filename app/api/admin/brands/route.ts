@@ -29,14 +29,20 @@ export async function GET(req: Request) {
 
   const [{ data: brands, error }, { data: caseRows }, { data: flagRows }, google] = await Promise.all([
     supabaseAdmin.from('brands').select('*').order('created_at', { ascending: false }),
-    supabaseAdmin.from('brand_cases').select('brand_id, status'),
+    supabaseAdmin.from('brand_cases').select('brand_id, status, is_test'),
     supabaseAdmin.from('brand_change_flags').select('brand_id').is('resolved_at', null),
     getGoogleConnectionStatus(),
   ])
   if (error) return Response.json({ error: 'Failed to load brands.' }, { status: 500 })
 
+  // Real borrowers only; test-key borrowers (the API sandbox) are counted apart.
   const counts: Record<string, Record<string, number>> = {}
+  const testCounts: Record<string, number> = {}
   for (const c of caseRows ?? []) {
+    if (c.is_test) {
+      testCounts[c.brand_id] = (testCounts[c.brand_id] ?? 0) + 1
+      continue
+    }
     counts[c.brand_id] ??= {}
     counts[c.brand_id][c.status] = (counts[c.brand_id][c.status] ?? 0) + 1
   }
@@ -45,22 +51,25 @@ export async function GET(req: Request) {
 
   const fake = process.env.GOOGLE_FAKE_WORKSPACE === 'true' && !isProduction()
   return Response.json({
-    brands: (brands ?? []).map((b) => ({ ...b, case_counts: counts[b.id] ?? {}, open_flags: openFlags[b.id] ?? 0 })),
+    brands: (brands ?? []).map((b) => ({ ...b, case_counts: counts[b.id] ?? {}, test_borrowers: testCounts[b.id] ?? 0, open_flags: openFlags[b.id] ?? 0 })),
     google: { ...google, ...googleConfigStatus(), fake },
   })
 }
 
 // "New brand": save it, then build its folder + sheet in the connected Drive. If Google fails
-// the brand is still saved (with the error) and "Retry setup" finishes the job later.
+// the brand is still saved (with the error) and "Retry setup" finishes the job later. A brand
+// that sends borrowers only by API (intakeChannel 'api') needs no Google set-up at all.
 export async function POST(req: Request) {
   const limited = rateLimited(req)
   if (limited) return limited
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
-  const parsed = parseBrandInput(await req.json().catch(() => null))
+  const rawBody = (await req.json().catch(() => null)) as { intakeChannel?: unknown } | null
+  const parsed = parseBrandInput(rawBody)
   if (parsed.ok === false) return Response.json({ error: parsed.error }, { status: 400 })
   const input = parsed.value
+  const intakeChannel = rawBody?.intakeChannel === 'api' || rawBody?.intakeChannel === 'both' ? rawBody.intakeChannel : 'sheet'
 
   const { data: brand, error } = await supabaseAdmin
     .from('brands')
@@ -70,6 +79,7 @@ export async function POST(req: Request) {
       address: input.address,
       contact_emails: input.contactEmails,
       per_letter_fee_kobo: input.perLetterFeeKobo,
+      intake_channel: intakeChannel,
       created_by: authResult.user.email ?? 'unknown',
       // Brand matters (cases rows) are owned by this staff account; see add-brand-sync.sql.
       owner_user_id: authResult.user.id,
@@ -82,6 +92,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Could not save the brand.' }, { status: 500 })
   }
 
+  if (intakeChannel === 'api') return Response.json({ ok: true, id: brand.id, setup: { ok: true, skipped: 'API only: no sheet or folders.' } }, { status: 201 })
   const setup = await runBrandSetup(brand.id)
   return Response.json({ ok: true, id: brand.id, setup }, { status: 201 })
 }

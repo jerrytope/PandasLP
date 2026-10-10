@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { brandWorkspaceOrNull } from '@/lib/brandServing'
+import { deliverForBorrower } from '@/lib/brandWebhooks'
 import { courtApprovalLink, recordCourtApproval, resolveFlag, setOutcome, type ActionResult, type Outcome } from '@/lib/brandExceptions'
 
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -12,14 +13,25 @@ function reply(result: ActionResult) {
   return result.ok === false ? Response.json({ error: result.error }, { status: result.status }) : Response.json({ ok: true })
 }
 
-// GET ?brandId=…   the borrowers of one brand (Admin → Brands), with any open flags
+// GET ?brandId=…   the borrowers of one brand (Admin → Brands), with any open flags (&test=1: its API test borrowers)
 // GET ?caseId=…    one borrower and their timeline, for the case drawer of a brand matter
 // GET ?awaiting=1  borrowers past Day 14 waiting for their brand's decision (Action Queue)
+// GET ?brandCaseId=…  one borrower's history (Admin → Brands → borrowers), including API and
+//                  test borrowers, which have no matter until (or ever) a letter is drafted
 export async function GET(req: Request) {
   const authResult = await requireAdmin(req)
   if (authResult instanceof Response) return authResult
 
   const params = new URL(req.url).searchParams
+  const brandCaseId = params.get('brandCaseId')
+  if (brandCaseId) {
+    const { data: events } = await supabaseAdmin
+      .from('brand_case_events')
+      .select('id, event_type, detail, actor, created_at')
+      .eq('brand_case_id', brandCaseId)
+      .order('created_at', { ascending: true })
+    return Response.json({ events: events ?? [] })
+  }
   const caseId = params.get('caseId')
   if (caseId) {
     const { data: bc } = await supabaseAdmin
@@ -42,6 +54,7 @@ export async function GET(req: Request) {
       .from('brand_cases')
       .select('id, case_ref, case_id, borrower, awaiting_brand_decision_at, brands(name)')
       .eq('status', 'day14_sent')
+      .eq('is_test', false)
       .is('court_approved_at', null)
       .order('awaiting_brand_decision_at', { ascending: true })
     if (error) return Response.json({ error: 'Failed to load.' }, { status: 500 })
@@ -54,8 +67,9 @@ export async function GET(req: Request) {
   const [{ data: cases, error }, { data: flags }] = await Promise.all([
     supabaseAdmin
       .from('brand_cases')
-      .select('id, case_ref, status, case_id, borrower, missing_items, letter_url, last_error, attempts, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, court_approved_at, created_at, updated_at')
+      .select('id, case_ref, status, case_id, borrower, missing_items, letter_url, last_error, attempts, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, court_approved_at, source, external_ref, is_test, created_at, updated_at')
       .eq('brand_id', brandId)
+      .eq('is_test', params.get('test') === '1')
       .order('case_ref', { ascending: true }),
     supabaseAdmin
       .from('brand_change_flags')
@@ -104,6 +118,7 @@ export async function POST(req: Request) {
   if (body.action === 'outcome') {
     if (!body.outcome) return Response.json({ error: 'Missing outcome.' }, { status: 400 })
     const result = await setOutcome(body.brandCaseId, body.outcome, note, actor, brandWorkspaceOrNull())
+    if (result.ok) await deliverForBorrower(body.brandCaseId) // an API brand hears straight away
     return reply(result)
   }
 

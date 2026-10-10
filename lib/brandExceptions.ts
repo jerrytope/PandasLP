@@ -83,31 +83,8 @@ export async function checkRowChanges(
     }
 
     // ── The brand's other columns: never reprocessed, flagged once per new value. ──
-    for (const column of TRACKED) {
-      const oldValue = c.borrower[column] ?? ''
-      const newValue = row.values[column]
-      if (newValue === oldValue) continue
-      // Any earlier flag for this exact value, open or decided, means it's been raised already.
-      const { data: seen } = await supabaseAdmin
-        .from('brand_change_flags')
-        .select('id')
-        .eq('brand_case_id', c.id)
-        .eq('kind', 'edited_after_processing')
-        .eq('column_name', column)
-        .eq('new_value', newValue)
-        .limit(1)
-      if (seen?.length) continue
-      await supabaseAdmin.from('brand_change_flags').insert({
-        brand_id: brand.id,
-        brand_case_id: c.id,
-        case_ref: c.case_ref,
-        kind: 'edited_after_processing',
-        column_name: column,
-        old_value: oldValue,
-        new_value: newValue,
-      })
-      await logEvent(c, 'edited_after_processing', { column, from: oldValue, to: newValue })
-      newEdits.push({ caseRef: c.case_ref, column, oldValue, newValue })
+    for (const edit of await flagEdits(brand.id, c, row.values)) {
+      newEdits.push({ caseRef: c.case_ref, ...edit })
       report.flagged++
     }
   }
@@ -124,7 +101,47 @@ export async function checkRowChanges(
   return report
 }
 
-export type ActionResult = { ok: true } | { ok: false; status: number; error: string }
+/**
+ * Flags each of the brand's columns (except Notes) that differs from what was recorded when the
+ * borrower was picked up. Once per new value: any earlier flag for that exact value, open or
+ * decided, means it's been raised already. Used for sheet edits and API resubmissions alike.
+ */
+export async function flagEdits(
+  brandId: string,
+  c: BrandCaseRecord,
+  values: Record<string, string>,
+): Promise<{ column: string; oldValue: string; newValue: string }[]> {
+  const flagged: { column: string; oldValue: string; newValue: string }[] = []
+  if (!c.borrower) return flagged
+  for (const column of TRACKED) {
+    const oldValue = c.borrower[column] ?? ''
+    const newValue = values[column] ?? ''
+    if (newValue === oldValue) continue
+    const { data: seen } = await supabaseAdmin
+      .from('brand_change_flags')
+      .select('id')
+      .eq('brand_case_id', c.id)
+      .eq('kind', 'edited_after_processing')
+      .eq('column_name', column)
+      .eq('new_value', newValue)
+      .limit(1)
+    if (seen?.length) continue
+    await supabaseAdmin.from('brand_change_flags').insert({
+      brand_id: brandId,
+      brand_case_id: c.id,
+      case_ref: c.case_ref,
+      kind: 'edited_after_processing',
+      column_name: column,
+      old_value: oldValue,
+      new_value: newValue,
+    })
+    await logEvent(c, 'edited_after_processing', { column, from: oldValue, to: newValue })
+    flagged.push({ column, oldValue, newValue })
+  }
+  return flagged
+}
+
+export type ActionResult ={ ok: true } | { ok: false; status: number; error: string }
 
 /**
  * Staff decide on a flag. For an edited row: 'accept' makes the brand's new value the record

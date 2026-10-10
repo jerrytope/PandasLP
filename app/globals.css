@@ -1445,6 +1445,7 @@ h1, h2, h3, h4, h5, h6 {
    than a styled list. Scrolls inside its own container on narrow screens so the
    article body never scrolls sideways. */
 .blog-content .table-scroll { overflow-x: auto; margin: 0 0 22px; }
+.blog-content :not(pre) > code { font-family: var(--font-mono), monospace; font-size: 0.88em; background: var(--bg-1); border: 1px solid var(--border-subtle); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
 .blog-content table { width: 100%; border-collapse: collapse; font-size: 15px; }
 .blog-content th { text-align: left; font-weight: 600; color: var(--text-1); padding: 10px 14px 10px 0; border-bottom: 2px solid var(--text-1); white-space: nowrap; }
 .blog-content td { padding: 11px 14px 11px 0; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }

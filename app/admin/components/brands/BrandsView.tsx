@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle2, AlertTriangle, ExternalLink, FolderOpen, Plus, RefreshCw, Link2, Pencil, Trash2 } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, ExternalLink, FolderOpen, Plus, RefreshCw, Link2, Pencil, Trash2, KeyRound } from 'lucide-react'
 import { authedFetch } from '@/lib/supabaseClient'
 import { formatKobo } from '@/lib/money'
 import { BRAND_CASE_STATUS_LABELS, type BrandCaseStatus } from '@/lib/brandSheet'
@@ -10,6 +10,7 @@ import { useAdminShell } from '../shell/AdminShellContext'
 import BrandSyncPanel from './BrandSyncPanel'
 import BrandBorrowers from './BrandBorrowers'
 import BrandBilling from './BrandBilling'
+import BrandApiPanel from './BrandApiPanel'
 
 interface BrandRow {
   id: string
@@ -24,9 +25,17 @@ interface BrandRow {
   last_synced_at: string | null
   last_sync_error: string | null
   active: boolean
+  /** How borrowers arrive: the Google Sheet, the API (lib/brandApi.ts), or both. */
+  intake_channel: IntakeChannel
   case_counts: Partial<Record<BrandCaseStatus, number>>
+  /** API test-key borrowers (the sandbox), not counted in case_counts. */
+  test_borrowers: number
   open_flags: number
 }
+
+type IntakeChannel = 'sheet' | 'api' | 'both'
+
+const CHANNEL_LABEL: Record<IntakeChannel, string> = { sheet: 'Google Sheet', api: 'API', both: 'Sheet and API' }
 
 interface GoogleState {
   connected: boolean
@@ -37,7 +46,7 @@ interface GoogleState {
   fake: boolean
 }
 
-const EMPTY_FORM = { name: '', code: '', address: '', contactEmails: '', perLetterFeeNaira: '' }
+const EMPTY_FORM = { name: '', code: '', address: '', contactEmails: '', perLetterFeeNaira: '', intakeChannel: 'sheet' as IntakeChannel }
 
 // Admin → Brands: connect the firm's Google Drive, create brands (each gets its own sheet and
 // folder, shared only with the brand's named emails), and see each brand's pipeline.
@@ -124,7 +133,8 @@ export default function BrandsView() {
       }
       setForm(EMPTY_FORM)
       setShowForm(false)
-      if (data.setup?.ok) setNotice(`${form.code.toUpperCase()} created — its sheet and folder are ready and shared.`)
+      if (data.setup?.skipped) setNotice(`${form.code.toUpperCase()} created as an API brand (no sheet). Open “API” on its card to set it up and issue a test key.`)
+      else if (data.setup?.ok) setNotice(`${form.code.toUpperCase()} created — its sheet and folder are ready and shared.`)
       else setError(`Brand saved, but the Google setup didn't finish: ${data.setup?.error ?? 'unknown error'}. Fix the cause, then press "Retry setup".`)
       await load()
     } catch {
@@ -194,6 +204,8 @@ export default function BrandsView() {
   }
 
   const canCreate = Boolean(google?.fake || (google?.configured && google?.connected))
+  // An API-only brand needs no Google Drive; a sheet brand does.
+  const formNeedsGoogle = form.intakeChannel !== 'api'
 
   return (
     <div style={{ display: 'grid', gap: 20 }}>
@@ -215,22 +227,20 @@ export default function BrandsView() {
       {google && <GoogleCard google={google} connecting={connecting} onConnect={connectGoogle} />}
 
       {/* Sheet sync: schedule, last run and "Sync now" */}
-      {canCreate && brands.length > 0 && <BrandSyncPanel onSynced={load} />}
+      {brands.length > 0 && <BrandSyncPanel onSynced={load} />}
 
       {/* Brand list */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <span className="label-mono">Lenders</span>
           <p style={{ color: 'var(--text-2)', fontSize: 13, margin: '4px 0 0' }}>
-            Each brand gets its own Google Sheet and folder, shared only with the emails you list.
+            Each brand sends borrowers through its own Google Sheet (shared only with the emails you list), through the API, or both.
           </p>
         </div>
         <button
           type="button"
           className="btn btn-primary btn-sm"
           onClick={() => setShowForm((v) => !v)}
-          disabled={!canCreate}
-          title={canCreate ? undefined : 'Connect Google Drive first'}
         >
           <Plus size={14} aria-hidden="true" style={{ marginRight: 6 }} />
           New brand
@@ -283,8 +293,29 @@ export default function BrandsView() {
               placeholder="18 Idowu Taylor Street, Victoria Island, Lagos"
             />
           </div>
+          <fieldset style={{ border: 'none', padding: 0, margin: 0, display: 'grid', gap: 6 }}>
+            <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>How will they send borrowers?</legend>
+            {(['sheet', 'api', 'both'] as IntakeChannel[]).map((c) => (
+              <label key={c} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 14 }}>
+                <input type="radio" name="brand-channel" checked={form.intakeChannel === c} onChange={() => setForm({ ...form, intakeChannel: c })} style={{ marginTop: 3 }} />
+                <span>
+                  <strong>{CHANNEL_LABEL[c]}</strong>
+                  <span style={{ color: 'var(--text-2)' }}>
+                    {c === 'sheet' && ' — they type borrowers into a Google Sheet we create and share.'}
+                    {c === 'api' && ' — their developers send borrowers to our API. No sheet or Drive folder is created.'}
+                    {c === 'both' && ' — a sheet as well as the API.'}
+                  </span>
+                </span>
+              </label>
+            ))}
+            {formNeedsGoogle && !canCreate && (
+              <small style={{ color: 'var(--warning)', fontSize: 12 }}>Connect Google Drive above first: this brand gets a sheet and folder.</small>
+            )}
+          </fieldset>
           <div className="form-group" style={{ margin: 0 }}>
-            <label htmlFor="brand-emails">Contact emails (the only people the sheet is shared with)</label>
+            <label htmlFor="brand-emails">
+              {form.intakeChannel === 'api' ? 'Contact emails (copied on borrower emails, told about anything we need)' : 'Contact emails (the only people the sheet is shared with)'}
+            </label>
             <input
               id="brand-emails"
               className="input"
@@ -296,8 +327,8 @@ export default function BrandsView() {
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button type="button" className="btn btn-sm" onClick={() => setShowForm(false)} disabled={saving}>Cancel</button>
-            <button type="submit" className="btn btn-primary btn-sm" disabled={saving}>
-              {saving ? 'Creating sheet and folder…' : 'Create brand'}
+            <button type="submit" className="btn btn-primary btn-sm" disabled={saving || (formNeedsGoogle && !canCreate)}>
+              {saving ? (formNeedsGoogle ? 'Creating sheet and folder…' : 'Creating…') : 'Create brand'}
             </button>
           </div>
         </form>
@@ -307,7 +338,7 @@ export default function BrandsView() {
         <p style={{ color: 'var(--text-2)', fontSize: 14 }}>Loading brands…</p>
       ) : brands.length === 0 ? (
         <div className="card" style={{ padding: '28px 22px', textAlign: 'center', color: 'var(--text-2)', fontSize: 14 }}>
-          No brands yet.{canCreate ? ' Create the first one with “New brand”.' : ' Connect Google Drive above to get started.'}
+          No brands yet. Create the first one with “New brand”.
         </div>
       ) : (
         <div style={{ display: 'grid', gap: 12 }}>
@@ -403,10 +434,13 @@ function BrandCard({
   onDelete: () => Promise<void>
 }) {
   const total = Object.values(brand.case_counts).reduce((s, n) => s + (n ?? 0), 0)
-  const ready = Boolean(brand.setup_completed_at)
+  const apiOnly = brand.intake_channel === 'api'
+  // An API-only brand has no Google set-up to finish.
+  const ready = Boolean(brand.setup_completed_at) || apiOnly
   const [mode, setMode] = useState<'view' | 'edit' | 'delete'>('view')
   const [showBorrowers, setShowBorrowers] = useState(false)
   const [showBilling, setShowBilling] = useState(false)
+  const [showApi, setShowApi] = useState(false)
   const [busy, setBusy] = useState(false)
   const [confirmCode, setConfirmCode] = useState('')
   const [edit, setEdit] = useState<EditForm>(() => toEditForm(brand))
@@ -439,6 +473,7 @@ function BrandCard({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <strong style={{ fontSize: 16 }}>{brand.name}</strong>
             <span className="badge" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{brand.code}</span>
+            <span className="badge" style={{ fontSize: 11 }}>{CHANNEL_LABEL[brand.intake_channel]}</span>
             {!brand.active && <span className="badge">Inactive — not syncing</span>}
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4 }}>
@@ -458,7 +493,7 @@ function BrandCard({
               Folder
             </a>
           )}
-          {!ready && (
+          {!brand.setup_completed_at && !apiOnly && (
             <button type="button" className="btn btn-sm btn-primary" onClick={onRetry} disabled={retrying}>
               <RefreshCw size={13} aria-hidden="true" style={{ marginRight: 6 }} />
               {retrying ? 'Retrying…' : 'Retry setup'}
@@ -621,15 +656,30 @@ function BrandCard({
             {brand.open_flags} change{brand.open_flags === 1 ? '' : 's'} to review
           </span>
         )}
+        {brand.test_borrowers > 0 && (
+          <span className="badge" title="Sent with the brand's API test key: never drafted, served, emailed or billed">
+            {brand.test_borrowers} test borrower{brand.test_borrowers === 1 ? '' : 's'}
+          </span>
+        )}
         {!ready && <span className="badge" style={{ color: 'var(--warning)' }}>Setup incomplete</span>}
         {!brand.address && (
           <span className="badge" style={{ color: 'var(--warning)' }}>No address — letters can’t be drafted (Edit to add)</span>
         )}
+        <button
+          type="button"
+          className="btn btn-sm"
+          style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px' }}
+          onClick={() => setShowApi((v) => !v)}
+          aria-expanded={showApi}
+        >
+          <KeyRound size={12} aria-hidden="true" style={{ marginRight: 5 }} />
+          {showApi ? 'Hide API' : 'API'}
+        </button>
         {ready && (
           <button
             type="button"
             className="btn btn-sm"
-            style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px' }}
+            style={{ fontSize: 12, padding: '4px 10px' }}
             onClick={() => setShowBorrowers((v) => !v)}
             aria-expanded={showBorrowers}
           >
@@ -649,8 +699,9 @@ function BrandCard({
         )}
       </div>
 
+      {showApi && <BrandApiPanel brandId={brand.id} />}
       {showBilling && <BrandBilling brandId={brand.id} />}
-      {showBorrowers && <BrandBorrowers brandId={brand.id} />}
+      {showBorrowers && <BrandBorrowers brandId={brand.id} hasApi={brand.intake_channel !== 'sheet' || brand.test_borrowers > 0} />}
     </div>
   )
 }

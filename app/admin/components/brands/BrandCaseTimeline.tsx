@@ -25,7 +25,7 @@ interface BrandCaseInfo {
   brands: { name: string; code: string } | null
 }
 
-interface EventRow {
+export interface EventRow {
   id: string
   event_type: string
   detail: Record<string, unknown>
@@ -34,17 +34,19 @@ interface EventRow {
 }
 
 /** Plain-English line for each audit event (lib/brandSync.ts, lib/brandServing.ts). */
-function describe(e: EventRow): string {
+export function describe(e: EventRow): string {
   const d = e.detail ?? {}
   switch (e.event_type) {
     case 'case_created':
-      return `Case ID given to the row the brand added (row ${d.row ?? '?'})`
+      return d.source === 'api'
+        ? `Sent by API${d.test ? ' with the TEST key' : ''} (their loan ID ${d.loan_id ?? '?'}, ${d.documents ?? 0} document${d.documents === 1 ? '' : 's'})`
+        : `Case ID given to the row the brand added (row ${d.row ?? '?'})`
     case 'status_changed':
       return `Status: ${label(d.from)} → ${label(d.to)}`
     case 'missing_documents':
       return `Missing documents: ${Array.isArray(d.missing) ? d.missing.join('; ') : ''}`
     case 'resubmitted':
-      return 'The brand corrected the row; checking again'
+      return d.source === 'api' ? (d.notes_changed ? 'The brand added a note; checking again' : 'The brand resent the loan with corrections; checking again') : 'The brand corrected the row; checking again'
     case 'letter_drafted':
       return `Letter drafted: ${d.title ?? ''}`
     case 'draft_failed':
@@ -54,7 +56,7 @@ function describe(e: EventRow): string {
     case 'retry_requested':
       return 'Retry requested'
     case 'lawyer_approved':
-      return `Approved by ${d.reviewer ?? e.actor}; the letter is now billable`
+      return d.test ? 'Test mode: approved (SAMPLE letter, never billed)' : `Approved by ${d.reviewer ?? e.actor}; the letter is now billable`
     case 'final_letter_saved':
       return 'FINAL letter saved to the brand’s Letters folder'
     case 'served':
@@ -76,7 +78,7 @@ function describe(e: EventRow): string {
     case 'edited_after_processing':
       return `The brand edited ${d.column ?? 'a column'} after we started (${d.from || '(empty)'} → ${d.to || '(empty)'}); not acted on`
     case 'notes_updated':
-      return `The brand updated Notes: “${d.to ?? ''}”`
+      return d.source === 'api' ? `The brand added a note by API: “${String(d.to ?? '').split('\n').pop()}”` : `The brand updated Notes: “${d.to ?? ''}”`
     case 'flag_resolved':
       return `Flag resolved (${d.decision ?? ''}): ${d.note ?? ''}`
     case 'row_missing':

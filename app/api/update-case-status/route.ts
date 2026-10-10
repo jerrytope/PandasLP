@@ -6,6 +6,7 @@ import { isAdminEmail } from '@/lib/adminAuth'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
 import { getReviewChecklist } from '@/lib/reviewChecklists'
 import { approveBrandLetter, brandWorkspaceOrNull, recordBrandServed } from '@/lib/brandServing'
+import { deliverForMatter } from '@/lib/brandWebhooks'
 import { courtFilingAllowed } from '@/lib/brandExceptions'
 
 const RATE_LIMIT = 20
@@ -249,6 +250,8 @@ export async function POST(req: Request) {
   if (caseData.brand_id && action === 'markServed') {
     await recordBrandServed(caseId, callerData.user.email ?? 'staff', { workspace: brandWorkspaceOrNull(), now: () => new Date() })
   }
+  // An API brand hears about the approval or the serve straight away (lib/brandWebhooks.ts).
+  if (caseData.brand_id && (action === 'markReviewed' || action === 'markServed')) await deliverForMatter(caseId)
 
   if (RESOLUTION_STAGES.has(nextStatus) && !caseData.resolution_email_sent) {
     // Fire-and-forget — same pattern as the confirmation emails elsewhere in this codebase

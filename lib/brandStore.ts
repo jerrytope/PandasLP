@@ -20,6 +20,8 @@ export interface BrandRecord {
   setup_completed_at: string | null
   owner_user_id: string | null
   active: boolean
+  /** 'sheet' (Google Sheet), 'api' (lib/brandApi.ts) or 'both'. */
+  intake_channel: 'sheet' | 'api' | 'both'
 }
 
 export interface BrandCaseRecord extends BrandCaseState {
@@ -39,10 +41,16 @@ export interface BrandCaseRecord extends BrandCaseState {
   last_notes: string | null
   /** The brand's columns as they were when the row was picked up. */
   borrower: Record<string, string> | null
+  /** Where the borrower came from: a sheet row, or the API (lib/brandApi.ts). */
+  source: 'sheet' | 'api'
+  /** API borrowers: the brand's own loan ID. */
+  external_ref: string | null
+  /** Sent with a test API key: never drafted with the AI, served, emailed or billed. */
+  is_test: boolean
 }
 
 export const CASE_FIELDS =
-  'id, brand_id, case_ref, status, case_id, snapshot_hash, borrower, claimed_at, attempts, letter_url, letter_file_id, final_letter_at, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, court_approved_at, row_missing_since, last_notes, updated_at'
+  'id, brand_id, case_ref, status, case_id, snapshot_hash, borrower, claimed_at, attempts, letter_url, letter_file_id, final_letter_at, served_at, day7_sent_at, day14_sent_at, awaiting_brand_decision_at, court_approved_at, row_missing_since, last_notes, source, external_ref, is_test, updated_at'
 
 export async function logEvent(c: { id: string; case_ref: string }, eventType: string, detail: Record<string, unknown> = {}, actor = 'system') {
   const { error } = await supabaseAdmin.from('brand_case_events').insert({ brand_case_id: c.id, case_ref: c.case_ref, event_type: eventType, detail, actor })

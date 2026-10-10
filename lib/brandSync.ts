@@ -6,6 +6,10 @@
 //   5. sends the borrower reminders that are due (Day 7, Day 14: lib/brandServing.ts),
 //   6. rewrites the app's columns in the sheet from the database, the source of truth.
 //
+// API brands (phase 5, lib/brandApi.ts) skip the sheet: their borrowers arrive already checked
+// and stored in the database, and step 4 claims them from there. Everything after drafting is
+// shared. API borrowers sent with a TEST key are never drafted here (no AI call, no cost).
+//
 // "NEVER TWICE" — how a borrower can't be processed twice even if two runs overlap:
 //   - runBrandSync takes a lease (firm_settings.brand_sync_lease_until), so runs don't overlap;
 //   - claiming is a conditional UPDATE (status = 'new' → 'checking'): only one caller can win;
@@ -16,7 +20,7 @@
 // only straight after re-reading the sheet (brands sort and delete rows).
 
 import { supabaseAdmin } from './supabaseAdmin'
-import { columnLetter, BRAND_CASE_STATUS_LABELS } from './brandSheet'
+import { columnLetter, BRAND_CASE_STATUS_LABELS, type BrandSheetHeader } from './brandSheet'
 import {
   agentCellsDiffer,
   agentCellsFor,
@@ -36,6 +40,7 @@ import { CASE_FIELDS, logEvent, setStatus, writeAgentCells, type BrandCaseRecord
 import { retryFinalLetters, sendDueReminders, type Mailer } from './brandServing'
 import { checkRowChanges } from './brandExceptions'
 import { isMailerConfigured, sendMail } from './mailer'
+import { toSheetRow } from './brandApiInput'
 
 /** A row stuck in Checking this long belongs to a run that died; it goes back to New. */
 const STALE_CLAIM_MS = 30 * 60 * 1000
@@ -49,8 +54,10 @@ export interface SyncDeps {
   workspace: BrandWorkspace
   draft: BrandDrafter
   now: () => Date
-  /** Letters drafted per brand per run; the rest wait for the next run. */
+  /** Letters drafted per brand per run from the sheet; the rest wait for the next run. */
   maxDraftsPerBrand: number
+  /** The same for API borrowers (100 to 150 a month, often in bursts). Defaults to 20. */
+  maxApiDraftsPerBrand?: number
   /** Stop starting new drafts after this time (ms since epoch), so a run ends inside its time limit. */
   deadline: number
   /** Sends the borrower reminders (lib/brandServing.ts). */
@@ -76,6 +83,7 @@ export function defaultSyncDeps(now = new Date()): SyncDeps {
     draft: draftBrandLetter,
     now: () => new Date(),
     maxDraftsPerBrand: 5,
+    maxApiDraftsPerBrand: 20,
     deadline: now.getTime() + 240_000,
     mail: async (opts) => {
       if (!isMailerConfigured()) throw new Error('Email is not set up (GMAIL_APP_PASSWORD).')
@@ -101,95 +109,123 @@ async function flagOnce(brandId: string, kind: string, caseRef: string, detail: 
 
 // ── One brand ─────────────────────────────────────────────────────────────
 
-export async function syncBrand(brandId: string, deps: SyncDeps): Promise<BrandSyncReport> {
+export async function syncBrand(brandId: string, deps: SyncDeps, opts: { apiOnly?: boolean } = {}): Promise<BrandSyncReport> {
   const { data: brand } = await supabaseAdmin.from('brands').select('*').eq('id', brandId).single<BrandRecord>()
   const report: BrandSyncReport = { brandId, code: brand?.code ?? '?', assigned: 0, drafted: 0, reminded: 0, missing: 0, failed: 0, flagged: 0 }
   if (!brand) return { ...report, skipped: 'Brand not found.' }
   if (!brand.active) return { ...report, skipped: 'Inactive.' }
-  if (!brand.setup_completed_at || !brand.sheet_id || brand.sheet_tab_id === null) return { ...report, skipped: 'Google setup not finished.' }
+  const hasSheet = Boolean(brand.setup_completed_at && brand.sheet_id && brand.sheet_tab_id !== null)
+  const channel = brand.intake_channel ?? 'sheet'
+  const usesApi = channel !== 'sheet'
+  // The sheet is read for sheet borrowers, and to keep any sheet the brand has up to date.
+  // An API-only pass (between the hourly sheet runs) leaves the sheet alone.
+  const useSheet = hasSheet && !opts.apiOnly
+  if (!hasSheet && !usesApi) return { ...report, skipped: 'Google setup not finished.' }
+  if (opts.apiOnly && !usesApi) return { ...report, skipped: 'No API borrowers.' }
 
   const ws = deps.workspace
   const notes: string[] = []
   try {
-    // ── Read the sheet and the database ──
-    const parsed = parseSheetValues(await ws.readSheet(brand.sheet_id, brand.sheet_tab_id))
-    if (parsed.ok === false) throw new Error(parsed.error)
-    const rows = parsed.rows
-
     const { data: caseRows, error: casesErr } = await supabaseAdmin.from('brand_cases').select(CASE_FIELDS).eq('brand_id', brand.id)
     if (casesErr) throw new Error(`Could not load borrowers: ${casesErr.message}`)
     const cases = new Map<string, BrandCaseRecord>((caseRows ?? []).map((c) => [c.case_ref, c as BrandCaseRecord]))
 
     const rowsByRef = new Map<string, SheetRow[]>()
-    for (const r of rows) {
-      const ref = r.values['Case ID']
-      if (ref) rowsByRef.set(ref, [...(rowsByRef.get(ref) ?? []), r])
-    }
-    for (const [ref, refRows] of rowsByRef) {
-      if (refRows.length > 1 && (await flagOnce(brand.id, 'duplicate_case_id', ref, { brand_case_id: cases.get(ref)?.id, new_value: `rows ${refRows.map((r) => r.rowNumber).join(', ')}` }))) report.flagged++
-      else if (!cases.has(ref) && (await flagOnce(brand.id, 'unknown_case_id', ref, { new_value: `row ${refRows[0].rowNumber}` }))) report.flagged++
-    }
     /** The one sheet row for a borrower, or null if missing or duplicated. */
     const rowFor = (ref: string) => (rowsByRef.get(ref)?.length === 1 ? rowsByRef.get(ref)![0] : null)
 
-    // ── 1. Case IDs for new rows ──
-    const newRows = rows.filter((r) => !r.values['Case ID'] && hasBorrowerData(r))
-    if (newRows.length > 0) {
-      const created: { row: SheetRow; c: BrandCaseRecord }[] = []
-      for (const row of newRows) {
-        const { data: ref, error: refErr } = await supabaseAdmin.rpc('allocate_brand_case_ref', { p_brand_id: brand.id })
-        if (refErr || typeof ref !== 'string') throw new Error(`Could not allocate a Case ID: ${refErr?.message}`)
-        const { data: inserted, error: insErr } = await supabaseAdmin
-          .from('brand_cases')
-          .insert({ brand_id: brand.id, case_ref: ref, status: 'new' })
-          .select(CASE_FIELDS)
-          .single()
-        if (insErr || !inserted) throw new Error(`Could not save ${ref}: ${insErr?.message}`)
-        created.push({ row, c: inserted as BrandCaseRecord })
-      }
-
-      // Write the IDs — but only into rows that are still the same borrower, still without an
-      // ID, after re-reading the sheet. A row that moved or changed gets its new case removed
-      // (nothing has happened to it yet) and is picked up fresh next run.
-      const fresh = parseSheetValues(await ws.readSheet(brand.sheet_id, brand.sheet_tab_id))
-      if (fresh.ok === false) throw new Error(fresh.error)
-      const stillThere = (row: SheetRow) => {
-        const now = fresh.rows.find((r) => r.rowNumber === row.rowNumber)
-        return Boolean(now && !now.values['Case ID'] && now.values['Borrower Full Name'] === row.values['Borrower Full Name'] && now.values['Phone Number'] === row.values['Phone Number'])
-      }
-      const keep = created.filter(({ row }) => stillThere(row))
-      const drop = created.filter(({ row }) => !stillThere(row))
-      if (drop.length) await supabaseAdmin.from('brand_cases').delete().in('id', drop.map(({ c }) => c.id))
-
-      const stamp = deps.now().toISOString()
-      const writes: CellWrite[] = keep.flatMap(({ row, c }) => [
-        { row: row.rowNumber, column: columnLetter('Case ID'), value: c.case_ref },
-        { row: row.rowNumber, column: columnLetter('Status'), value: BRAND_CASE_STATUS_LABELS.new },
-        { row: row.rowNumber, column: columnLetter('Last Updated'), value: sheetDateTime(stamp) },
-      ])
+    /** Check one claimed borrower and draft its letter, recording what happened in the report. */
+    const checkAndDraft = async (c: BrandCaseRecord, row: SheetRow) => {
       try {
-        await ws.writeCells(brand.sheet_id, brand.sheet_tab_id, writes)
+        const outcome = await processClaimed(c, row, brand, deps)
+        if (outcome === 'drafted') report.drafted++
+        else if (outcome === 'missing') report.missing++
+        else if (outcome === 'waiting') notes.push(`${c.case_ref} waiting: add the brand’s address (Edit brand) so letters can be drafted.`)
+        else report.failed++
       } catch (err) {
-        // The sheet never got the IDs, so the cases must not exist either — otherwise the same
-        // rows would get a second Case ID next run.
-        await supabaseAdmin.from('brand_cases').delete().in('id', keep.map(({ c }) => c.id))
-        throw err
-      }
-      for (const { row, c } of keep) {
-        await logEvent(c, 'case_created', { row: row.rowNumber, borrower: row.values['Borrower Full Name'] })
-        row.values['Case ID'] = c.case_ref
-        cases.set(c.case_ref, c)
-        rowsByRef.set(c.case_ref, [row])
-        report.assigned++
+        report.failed++
+        const message = err instanceof Error ? err.message : String(err)
+        await supabaseAdmin.from('brand_cases').update({ status: 'new', claimed_at: null, last_error: message }).eq('id', c.id)
+        await logEvent(c, 'draft_failed', { error: message })
+        c.status = 'new'
       }
     }
 
-    // ── 1b. Rows the brand changed after we started on them, and rows that have gone ──
-    // Flagged for staff, never reprocessed (lib/brandExceptions.ts).
-    const changes = await checkRowChanges(brand, [...cases.values()], rowsByRef, deps)
-    report.flagged += changes.flagged
+    if (useSheet) {
+      // ── Read the sheet ──
+      const parsed = parseSheetValues(await ws.readSheet(brand.sheet_id!, brand.sheet_tab_id!))
+      if (parsed.ok === false) throw new Error(parsed.error)
+      const rows = parsed.rows
 
-    // ── 2. Recover claims left by a run that died ──
+      for (const r of rows) {
+        const ref = r.values['Case ID']
+        if (ref) rowsByRef.set(ref, [...(rowsByRef.get(ref) ?? []), r])
+      }
+      for (const [ref, refRows] of rowsByRef) {
+        if (refRows.length > 1 && (await flagOnce(brand.id, 'duplicate_case_id', ref, { brand_case_id: cases.get(ref)?.id, new_value: `rows ${refRows.map((r) => r.rowNumber).join(', ')}` }))) report.flagged++
+        else if (!cases.has(ref) && (await flagOnce(brand.id, 'unknown_case_id', ref, { new_value: `row ${refRows[0].rowNumber}` }))) report.flagged++
+      }
+
+      // ── 1. Case IDs for new rows ──
+      const newRows = rows.filter((r) => !r.values['Case ID'] && hasBorrowerData(r))
+      if (newRows.length > 0) {
+        const created: { row: SheetRow; c: BrandCaseRecord }[] = []
+        for (const row of newRows) {
+          const { data: ref, error: refErr } = await supabaseAdmin.rpc('allocate_brand_case_ref', { p_brand_id: brand.id })
+          if (refErr || typeof ref !== 'string') throw new Error(`Could not allocate a Case ID: ${refErr?.message}`)
+          const { data: inserted, error: insErr } = await supabaseAdmin
+            .from('brand_cases')
+            .insert({ brand_id: brand.id, case_ref: ref, status: 'new' })
+            .select(CASE_FIELDS)
+            .single()
+          if (insErr || !inserted) throw new Error(`Could not save ${ref}: ${insErr?.message}`)
+          created.push({ row, c: inserted as BrandCaseRecord })
+        }
+
+        // Write the IDs — but only into rows that are still the same borrower, still without an
+        // ID, after re-reading the sheet. A row that moved or changed gets its new case removed
+        // (nothing has happened to it yet) and is picked up fresh next run.
+        const fresh = parseSheetValues(await ws.readSheet(brand.sheet_id!, brand.sheet_tab_id!))
+        if (fresh.ok === false) throw new Error(fresh.error)
+        const stillThere = (row: SheetRow) => {
+          const now = fresh.rows.find((r) => r.rowNumber === row.rowNumber)
+          return Boolean(now && !now.values['Case ID'] && now.values['Borrower Full Name'] === row.values['Borrower Full Name'] && now.values['Phone Number'] === row.values['Phone Number'])
+        }
+        const keep = created.filter(({ row }) => stillThere(row))
+        const drop = created.filter(({ row }) => !stillThere(row))
+        if (drop.length) await supabaseAdmin.from('brand_cases').delete().in('id', drop.map(({ c }) => c.id))
+
+        const stamp = deps.now().toISOString()
+        const writes: CellWrite[] = keep.flatMap(({ row, c }) => [
+          { row: row.rowNumber, column: columnLetter('Case ID'), value: c.case_ref },
+          { row: row.rowNumber, column: columnLetter('Status'), value: BRAND_CASE_STATUS_LABELS.new },
+          { row: row.rowNumber, column: columnLetter('Last Updated'), value: sheetDateTime(stamp) },
+        ])
+        try {
+          await ws.writeCells(brand.sheet_id!, brand.sheet_tab_id!, writes)
+        } catch (err) {
+          // The sheet never got the IDs, so the cases must not exist either — otherwise the same
+          // rows would get a second Case ID next run.
+          await supabaseAdmin.from('brand_cases').delete().in('id', keep.map(({ c }) => c.id))
+          throw err
+        }
+        for (const { row, c } of keep) {
+          await logEvent(c, 'case_created', { row: row.rowNumber, borrower: row.values['Borrower Full Name'] })
+          row.values['Case ID'] = c.case_ref
+          cases.set(c.case_ref, c)
+          rowsByRef.set(c.case_ref, [row])
+          report.assigned++
+        }
+      }
+
+      // ── 1b. Rows the brand changed after we started on them, and rows that have gone ──
+      // Flagged for staff, never reprocessed (lib/brandExceptions.ts). Sheet borrowers only: an
+      // API borrower has no row, so it must never be flagged "row missing".
+      const changes = await checkRowChanges(brand, [...cases.values()].filter((c) => c.source !== 'api'), rowsByRef, deps)
+      report.flagged += changes.flagged
+    }
+
+    // ── 2. Recover claims left by a run that died (sheet and API borrowers alike) ──
     const staleBefore = new Date(deps.now().getTime() - STALE_CLAIM_MS).toISOString()
     for (const c of cases.values()) {
       if (c.status === 'checking' && c.claimed_at && c.claimed_at < staleBefore) {
@@ -208,61 +244,71 @@ export async function syncBrand(brandId: string, deps: SyncDeps): Promise<BrandS
       }
     }
 
-    // ── 3. Missing Documents rows the brand has since corrected go back to New ──
-    // Corrected = a brand column changed, or the Notes changed (that's where a brand answers
-    // the lawyer's questions; Notes are deliberately left out of the snapshot hash).
-    for (const c of cases.values()) {
-      const row = rowFor(c.case_ref)
-      if (c.status !== 'missing_documents' || !row) continue
-      const notesChanged = (c.borrower?.Notes ?? '') !== row.values.Notes
-      if (snapshotHash(row) === c.snapshot_hash && !notesChanged) continue
-      const { data: reopened } = await supabaseAdmin
-        .from('brand_cases')
-        .update({ status: 'new', missing_items: [] })
-        .eq('id', c.id)
-        .eq('status', 'missing_documents')
-        .select('id')
-      if (reopened?.length) {
-        await logEvent(c, 'resubmitted', { previous_status: 'missing_documents', notes_changed: notesChanged })
-        c.status = 'new'
+    if (useSheet) {
+      // ── 3. Missing Documents rows the brand has since corrected go back to New ──
+      // Corrected = a brand column changed, or the Notes changed (that's where a brand answers
+      // the lawyer's questions; Notes are deliberately left out of the snapshot hash). API
+      // borrowers are corrected by resubmitting instead (lib/brandApi.ts).
+      for (const c of cases.values()) {
+        const row = rowFor(c.case_ref)
+        if (c.status !== 'missing_documents' || !row) continue
+        const notesChanged = (c.borrower?.Notes ?? '') !== row.values.Notes
+        if (snapshotHash(row) === c.snapshot_hash && !notesChanged) continue
+        const { data: reopened } = await supabaseAdmin
+          .from('brand_cases')
+          .update({ status: 'new', missing_items: [] })
+          .eq('id', c.id)
+          .eq('status', 'missing_documents')
+          .select('id')
+        if (reopened?.length) {
+          await logEvent(c, 'resubmitted', { previous_status: 'missing_documents', notes_changed: notesChanged })
+          c.status = 'new'
+        }
       }
+
+      // ── 4. Claim New rows ──
+      const candidates = [...cases.values()].filter((c) => c.source !== 'api' && c.status === 'new' && c.attempts < MAX_DRAFT_ATTEMPTS && rowFor(c.case_ref))
+      const claimed: BrandCaseRecord[] = []
+      for (const c of candidates.slice(0, deps.maxDraftsPerBrand)) {
+        const row = rowFor(c.case_ref)!
+        const claimedAt = deps.now().toISOString()
+        const { data: won } = await supabaseAdmin
+          .from('brand_cases')
+          .update({ status: 'checking', claimed_at: claimedAt, borrower: brandColumnsSnapshot(row), snapshot_hash: snapshotHash(row) })
+          .eq('id', c.id)
+          .eq('status', 'new')
+          .select(CASE_FIELDS)
+          .single()
+        if (!won) continue // another run claimed it first — leave it alone
+        await logEvent(c, 'status_changed', { from: 'new', to: 'checking' })
+        Object.assign(c, won)
+        claimed.push(c)
+      }
+      await writeAgentCells(ws, brand, claimed)
+
+      // ── 5. Check and draft each claimed row ──
+      for (const c of claimed) await checkAndDraft(c, rowFor(c.case_ref)!)
     }
 
-    // ── 4. Claim New rows ──
-    const candidates = [...cases.values()].filter((c) => c.status === 'new' && c.attempts < MAX_DRAFT_ATTEMPTS && rowFor(c.case_ref))
-    const claimed: BrandCaseRecord[] = []
-    for (const c of candidates.slice(0, deps.maxDraftsPerBrand)) {
-      const row = rowFor(c.case_ref)!
-      const claimedAt = deps.now().toISOString()
-      const { data: won } = await supabaseAdmin
-        .from('brand_cases')
-        .update({ status: 'checking', claimed_at: claimedAt, borrower: brandColumnsSnapshot(row), snapshot_hash: snapshotHash(row) })
-        .eq('id', c.id)
-        .eq('status', 'new')
-        .select(CASE_FIELDS)
-        .single()
-      if (!won) continue // another run claimed it first — leave it alone
-      await logEvent(c, 'status_changed', { from: 'new', to: 'checking' })
-      Object.assign(c, won)
-      claimed.push(c)
-    }
-    await writeAgentCells(ws, brand, claimed)
-
-    // ── 5. Check and draft each claimed row ──
-    for (const c of claimed) {
-      const row = rowFor(c.case_ref)!
-      try {
-        const outcome = await processClaimed(c, row, brand, deps)
-        if (outcome === 'drafted') report.drafted++
-        else if (outcome === 'missing') report.missing++
-        else if (outcome === 'waiting') notes.push(`${c.case_ref} waiting: add the brand’s address (Edit brand) so letters can be drafted.`)
-        else report.failed++
-      } catch (err) {
-        report.failed++
-        const message = err instanceof Error ? err.message : String(err)
-        await supabaseAdmin.from('brand_cases').update({ status: 'new', claimed_at: null, last_error: message }).eq('id', c.id)
-        await logEvent(c, 'draft_failed', { error: message })
-        c.status = 'new'
+    // ── 4b and 5b. API borrowers: claimed straight from the database ──
+    // They were checked when they arrived (lib/brandApi.ts) and are checked again here, the same
+    // way as a sheet row. Test-key borrowers are never drafted: no AI call, no cost.
+    if (usesApi) {
+      const apiCandidates = [...cases.values()].filter(
+        (c) => c.source === 'api' && !c.is_test && c.status === 'new' && c.attempts < MAX_DRAFT_ATTEMPTS && c.borrower,
+      )
+      for (const c of apiCandidates.slice(0, deps.maxApiDraftsPerBrand ?? 20)) {
+        const { data: won } = await supabaseAdmin
+          .from('brand_cases')
+          .update({ status: 'checking', claimed_at: deps.now().toISOString() })
+          .eq('id', c.id)
+          .eq('status', 'new')
+          .select(CASE_FIELDS)
+          .single()
+        if (!won) continue // another run, or a resubmission, got there first
+        await logEvent(c, 'status_changed', { from: 'new', to: 'checking' })
+        Object.assign(c, won)
+        await checkAndDraft(c, toSheetRow(c.borrower as Record<BrandSheetHeader, string>))
       }
     }
 
@@ -271,31 +317,39 @@ export async function syncBrand(brandId: string, deps: SyncDeps): Promise<BrandS
       .from('brand_cases')
       .select(CASE_FIELDS)
       .eq('brand_id', brand.id)
+      .eq('is_test', false) // test borrowers are never emailed (lib/brandTestMode.ts moves them on)
       .in('status', ['lawyer_approved', 'served', 'day7_sent'])
     const active = (activeRows ?? []) as BrandCaseRecord[]
     await retryFinalLetters(active, ws)
     if (active.some((c) => c.served_at)) {
-      const now = parseSheetValues(await ws.readSheet(brand.sheet_id, brand.sheet_tab_id))
-      if (now.ok === false) throw new Error(now.error)
-      const counts = new Map<string, number>()
-      for (const r of now.rows) if (r.values['Case ID']) counts.set(r.values['Case ID'], (counts.get(r.values['Case ID']) ?? 0) + 1)
-      const single = new Map(now.rows.filter((r) => counts.get(r.values['Case ID']) === 1).map((r) => [r.values['Case ID'], r]))
+      // The sheet's Day 7 / Day 14 cells are a second "already sent?" check for sheet borrowers.
+      // API borrowers have no row, so for them the database check alone applies.
+      const single = new Map<string, SheetRow>()
+      if (useSheet) {
+        const now = parseSheetValues(await ws.readSheet(brand.sheet_id!, brand.sheet_tab_id!))
+        if (now.ok === false) throw new Error(now.error)
+        const counts = new Map<string, number>()
+        for (const r of now.rows) if (r.values['Case ID']) counts.set(r.values['Case ID'], (counts.get(r.values['Case ID']) ?? 0) + 1)
+        for (const r of now.rows) if (counts.get(r.values['Case ID']) === 1) single.set(r.values['Case ID'], r)
+      }
       const reminders = await sendDueReminders(brand, active, single, deps)
       report.reminded += reminders.sent
       report.failed += reminders.failed
     }
 
     // ── 7. The sheet's app columns ← the database ──
-    const { data: latest } = await supabaseAdmin.from('brand_cases').select(CASE_FIELDS).eq('brand_id', brand.id)
-    const fresh = parseSheetValues(await ws.readSheet(brand.sheet_id, brand.sheet_tab_id))
-    if (fresh.ok === false) throw new Error(fresh.error)
-    const freshByRef = new Map<string, SheetRow[]>()
-    for (const r of fresh.rows) if (r.values['Case ID']) freshByRef.set(r.values['Case ID'], [...(freshByRef.get(r.values['Case ID']) ?? []), r])
-    const drifted = ((latest ?? []) as BrandCaseRecord[]).filter((c) => {
-      const r = freshByRef.get(c.case_ref)
-      return r?.length === 1 && agentCellsDiffer(r[0], agentCellsFor(c))
-    })
-    await writeAgentCells(ws, brand, drifted)
+    if (useSheet) {
+      const { data: latest } = await supabaseAdmin.from('brand_cases').select(CASE_FIELDS).eq('brand_id', brand.id)
+      const fresh = parseSheetValues(await ws.readSheet(brand.sheet_id!, brand.sheet_tab_id!))
+      if (fresh.ok === false) throw new Error(fresh.error)
+      const freshByRef = new Map<string, SheetRow[]>()
+      for (const r of fresh.rows) if (r.values['Case ID']) freshByRef.set(r.values['Case ID'], [...(freshByRef.get(r.values['Case ID']) ?? []), r])
+      const drifted = ((latest ?? []) as BrandCaseRecord[]).filter((c) => {
+        const r = freshByRef.get(c.case_ref)
+        return r?.length === 1 && agentCellsDiffer(r[0], agentCellsFor(c))
+      })
+      await writeAgentCells(ws, brand, drifted)
+    }
 
     await supabaseAdmin
       .from('brands')
@@ -320,11 +374,18 @@ async function processClaimed(
   brand: BrandRecord,
   deps: SyncDeps,
 ): Promise<'drafted' | 'missing' | 'waiting' | 'failed'> {
-  const checked = checkBorrower(row)
+  const isApi = c.source === 'api'
+  const checked = checkBorrower(row, { documentsStored: isApi })
   const missing = checked.ok === false ? [...checked.missing] : []
   if (checked.ok === true) {
-    const doc = await deps.workspace.checkDocument(checked.borrower.documentsFileId)
-    if (doc.ok === false) missing.push(`Documents Link (${doc.reason})`)
+    if (isApi) {
+      // Stored with us when they arrived (lib/brandApi.ts), already checked to be PDFs or images.
+      const { count } = await supabaseAdmin.from('brand_case_documents').select('id', { count: 'exact', head: true }).eq('brand_case_id', c.id)
+      if (!count) missing.push('Documents (send at least one: the loan agreement or statement)')
+    } else {
+      const doc = await deps.workspace.checkDocument(checked.borrower.documentsFileId)
+      if (doc.ok === false) missing.push(`Documents Link (${doc.reason})`)
+    }
   }
   if (missing.length > 0 || checked.ok === false) {
     await setStatus(c, 'missing_documents', { missing_items: missing, claimed_at: null, last_error: null })
@@ -335,7 +396,8 @@ async function processClaimed(
 
   // Letters name the client "of [address]"; without one every letter would come back with an
   // outstanding question. Wait (without spending an attempt) until the admin adds it.
-  if (!brand.address || !brand.owner_user_id || !brand.letters_folder_id) {
+  // (API borrowers don't need the Letters folder: their letter is pulled through the API.)
+  if (!brand.address || !brand.owner_user_id || (!isApi && !brand.letters_folder_id)) {
     await supabaseAdmin.from('brand_cases').update({ status: 'new', claimed_at: null }).eq('id', c.id)
     c.status = 'new'
     return 'waiting'
@@ -393,7 +455,7 @@ async function processClaimed(
         agent_id: 'small-claims',
         brand_id: brand.id,
         status: 'draft',
-        source: 'brand-sheet',
+        source: isApi ? 'brand-api' : 'brand-sheet',
         source_detail: c.case_ref,
         client_email: brand.contact_emails[0],
         recipient_phone: borrower.phone,
@@ -418,24 +480,29 @@ async function processClaimed(
       .eq('id', matter.id)
     if (docErr) throw new Error(`Could not save the letter: ${docErr.message}`)
 
-    const docx = (await buildDemandLetterDocxBuffer(body)) as Buffer
-    const file = await deps.workspace.uploadFile({
-      folderId: brand.letters_folder_id,
-      name: `${c.case_ref} — ${result.doc.title} (DRAFT, awaiting lawyer review).docx`,
-      mimeType: DOCX_MIME,
-      content: docx,
-    })
+    // Sheet brands get a DRAFT Word copy in their Letters folder. API brands don't use Drive:
+    // their letter is in the matter, and they pull it through the API once approved (phase 5B).
+    let file: { id: string; url: string } | null = null
+    if (!isApi && brand.letters_folder_id) {
+      const docx = (await buildDemandLetterDocxBuffer(body)) as Buffer
+      file = await deps.workspace.uploadFile({
+        folderId: brand.letters_folder_id,
+        name: `${c.case_ref} — ${result.doc.title} (DRAFT, awaiting lawyer review).docx`,
+        mimeType: DOCX_MIME,
+        content: docx,
+      })
+    }
 
     await setStatus(c, 'letter_drafted', {
       case_id: matter.id,
-      letter_url: file.url,
-      letter_file_id: file.id,
+      letter_url: file?.url ?? null,
+      letter_file_id: file?.id ?? null,
       missing_items: [],
       claimed_at: null,
       last_error: null,
     })
-    await supabaseAdmin.from('brand_case_events').update({ detail: { title: result.doc.title, case_id: matter.id, letter_url: file.url } }).eq('id', gate.id)
-    c.letter_url = file.url
+    await supabaseAdmin.from('brand_case_events').update({ detail: { title: result.doc.title, case_id: matter.id, letter_url: file?.url ?? null } }).eq('id', gate.id)
+    c.letter_url = file?.url ?? null
     return 'drafted'
   } catch (err) {
     // Undo so a later run can try again cleanly: no half-made matter, and the gate re-opened.
@@ -466,8 +533,19 @@ export async function runBrandSync(opts: { force?: boolean; brandId?: string; de
     .single()
   const intervalMs = (settings?.brand_sync_interval_minutes ?? 60) * 60_000
   // A minute of slack so an hourly cron firing at :00 isn't skipped for being a few seconds early.
-  if (!opts.force && settings?.brand_sync_last_run_at && started.getTime() - new Date(settings.brand_sync_last_run_at).getTime() < intervalMs - 60_000) {
-    return { ran: false, reason: 'Not due yet.', reports: [] }
+  const sheetsDue = opts.force || !settings?.brand_sync_last_run_at || started.getTime() - new Date(settings.brand_sync_last_run_at).getTime() >= intervalMs - 60_000
+  // Between sheet runs, a tick still drafts API borrowers that are waiting: a brand sending by
+  // API shouldn't wait up to an hour for the next sheet run (plans/phase-5-api-intake.md).
+  let apiOnly = false
+  if (!sheetsDue) {
+    const { count } = await supabaseAdmin
+      .from('brand_cases')
+      .select('id', { count: 'exact', head: true })
+      .eq('source', 'api')
+      .eq('is_test', false)
+      .eq('status', 'new')
+    if (!count) return { ran: false, reason: 'Not due yet.', reports: [] }
+    apiOnly = true
   }
 
   const { data: lease } = await supabaseAdmin
@@ -480,16 +558,19 @@ export async function runBrandSync(opts: { force?: boolean; brandId?: string; de
 
   try {
     const deps = opts.deps ?? defaultSyncDeps(started)
-    let query = supabaseAdmin.from('brands').select('id').eq('active', true).not('setup_completed_at', 'is', null)
+    // Brands with a finished Google set-up, plus API brands (which may have no sheet at all).
+    let query = supabaseAdmin.from('brands').select('id').eq('active', true).or('setup_completed_at.not.is.null,intake_channel.neq.sheet')
+    if (apiOnly) query = query.neq('intake_channel', 'sheet')
     if (opts.brandId) query = query.eq('id', opts.brandId)
     const { data: brands } = await query.order('created_at', { ascending: true })
     const reports: BrandSyncReport[] = []
-    for (const b of brands ?? []) reports.push(await syncBrand(b.id, deps))
+    for (const b of brands ?? []) reports.push(await syncBrand(b.id, deps, { apiOnly }))
     return { ran: true, reports }
   } finally {
+    // An API-only pass doesn't count as the scheduled sheet run, so the sheet schedule is unchanged.
     await supabaseAdmin
       .from('firm_settings')
-      .update({ brand_sync_lease_until: null, brand_sync_last_run_at: new Date().toISOString() })
+      .update({ brand_sync_lease_until: null, ...(apiOnly ? {} : { brand_sync_last_run_at: new Date().toISOString() }) })
       .eq('id', 1)
   }
 }

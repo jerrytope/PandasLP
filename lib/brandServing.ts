@@ -106,7 +106,8 @@ export async function approveBrandLetter(caseId: string, reviewer: string, deps:
 
   const ws = deps.workspace
   if (ws) {
-    await tryGoogle(c, 'Saving the final letter to Drive', () => saveFinalLetter(c, ws))
+    // API borrowers have no Word copy in Drive: the brand pulls the letter through the API.
+    if (c.source !== 'api') await tryGoogle(c, 'Saving the final letter to Drive', () => saveFinalLetter(c, ws))
     await tryGoogle(c, 'Updating the sheet', () => refreshSheetRow(c.id, ws))
   }
 }
@@ -329,7 +330,7 @@ export async function sendDueReminders(
 /** The approved letters whose FINAL copy never reached Drive (Google was down at approval). */
 export async function retryFinalLetters(cases: BrandCaseRecord[], ws: BrandWorkspace) {
   for (const c of cases) {
-    if (c.case_id && !c.final_letter_at && ['lawyer_approved', 'served', 'day7_sent', 'day14_sent'].includes(c.status)) {
+    if (c.source !== 'api' && c.case_id && !c.final_letter_at && ['lawyer_approved', 'served', 'day7_sent', 'day14_sent'].includes(c.status)) {
       await tryGoogle(c, 'Saving the final letter to Drive', () => saveFinalLetter(c, ws))
     }
   }

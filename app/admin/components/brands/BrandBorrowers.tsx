@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ExternalLink, AlertTriangle } from 'lucide-react'
 import { authedFetch } from '@/lib/supabaseClient'
 import { BRAND_CASE_STATUS_LABELS, type BrandCaseStatus } from '@/lib/brandSheet'
+import { describe, type EventRow } from './BrandCaseTimeline'
 
 interface BorrowerRow {
   id: string
@@ -15,6 +16,9 @@ interface BorrowerRow {
   last_error: string | null
   attempts: number
   awaiting_brand_decision_at: string | null
+  source: 'sheet' | 'api'
+  external_ref: string | null
+  is_test: boolean
   updated_at: string
 }
 
@@ -36,14 +40,16 @@ const FLAG_TEXT: Record<string, string> = {
 
 const MAX_ATTEMPTS = 3
 
-// The borrowers of one brand, as the database (the source of truth) has them.
-export default function BrandBorrowers({ brandId }: { brandId: string }) {
+// The borrowers of one brand, as the database (the source of truth) has them. For a brand on
+// the API, a switch shows its test-key borrowers (the sandbox) instead of the real ones.
+export default function BrandBorrowers({ brandId, hasApi = false }: { brandId: string; hasApi?: boolean }) {
   const [cases, setCases] = useState<BorrowerRow[] | null>(null)
+  const [test, setTest] = useState(false)
   const [flags, setFlags] = useState<FlagRow[]>([])
   const [error, setError] = useState('')
 
   async function load() {
-    const res = await authedFetch(`/api/admin/brands/cases?brandId=${encodeURIComponent(brandId)}`)
+    const res = await authedFetch(`/api/admin/brands/cases?brandId=${encodeURIComponent(brandId)}${test ? '&test=1' : ''}`)
     const data = await res.json()
     if (!res.ok) return setError(data.error || 'Failed to load borrowers.')
     setCases(data.cases)
@@ -53,7 +59,7 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
   useEffect(() => {
     load().catch(() => setError('Network error while loading borrowers.'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [brandId])
+  }, [brandId, test])
 
   async function retry(brandCaseId: string) {
     const res = await authedFetch('/api/admin/brands/cases', {
@@ -71,7 +77,18 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
 
   return (
     <div style={{ display: 'grid', gap: 10 }}>
-      {flags.length > 0 && (
+      {hasApi && (
+        <div role="group" aria-label="Which borrowers" style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13, flexWrap: 'wrap' }}>
+          <button type="button" className={`btn btn-sm ${test ? '' : 'btn-primary'}`} aria-pressed={!test} onClick={() => setTest(false)}>
+            Real borrowers
+          </button>
+          <button type="button" className={`btn btn-sm ${test ? 'btn-primary' : ''}`} aria-pressed={test} onClick={() => setTest(true)}>
+            Test borrowers
+          </button>
+          {test && <span style={{ color: 'var(--text-2)' }}>Sent with the test key: never drafted, served, emailed or billed. They move on by themselves.</span>}
+        </div>
+      )}
+      {!test && flags.length > 0 && (
         <div style={{ display: 'grid', gap: 8 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--danger)', textTransform: 'uppercase' }}>Needs attention</div>
           {flags.map((f) => (
@@ -82,7 +99,7 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
 
       {cases.length === 0 ? (
         <p style={{ color: 'var(--text-2)', fontSize: 13, margin: 0 }}>
-          No borrowers yet. Rows the brand adds to its sheet appear here after the next sync.
+          {test ? 'No test borrowers yet. They appear as soon as the brand sends one with its test key.' : hasApi ? 'No borrowers yet. They appear as soon as the brand sends them (by API at once; sheet rows after the next sync).' : 'No borrowers yet. Rows the brand adds to its sheet appear here after the next sync.'}
         </p>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -90,6 +107,7 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
             <thead>
               <tr style={{ textAlign: 'left', color: 'var(--text-2)', borderBottom: '1px solid var(--border-subtle)' }}>
                 <th style={{ padding: '6px 8px' }}>Case ID</th>
+                {hasApi && <th style={{ padding: '6px 8px' }}>Their loan ID</th>}
                 <th style={{ padding: '6px 8px' }}>Borrower</th>
                 <th style={{ padding: '6px 8px' }}>Outstanding</th>
                 <th style={{ padding: '6px 8px' }}>Status</th>
@@ -100,6 +118,11 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
               {cases.map((c) => (
                 <tr key={c.id} style={{ borderBottom: '1px solid var(--border-subtle)', verticalAlign: 'top' }}>
                   <td style={{ padding: '8px', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>{c.case_ref}</td>
+                  {hasApi && (
+                    <td style={{ padding: '8px', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+                      {c.source === 'api' ? c.external_ref : <span style={{ color: 'var(--text-3)', fontFamily: 'inherit' }}>sheet row</span>}
+                    </td>
+                  )}
                   <td style={{ padding: '8px' }}>{c.borrower?.['Borrower Full Name'] || <span style={{ color: 'var(--text-3)' }}>not checked yet</span>}</td>
                   <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{c.borrower?.['Amount Outstanding'] || '—'}</td>
                   <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
@@ -121,6 +144,7 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
                         ))}
                       </ul>
                     )}
+                    <History brandCaseId={c.id} />
                     {c.last_error && (
                       <div style={{ color: 'var(--danger)' }}>
                         {c.last_error}
@@ -138,6 +162,48 @@ export default function BrandBorrowers({ brandId }: { brandId: string }) {
             </tbody>
           </table>
         </div>
+      )}
+    </div>
+  )
+}
+
+// One borrower's audit log, loaded when opened (every step, including API and test ones).
+function History({ brandCaseId }: { brandCaseId: string }) {
+  const [events, setEvents] = useState<EventRow[] | null>(null)
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState('')
+
+  async function toggle() {
+    const next = !open
+    setOpen(next)
+    if (!next || events) return
+    try {
+      const res = await authedFetch(`/api/admin/brands/cases?brandCaseId=${encodeURIComponent(brandCaseId)}`)
+      const data = await res.json()
+      if (!res.ok) return setError(data.error || 'Could not load the history.')
+      setEvents(data.events)
+    } catch {
+      setError('Network error.')
+    }
+  }
+
+  return (
+    <div>
+      <button type="button" className="btn btn-sm" style={{ fontSize: 12, padding: '2px 8px', minHeight: 0 }} onClick={toggle} aria-expanded={open}>
+        {open ? 'Hide history' : 'History'}
+      </button>
+      {open && error && <div role="alert" style={{ color: 'var(--danger)' }}>{error}</div>}
+      {open && events && (
+        <ol style={{ margin: '6px 0 0', paddingLeft: 18, color: 'var(--text-2)', display: 'grid', gap: 2 }}>
+          {events.map((e) => (
+            <li key={e.id}>
+              <span style={{ color: 'var(--text-3)', fontSize: 12 }}>
+                {new Date(e.created_at).toLocaleString('en-GB', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              </span>{' '}
+              {describe(e)}
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   )

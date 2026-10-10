@@ -142,8 +142,14 @@ export interface Borrower {
  * Everything the app can check without Google. Returns the borrower, or the list of what's
  * missing — in plain words, because this list is shown to the brand's staff and to ours.
  * Whether the Documents Link actually opens is checked separately (it needs Drive).
+ *
+ * `documentsStored`: an API borrower's documents arrive with it and are stored by us
+ * (lib/brandApi.ts), so there is no Drive link to check; documentsLink/documentsFileId are ''.
  */
-export function checkBorrower(row: SheetRow): { ok: true; borrower: Borrower } | { ok: false; missing: string[] } {
+export function checkBorrower(
+  row: SheetRow,
+  opts: { documentsStored?: boolean } = {},
+): { ok: true; borrower: Borrower } | { ok: false; missing: string[] } {
   const v = row.values
   const missing: string[] = []
 
@@ -174,9 +180,11 @@ export function checkBorrower(row: SheetRow): { ok: true; borrower: Borrower } |
   const lastPaymentDate = v['Last Payment Date'] ? parseSheetDate(row.raw['Last Payment Date'] ?? v['Last Payment Date']) : null
   if (v['Last Payment Date'] && !lastPaymentDate) missing.push('Last Payment Date (not a valid date — use e.g. 15/01/2026)')
 
-  const fileId = driveFileIdFromUrl(v['Documents Link'])
-  if (!v['Documents Link']) missing.push('Documents Link (the loan documents)')
-  else if (!fileId) missing.push('Documents Link (must be a Google Drive link — upload to the brand’s Documents folder)')
+  const fileId = opts.documentsStored ? '' : driveFileIdFromUrl(v['Documents Link'])
+  if (!opts.documentsStored) {
+    if (!v['Documents Link']) missing.push('Documents Link (the loan documents)')
+    else if (!fileId) missing.push('Documents Link (must be a Google Drive link — upload to the brand’s Documents folder)')
+  }
 
   if (missing.length > 0) return { ok: false, missing }
   return {
@@ -190,8 +198,8 @@ export function checkBorrower(row: SheetRow): { ok: true; borrower: Borrower } |
       amountOutstanding: outstanding!,
       loanDate: loanDate!,
       lastPaymentDate,
-      documentsLink: v['Documents Link'],
-      documentsFileId: fileId!,
+      documentsLink: opts.documentsStored ? '' : v['Documents Link'],
+      documentsFileId: fileId ?? '',
       notes: v['Notes'],
     },
   }
