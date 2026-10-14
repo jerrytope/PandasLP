@@ -43,6 +43,7 @@ ADMIN_EMAILS               — Comma-separated staff allowlist checked by lib/ad
 GOOGLE_REVIEW_URL          — Link included in the resolution email (lib/sendCaseEmail.ts) once a case closes. Omitted gracefully if unset — no fabricated URL.
 ALLOW_STUB_PAYMENTS        — Set to "true" to allow stub (unverified) payments in real production (isProduction() in lib/appEnv.ts). Dangerous if left on — it means /api/verify-payment trusts the client-reported amount instead of checking with Paystack. Should not be set in normal operation; see app/api/verify-payment/route.ts.
 NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-consultation flow (components/LawyerConsult.jsx).
+GROQ_API_KEY / GROQ_MODEL / GROQ_ROUTER_MODEL — LOCAL TESTING ONLY, for npm run property:chat (see "Property Law Agent rebuild"). Never read by the app.
 NEXT_PUBLIC_PROPERTY_AGENT_V2 — "true" switches the Property Law Agent to the rebuilt router + sub-agents (docs/property_agent_plans/). Read by the browser (starter menu) and /api/chat. Unset/false = the old single prompt.
 GOOGLE_OAUTH_CLIENT_ID     — OAuth client (Web application) from the firm's Google Cloud project. Brand sheets, see "Brand sheets" below.
 GOOGLE_OAUTH_CLIENT_SECRET — Its secret. Server-only.
@@ -167,6 +168,8 @@ Phase 2 (router + the 5 existing areas) is built behind `NEXT_PUBLIC_PROPERTY_AG
 - `lib/property/starter.ts` (menu, button → area, state questions; browser-safe), `jurisdictions.ts` (12 covered states in 4 groups), `shared.ts` (shared prompt block), `areas/` (one config per area; wills-probate and land-dispute are disabled until Phase 4), `templates.ts` / `templatesNew.ts`.
 - Prompt order for caching: identical tool list for every area → shared block (1h) → area block (1h) → jurisdiction → matter record + date.
 - Area rules are PENDING LAWYER SIGN-OFF; the scope document they should be checked against is not in the repo yet.
+
+**Local test harness (no Supabase, no Anthropic key):** `npm run property:chat` (`scripts/property-agent-chat.ts`) runs the orchestrator in the terminal with the matter in SQLite (`lib/dev/sqliteMatterRepo.ts`, Node's built-in `node:sqlite`, file `.local/property-agent.sqlite`, gitignored) and the AI calls on Groq (`lib/dev/groqCaller.ts`, translates the Claude-shaped requests to Groq's OpenAI-style API). Needs `GROQ_API_KEY` in `.env.local`. Flags: `--new`, `--case <id>`, `--memory`, `--quiet`; a number presses a button; `/matter /events /doc /new /quit`. It tests the plumbing (routing, tools, state, documents, prices), not how Claude behaves or costs. `lib/dev/` is never imported by the app.
 
 ### Blog
 - `lib/blogPosts.ts` — 4 debt recovery articles as TypeScript objects with inline HTML content.

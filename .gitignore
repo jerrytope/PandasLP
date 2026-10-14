@@ -38,3 +38,5 @@ campaign/*-film/frames-*/
 plans/
 supabase
 plans/
+# Local test databases (scripts/property-agent-chat.ts)
+.local/

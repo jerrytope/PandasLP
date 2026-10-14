@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "test": "vitest run",
-    "job": "node scripts/run-scheduled-job.mjs"
+    "job": "node scripts/run-scheduled-job.mjs",
+    "property:chat": "tsx scripts/property-agent-chat.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.14",
@@ -42,6 +43,7 @@
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "tsx": "^4.23.15",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
   }
