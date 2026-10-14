@@ -9,7 +9,8 @@
     "start": "next start",
     "test": "vitest run",
     "job": "node scripts/run-scheduled-job.mjs",
-    "property:chat": "tsx scripts/property-agent-chat.ts"
+    "property:chat": "tsx scripts/property-agent-chat.ts",
+    "property:scenarios": "tsx scripts/property-agent-scenarios.ts"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.14",

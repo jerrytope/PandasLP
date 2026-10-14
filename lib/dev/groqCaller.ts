@@ -13,8 +13,8 @@ const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 /** The model for a call: the router's cheap model maps to GROQ_ROUTER_MODEL, everything else to GROQ_MODEL. */
 export function groqModelFor(model: string | undefined, env: Record<string, string | undefined> = process.env): string {
-  const main = env.GROQ_MODEL || 'llama-3.3-70b-versatile'
-  if (model?.includes('haiku')) return env.GROQ_ROUTER_MODEL || main
+  const main = env.GROQ_MODEL || 'openai/gpt-oss-120b'
+  if (model?.includes('haiku')) return env.GROQ_ROUTER_MODEL || 'openai/gpt-oss-20b'
   return main
 }
 
@@ -27,6 +27,26 @@ type Block = { type: string; [key: string]: unknown }
 
 function textOf(blocks: Block[]): string {
   return blocks.filter((b) => b.type === 'text').map((b) => String(b.text ?? '')).join('\n')
+}
+
+/**
+ * Groq validates tool arguments against the schema, and its models send null for optional
+ * fields they don't use. The tool handlers already treat null as "not given", so optional
+ * top-level properties are sent as nullable.
+ */
+export function nullableOptionals(schema: Record<string, unknown>): Record<string, unknown> {
+  const props = schema.properties as Record<string, Record<string, unknown>> | undefined
+  if (!props) return schema
+  const required = new Set((schema.required as string[] | undefined) ?? [])
+  const out: Record<string, Record<string, unknown>> = {}
+  for (const [key, prop] of Object.entries(props)) {
+    if (required.has(key) || typeof prop.type !== 'string') {
+      out[key] = prop
+      continue
+    }
+    out[key] = { ...prop, type: [prop.type, 'null'], ...(Array.isArray(prop.enum) ? { enum: [...prop.enum, null] } : {}) }
+  }
+  return { ...schema, properties: out }
 }
 
 /** Claude request → OpenAI chat request body. Pure, so it is unit-tested. */
@@ -66,7 +86,7 @@ export function toOpenAIRequest(opts: ClaudeCallOptions, model: string) {
     messages,
     ...(opts.tools?.length
       ? {
-          tools: opts.tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: t.input_schema } })),
+          tools: opts.tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: nullableOptionals(t.input_schema) } })),
           tool_choice: opts.toolChoice?.type === 'none' ? 'none' : 'auto',
         }
       : {}),
@@ -140,6 +160,11 @@ export function createGroqCaller(opts: { apiKey: string; onCall?: (log: GroqCall
       }
       if (!res.ok) {
         const text = await res.text()
+        // The model sometimes produces malformed tool-call JSON; Groq rejects it. Just ask again.
+        if (res.status === 400 && text.includes('tool_use_failed') && attempt < 2) {
+          console.warn('  [groq] malformed tool call; retrying')
+          continue
+        }
         console.warn(`  [groq] ${res.status}: ${text.slice(0, 300)}`)
         return { ok: false, status: res.status === 429 ? 429 : 502, error: `Groq returned ${res.status}: ${text.slice(0, 500)}` }
       }

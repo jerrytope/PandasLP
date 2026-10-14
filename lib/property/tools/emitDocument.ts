@@ -67,6 +67,10 @@ export const emitDocument: AgentTool<PropertyToolContext> = {
     const title = oneLine(requireString(input, 'title', 200))
     const body = requireString(input, 'body', 60_000)
     if (/<<<|>>>/.test(body) || /<<<|>>>/.test(title)) throw new RangeError('The title and body must not contain <<< or >>>.')
+    // Powers of attorney are construed strictly: a vague "to manage" power is refused (scenario 10).
+    if (type === 'power-of-attorney' && /\bto (manage|handle|deal with|look after)\b/i.test(body)) {
+      throw new RangeError('A power of attorney must list specific acts (to lease, to sell, to collect rent and account...). "To manage", "to handle", "to deal with" or "to look after" a property is too vague: ask the client which acts they mean.')
+    }
     const blanks = findPlaceholders(body)
     if (blanks.length) {
       throw new RangeError(`The document still has blanks: ${blanks.join(', ')}. Ask the client for these, or remove them, then emit it again.`)

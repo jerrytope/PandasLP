@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../supabaseAdmin', () => ({ supabaseAdmin: {} }))
 
-import { fromOpenAIResponse, groqModelFor, toOpenAIRequest } from '../dev/groqCaller'
+import { fromOpenAIResponse, groqModelFor, nullableOptionals, toOpenAIRequest } from '../dev/groqCaller'
 import { SqliteMatterRepo } from '../dev/sqliteMatterRepo'
 import { runPropertyOrchestrator } from '../property/orchestrator'
 import { PROPERTY_V2_STARTER } from '../property/starter'
@@ -52,10 +52,19 @@ describe('groqCaller translation', () => {
     })
   })
 
+  it('sends optional tool fields as nullable, since Groq models send null for unused ones', () => {
+    expect(nullableOptionals({ type: 'object', properties: { a: { type: 'string' }, b: { type: 'string', enum: ['x'] }, c: { type: 'number' } }, required: ['a'] })).toEqual({
+      type: 'object',
+      properties: { a: { type: 'string' }, b: { type: ['string', 'null'], enum: ['x', null] }, c: { type: ['number', 'null'] } },
+      required: ['a'],
+    })
+  })
+
   it('maps the router model and the main model', () => {
     expect(groqModelFor('claude-haiku-4-5', { GROQ_MODEL: 'big', GROQ_ROUTER_MODEL: 'small' })).toBe('small')
     expect(groqModelFor(undefined, { GROQ_MODEL: 'big', GROQ_ROUTER_MODEL: 'small' })).toBe('big')
-    expect(groqModelFor('claude-haiku-4-5', {})).toBe('llama-3.3-70b-versatile')
+    expect(groqModelFor('claude-haiku-4-5', {})).toBe('openai/gpt-oss-20b')
+    expect(groqModelFor(undefined, {})).toBe('openai/gpt-oss-120b')
   })
 })
 

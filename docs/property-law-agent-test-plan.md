@@ -178,6 +178,51 @@ is also a flaw — see CONVERSATION STYLE).
 | 18 | Out-of-scope (Sublease) | | | |
 | 19 | Illiterate signatory | | | |
 
+## Rebuilt agent: local harness runs (14 Oct 2026)
+
+The rebuilt agent (router + sub-agents, `NEXT_PUBLIC_PROPERTY_AGENT_V2`) was run through these 19
+scenarios plus 7 new ones (20–26: router, scope corrections, hand-offs) with
+`npm run property:scenarios` (`scripts/property-scenarios.ts`). **Model: Groq `openai/gpt-oss-120b`,
+not Claude**, so this checks the plumbing (routing, tools, prices, saved facts, hand-offs) and the
+rules, not Claude's drafting quality. Scenario 18 now expects a Deed of Sublease (in scope).
+A full run costs about 1.3M Groq tokens; run single scenarios by id to save credit.
+
+Run 1: 11 pass, 5 partial, 8 fail/stall, 2 Groq errors. Fixes made after it: arrears never counted
+past today; full dates in documents; no execution blocks or signing questions on notices; signing
+details left as lines, not asked for; default notice/re-entry terms instead of stalling; fee quote
+(`calc_transfer_fee`), `calc_amounts`, `calc_date` tools; refusal of a vague "to manage" power;
+server checks for a document or tool call written into the reply, and for a promised lawyer with no
+escalation; OPTIONS marker repair; Seven Days' Notice recital for an expired fixed term.
+
+| # | Scenario | Run 2 | Notes |
+|---|---|---|---|
+| 1 | Notice to Quit — monthly | PASS | Quit 20 Nov 2026, arrears ₦300,000 from tools, ₦25,000 |
+| 2 | Notice to Quit — yearly, arrears | PASS | Quit 31 Dec 2027 (anniversary rule). Arrears = full year ₦2.4m (rent in advance), not the pro-rated 4 months the old plan expected: **lawyer to confirm** |
+| 3 | Seven-Day Notice | PASS | Daily rate ₦3,287.67 from tool, dates from tool |
+| 4 | Tenancy Agreement — individual | PASS | Was a stall in run 1 |
+| 5 | Tenancy Agreement — company landlord | PASS | Two-director block for the company |
+| 6 | Deed of Assignment — standard | PARTIAL | Fee quoted by tool, acceptance recorded, consent clause. Deed still dated with today instead of a blank signing date |
+| 7 | Deed of Assignment — corporate assignor | PASS | |
+| 8 | Deed of Gift — family | PASS | |
+| 9 | Deed of Gift — payment edge case | PASS | Flags it as a sale, hands off to Conveyancing |
+| 10 | POA — vagueness pushback | PASS | Was a FAIL in run 1 (wrote a "to manage" POA into the chat) |
+| 11 | POA — irrevocable for consideration | PASS | Clause (a), ₦2,000,000 |
+| 12 | Mortgage — individual/bank | PASS | Common-seal block with lines for the officers. Was a stall |
+| 13 | Mortgage — with guarantor | PARTIAL | Guarantor named as a party, but "one / other / third part" instead of "one / second / third" |
+| 14 | Sale of Land agreement | PARTIAL | ₦60m balance and 13 Dec 2026 completion correct; date from `calc_date`, but the balance still worked out by the model |
+| 15 | Search instruction — unsure encumbrances | PASS | "None disclosed", ₦50,000 |
+| 16 | Self-help eviction refusal | PARTIAL | Clear refusal; did not escalate when the client pushed again |
+| 17 | Skipping consent entirely | PASS | Escalated |
+| 18 | Deed of Sublease (now in scope) | PASS | 5 years ending before the head lease, consent recital, PRICE 0 "lawyer will confirm" |
+| 19 | Illiterate signatory | PARTIAL | Correct jurat, but says "signature" where it should say thumbprint |
+| 20 | Router: free text with state | PASS | Oyo taken from the text |
+| 21 | Router: land grabbers | PASS | Escalated |
+| 22 | Unsupported state (Kano) | PASS | |
+| 23 | Expired fixed term | PASS | No Notice to Quit; Seven Days' Notice with the fixed-term recital |
+| 24 | POA irrevocable 5 years, no consideration | PASS | Pushback with the lawful options |
+| 25 | Hand-off: sale agreement → search | PASS | Same turn, nothing re-asked |
+| 26 | Gift on death → wills (not live) | FIXED, NOT RE-RUN | Run 2: explained, but left the client stuck; a further attempt wrote the call as text. Now escalated by the server (unit-tested, not re-run on Groq to save credit) |
+
 ## What this does not cover
 
 - Whether the underlying legal rules themselves are correct (notice periods, s.22 scope,

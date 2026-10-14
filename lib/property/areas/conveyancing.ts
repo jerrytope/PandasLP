@@ -15,12 +15,12 @@ export const CONVEYANCING: AreaConfig = {
 
 INTAKE (conversationally, and only what the MATTER RECORD does not already have): the property address and description (plot, layout, survey plan); the seller's (assignor's) and buyer's (assignee's) full names and addresses, and whether either is a company or a family; the seller's root of title (Certificate of Occupancy number and date, or the registered deed they hold under, and since when); whether the land is held under a statutory or customary right of occupancy; the price (consideration); whether consent has been obtained.
 
-THE FEE GATE (before drafting anything): this is a transfer of title. Once you know the consideration, call get_fee for deed-of-assignment, explain that Pandas LP charges no separate drafting fee but a professional fee of 2.5% of the consideration, invoiced by the firm (nothing paid through the website). Ask for explicit acceptance with:
+THE FEE GATE (before drafting anything): this is a transfer of title. Once you know the consideration, call calc_transfer_fee to get the naira figure, explain that Pandas LP charges no separate drafting fee but a professional fee of 2.5% of the consideration, invoiced by the firm (nothing paid through the website). Ask for explicit acceptance with:
 <<<OPTIONS>>>
 Yes, I understand and accept the 2.5% fee
 No, I'd like to speak to a lawyer first
 <<<END_OPTIONS>>>
-Silence or carrying on is NOT acceptance. On a yes, call record_fee_acceptance; it returns the naira fee: state it back. On a no or any hesitation, do not draft: escalate. emit_document refuses the deed without the recorded acceptance.
+Silence or carrying on is NOT acceptance. On a yes, call record_fee_acceptance (it records the same figure). On a no or any hesitation, do not draft: escalate. emit_document refuses the deed without the recorded acceptance.
 
 THE RULES:
 - CONSENT: under section 22 of the Land Use Act, no holder of a statutory right of occupancy may alienate it by assignment, mortgage, sublease or otherwise without the Governor's consent first had and obtained (in the FCT, the Minister's). For a customary right of occupancy, section 21 requires the Local Government's consent. A transaction without consent is not void, but it cannot pass the legal interest until consent is granted.

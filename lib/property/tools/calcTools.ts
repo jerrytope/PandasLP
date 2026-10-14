@@ -2,8 +2,13 @@
 // agent states comes from one of these, never from its own arithmetic.
 
 import type { AgentTool } from '../../agentRuntime/types'
+import { PROPERTY_PRICING, transferFee } from '../../propertyPricing'
 import {
+  addDays,
+  addMonths,
   advanceRentCheck,
+  formatDate,
+  parseDate,
   arrears,
   mesneProfits,
   noticeToQuit,
@@ -37,20 +42,26 @@ export const calcArrears: Tool = {
         rent: { type: 'number', description: 'Rent for one period, in naira.' },
         frequency: { type: 'string', enum: FREQUENCIES },
         from: { ...DATE, description: 'The first day of the first unpaid rent period (YYYY-MM-DD).' },
-        to: { ...DATE, description: 'The day the tenancy ended, or today if it has not (YYYY-MM-DD).' },
+        to: { ...DATE, description: "The day the tenancy ended if it already has, otherwise TODAY (YYYY-MM-DD). Never a future date such as a notice's quit date: rent not yet due is not arrears." },
       },
       required: ['rent', 'frequency', 'from', 'to'],
     },
   },
-  handler: (input) => ({
-    ok: true,
-    result: arrears({
-      rent: requireNumber(input, 'rent'),
-      frequency: oneOf(input, 'frequency', FREQUENCIES),
-      from: requireString(input, 'from', 10),
-      to: requireString(input, 'to', 10),
-    }),
-  }),
+  handler: (input, ctx) => {
+    const to = requireString(input, 'to', 10)
+    if (ctx.today && to > ctx.today) {
+      throw new RangeError(`to (${to}) is in the future. Arrears are rent already due: use today (${ctx.today}) or the day the tenancy ended, whichever is earlier.`)
+    }
+    return {
+      ok: true,
+      result: arrears({
+        rent: requireNumber(input, 'rent'),
+        frequency: oneOf(input, 'frequency', FREQUENCIES),
+        from: requireString(input, 'from', 10),
+        to,
+      }),
+    }
+  },
 }
 
 export const calcMesneProfits: Tool = {
@@ -161,4 +172,70 @@ export const calcAdvanceRent: Tool = {
   }),
 }
 
-export const CALC_TOOLS: Tool[] = [calcArrears, calcMesneProfits, calcNoticeToQuit, calcSevenDaysNotice, calcAdvanceRent]
+export const calcTransferFee: Tool = {
+  definition: {
+    name: 'calc_transfer_fee',
+    description: "The firm's 2.5% fee on a transfer of title, in naira, for quoting to the client BEFORE they accept it. It records nothing: record_fee_acceptance records the acceptance.",
+    input_schema: {
+      type: 'object',
+      properties: { consideration: { type: 'number', description: 'The price for the property, in naira.' } },
+      required: ['consideration'],
+    },
+  },
+  handler: (input) => {
+    const consideration = requireNumber(input, 'consideration')
+    if (consideration <= 0) throw new RangeError('consideration must be more than 0.')
+    return { ok: true, result: { fee: transferFee(consideration), rate: PROPERTY_PRICING.transferFeeRate, consideration } }
+  },
+}
+
+export const calcAmounts: Tool = {
+  definition: {
+    name: 'calc_amounts',
+    description: 'Adds or subtracts naira amounts (e.g. a balance = price minus deposit). Use it for any figure no other calc tool gives.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        operation: { type: 'string', enum: ['sum', 'difference'], description: 'sum: add them all; difference: the first minus all the others.' },
+        amounts: { type: 'array', items: { type: 'number' } },
+      },
+      required: ['operation', 'amounts'],
+    },
+  },
+  handler: (input) => {
+    const op = oneOf(input, 'operation', ['sum', 'difference'] as const)
+    const amounts = input.amounts
+    if (!Array.isArray(amounts) || amounts.length < 2 || amounts.some((a) => typeof a !== 'number' || !Number.isFinite(a))) {
+      throw new RangeError('amounts must be a list of at least two numbers.')
+    }
+    const kobo = (amounts as number[]).map((a) => Math.round(a * 100))
+    const total = op === 'sum' ? kobo.reduce((a, b) => a + b, 0) : kobo.slice(1).reduce((a, b) => a - b, kobo[0])
+    return { ok: true, result: { result: total / 100 } }
+  },
+}
+
+export const calcDate: Tool = {
+  definition: {
+    name: 'calc_date',
+    description: 'Adds days, months or years to a date (e.g. completion 60 days after signing). Use it for any date no other calc tool gives.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        date: DATE,
+        days: { type: 'integer' },
+        months: { type: 'integer' },
+        years: { type: 'integer' },
+      },
+      required: ['date'],
+    },
+  },
+  handler: (input) => {
+    const days = optionalNumber(input, 'days') ?? 0
+    const months = (optionalNumber(input, 'months') ?? 0) + 12 * (optionalNumber(input, 'years') ?? 0)
+    if (![days, months].every(Number.isInteger)) throw new RangeError('days, months and years must be whole numbers.')
+    const result = addDays(addMonths(parseDate(requireString(input, 'date', 10), 'date'), months), days)
+    return { ok: true, result: { date: formatDate(result) } }
+  },
+}
+
+export const CALC_TOOLS: Tool[] = [calcArrears, calcMesneProfits, calcNoticeToQuit, calcSevenDaysNotice, calcAdvanceRent, calcTransferFee, calcAmounts, calcDate]

@@ -24,6 +24,8 @@ export interface PropertyToolContext {
   allowedHandoffs?: readonly PropertyArea[]
   /** Areas that are live. A hand-off to any other area is refused. Unset = all. */
   enabledAreas?: readonly PropertyArea[]
+  /** Today, as YYYY-MM-DD in Lagos. Arrears are never counted past it. Unset = no limit. */
+  today?: string
 }
 
 // ----- Input helpers: a RangeError goes back to the model as a fixable tool error. -----

@@ -169,3 +169,43 @@ describe('emit_document', () => {
     ])
   })
 })
+
+describe('calc_arrears with a known today', () => {
+  it('refuses to count rent that is not yet due', async () => {
+    const tool = SHARED_PROPERTY_TOOLS.find((t) => t.definition.name === 'calc_arrears')!
+    const ctx: PropertyToolContext = { caseId: 'c', area: 'recovery', store: memoryStore().store, emitted: [], today: '2026-10-14' }
+    await expect(Promise.resolve().then(() => tool.handler({ rent: 150_000, frequency: 'monthly', from: '2026-08-01', to: '2026-11-20' }, ctx))).rejects.toThrow(/future/)
+    expect(await tool.handler({ rent: 150_000, frequency: 'monthly', from: '2026-08-01', to: '2026-10-14' }, ctx)).toMatchObject({ ok: true, result: { amount: 450_000, periods: 3 } })
+  })
+})
+
+describe('fee quote, amount and date tools', () => {
+  it('quotes the 2.5% fee without recording anything', async () => {
+    const { run, log } = setup('conveyancing')
+    expect(await run('calc_transfer_fee', { consideration: 60_000_000 })).toMatchObject({ ok: true, result: { fee: 1_500_000 } })
+    expect(log).toEqual([])
+  })
+
+  it('adds and subtracts amounts to the kobo', async () => {
+    const { run } = setup()
+    expect(await run('calc_amounts', { operation: 'difference', amounts: [80_000_000, 20_000_000] })).toMatchObject({ result: { result: 60_000_000 } })
+    expect(await run('calc_amounts', { operation: 'sum', amounts: [0.1, 0.2] })).toMatchObject({ result: { result: 0.3 } })
+    expect(await run('calc_amounts', { operation: 'sum', amounts: [1] })).toMatchObject({ ok: false })
+  })
+
+  it('adds days, months and years to a date', async () => {
+    const { run } = setup()
+    expect(await run('calc_date', { date: '2026-10-14', days: 60 })).toMatchObject({ result: { date: '2026-12-13' } })
+    expect(await run('calc_date', { date: '2026-01-31', months: 1 })).toMatchObject({ result: { date: '2026-02-28' } })
+    expect(await run('calc_date', { date: '2026-10-14', years: 5 })).toMatchObject({ result: { date: '2031-10-14' } })
+  })
+})
+
+describe('emit_document: power of attorney', () => {
+  it('refuses a vague "to manage" power', async () => {
+    const { run } = setup('other-instruments')
+    const out = await run('emit_document', { documentType: 'power-of-attorney', title: 'Power of Attorney', body: '1. To manage my property at 12 Allen Avenue, Ikeja.' })
+    expect(out).toMatchObject({ ok: false })
+    expect(await run('emit_document', { documentType: 'power-of-attorney', title: 'Power of Attorney', body: '1. To let my property at 12 Allen Avenue, Ikeja and to collect the rent.' })).toMatchObject({ ok: true })
+  })
+})

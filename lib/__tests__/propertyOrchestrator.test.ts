@@ -6,7 +6,7 @@ import type { ModelCaller } from '../agentRuntime/types'
 import { extractDocument, extractOptions } from '../agentChatParsing'
 import type { ClaudeCallOptions, ClaudeContentBlock } from '../claude'
 import type { MatterRepository } from '../property/matterStore'
-import { runPropertyOrchestrator } from '../property/orchestrator'
+import { promisesLawyer, repairMarkers, replyProblem, runPropertyOrchestrator } from '../property/orchestrator'
 import { AREA_NOT_LIVE_REPLY, DESCRIBE_PROMPT, ESCALATED_REPLY, PROPERTY_V2_STARTER, UNSUPPORTED_STATE_REPLY } from '../property/starter'
 import type { MatterEvent, PropertyMatter } from '../property/types'
 
@@ -215,3 +215,4 @@ describe('the area sub-agent', () => {
     expect(result).toMatchObject({ ok: false, status: 502 })
   })
 })
+

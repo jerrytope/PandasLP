@@ -45,9 +45,11 @@ SEVEN (7) DAYS' NOTICE OF OWNER'S INTENTION TO APPLY TO RECOVER POSSESSION
 
 We are Solicitors to [LANDLORD_NAME] ("our Client") and write on our Client's instructions.
 
-TAKE NOTICE that a Notice to Quit dated **[NOTICE_TO_QUIT_DATE]** requiring you to deliver up vacant possession of the premises situate at [PROPERTY_ADDRESS] expired on **[EXPIRY_DATE]**, and you have failed, refused, or neglected to give up possession.
+[RECITAL — use the ONE that fits:
+ (a) after a Notice to Quit: "TAKE NOTICE that a Notice to Quit dated **(date)** requiring you to deliver up vacant possession of the premises situate at (address) expired on **(date)**, and you have failed, refused, or neglected to give up possession."
+ (b) after a fixed term ended by itself (no Notice to Quit was needed): "TAKE NOTICE that your tenancy of the premises situate at (address) for a fixed term expired on **(date)**, and you have failed, refused, or neglected to give up possession."]
 
-TAKE FURTHER NOTICE that our Client intends to apply to the appropriate Court for an Order of Recovery of Possession of the said premises on the expiration of **seven (7) days** from the date of service of this Notice, together with mesne profits at the rate of **[DAILY_OR_MONTHLY_RATE]** from the date the tenancy determined until possession is given up.
+TAKE FURTHER NOTICE that our Client intends to apply to the appropriate Court for an Order of Recovery of Possession of the said premises on the expiration of **seven (7) days** from the date of service of this Notice, together with mesne profits at the rate of **[DAILY_RATE] per day** from the date the tenancy determined until possession is given up.
 
 Yours Faithfully,
 
@@ -310,4 +312,4 @@ WHAT THE TEAM NEEDS TO ESTABLISH
 Registered ownership of the property, any registered encumbrances against it, and the basic title position at the [STATE] Land Registry.
 
 FEE
-To be confirmed by the Pandas LP team before the search is carried out.`
+As shown with this instruction. The team carries out the search once it is paid.`

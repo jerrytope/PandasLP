@@ -26,12 +26,16 @@ export function areaDocuments(area: PropertyArea): PropertyDocumentKey[] {
 }
 
 /** The area's cached system block: its prompt plus the cases, hand-offs and documents it may use. */
-export function areaBlock(config: AreaConfig): string {
+export function areaBlock(config: AreaConfig, enabled?: readonly PropertyArea[]): string {
   const cases = config.citableCases.length
     ? config.citableCases.map((c) => `- ${c.name}: ${c.principle}`).join('\n')
     : '- None. Cite no cases in this area.'
   const handoffs = config.handoffs.length
-    ? config.handoffs.map((h) => `- to ${h.to}: ${h.when}`).join('\n')
+    ? config.handoffs
+        .map((h) => enabled && !enabled.includes(h.to)
+          ? `- ${h.to} is NOT available yet. When ${h.when} explain why briefly, then call escalate_to_lawyer so a lawyer takes it on.`
+          : `- to ${h.to}: ${h.when}`)
+        .join('\n')
     : '- None. Anything outside this area is escalated.'
   const docs = areaDocuments(config.id).map((t) => `- ${t}: ${PROPERTY_DOCUMENTS[t].title}`).join('\n')
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

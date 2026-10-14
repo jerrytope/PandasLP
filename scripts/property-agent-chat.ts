@@ -18,20 +18,22 @@ import { mkdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline'
 
-// ----- Environment: .env.local, plus placeholders so lib/supabaseAdmin.ts can be imported -----
+// ----- Environment: .env.local and .env, plus placeholders so lib/supabaseAdmin.ts can be imported -----
 
-function loadEnvLocal() {
-  try {
-    const text = readFileSync(path.resolve('.env.local'), 'utf8')
-    for (const line of text.split(/\r?\n/)) {
-      const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
-      if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].trim().replace(/^["']|["']$/g, '')
+function loadEnvFiles() {
+  for (const file of ['.env.local', '.env']) {
+    try {
+      const text = readFileSync(path.resolve(file), 'utf8')
+      for (const line of text.split(/\r?\n/)) {
+        const m = line.match(/^([A-Z0-9_]+)=(.*)$/)
+        if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].trim().replace(/^["']|["']$/g, '')
+      }
+    } catch {
+      // file missing: GROQ_API_KEY may be in the other one, or come from the shell
     }
-  } catch {
-    // no .env.local: GROQ_API_KEY may come from the shell
   }
 }
-loadEnvLocal()
+loadEnvFiles()
 // lib/claude.ts imports lib/supabaseAdmin.ts, which builds a client at import time. Nothing here
 // calls Supabase; these only let it construct.
 process.env.NEXT_PUBLIC_SUPABASE_URL ||= 'https://placeholder.supabase.co'
@@ -46,7 +48,7 @@ const option = (name: string) => {
 
 const apiKey = process.env.GROQ_API_KEY
 if (!apiKey) {
-  console.error('GROQ_API_KEY is not set. Add it to .env.local (get one at https://console.groq.com/keys).')
+  console.error('GROQ_API_KEY is not set. Add it to .env.local or .env (get one at https://console.groq.com/keys).')
   process.exit(1)
 }
 

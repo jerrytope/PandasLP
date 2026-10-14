@@ -59,7 +59,7 @@ function matterRecord(matter: PropertyMatter): string {
   return `MATTER RECORD (facts already saved for this matter; never ask for these again):\n${facts}`
 }
 
-export function buildAreaSystem(matter: PropertyMatter, now: Date, handoff?: { from: PropertyArea | null; reason: string }): SystemBlock[] {
+export function buildAreaSystem(matter: PropertyMatter, now: Date, handoff?: { from: PropertyArea | null; reason: string }, correction?: string): SystemBlock[] {
   const config = AREAS[matter.area!]
   const state = normaliseState(matter.state!) as SupportedState
   const group = groupOf(state)!
@@ -67,9 +67,10 @@ export function buildAreaSystem(matter: PropertyMatter, now: Date, handoff?: { f
   if (handoff) {
     volatile.push(`HAND-OFF: this matter has just been passed to you${handoff.from ? ` from ${AREAS[handoff.from].title}` : ''} because: ${handoff.reason}. Open with one short line telling the client this is now a ${config.title} matter and that you have what they told you, then carry on. Do not ask again for anything in the MATTER RECORD or the conversation.`)
   }
+  if (correction) volatile.push(correction)
   return [
     { text: SHARED_PROPERTY_BLOCK, cache: '1h' },
-    { text: areaBlock(config), cache: '1h' },
+    { text: areaBlock(config, ENABLED_AREAS), cache: '1h' },
     { text: `${jurisdictionBlock(state, matter.lagosArea)}\n\n${config.jurisdictionRules[group]}` },
     { text: volatile.join('\n\n') },
   ]
@@ -79,6 +80,44 @@ async function escalate(input: OrchestratorInput, reason: string, reply: string,
   await input.repo.setStatus(input.caseId, 'escalated')
   await input.repo.logEvent(input.caseId, 'escalated', { area, reason })
   return { ok: true, response: reply }
+}
+
+/** YYYY-MM-DD in Lagos (WAT, UTC+1, no daylight saving). */
+export function lagosDate(now: Date): string {
+  return new Date(now.getTime() + 60 * 60 * 1000).toISOString().slice(0, 10)
+}
+
+// ----- Checks on what the model wrote, before the client sees it -----
+
+const INLINE_DOCUMENT_RE = /^\s*\**\s*(THIS (DEED|AGREEMENT|TENANCY AGREEMENT|SUBLEASE AGREEMENT|DEED OF [A-Z ]+) is made|BY THIS POWER OF ATTORNEY|IN WITNESS WHEREOF|SIGNED,? SEALED AND DELIVERED|TAKE (FURTHER )?NOTICE that)/im
+const TOOL_AS_TEXT_RE = /\b(handoff_to|escalate_to_lawyer|emit_document|record_facts|record_fee_acceptance|get_fee|prepare_consent_application|calc_[a-z_]+)\s*\(/
+const PROMISED_LAWYER_RE = /\blawyer (will|shall) (contact|call|reach|get in touch|be in touch|follow up)|passed (it|this|your matter|the matter) (on )?to a (pandas lp )?lawyer/i
+
+export type ReplyProblem = 'inline-document' | 'tool-as-text' | null
+
+/** A reply that put a document or a tool call into the text, instead of using the tools. */
+export function replyProblem(text: string): ReplyProblem {
+  if (TOOL_AS_TEXT_RE.test(text)) return 'tool-as-text'
+  if (INLINE_DOCUMENT_RE.test(text)) return 'inline-document'
+  return null
+}
+
+export function promisesLawyer(text: string): boolean {
+  return PROMISED_LAWYER_RE.test(text)
+}
+
+const CORRECTIONS: Record<Exclude<ReplyProblem, null>, string> = {
+  'inline-document': 'CORRECTION: your last attempt wrote a document into your message. That is never allowed: the client must only ever receive documents through emit_document, which checks them and sets the price. Do the turn again: if the document is ready, call emit_document; if something is missing, ask for it. Your message itself must contain no document text.',
+  'tool-as-text': 'CORRECTION: your last attempt wrote a tool call into your message as text. Tools must be CALLED, never written out. Do the turn again, calling the tool you meant to use.',
+}
+
+const INLINE_DOCUMENT_FALLBACK = 'I have the details I need. Reply "please draft it" and I will prepare the document for you to review.'
+
+/** Repairs near-miss OPTIONS markers (a missing ">" stops the buttons rendering). */
+export function repairMarkers(text: string): string {
+  return text
+    .replace(/<<<\s*END_OPTIONS\s*>*/g, '<<<END_OPTIONS>>>')
+    .replace(/<<<\s*OPTIONS\s*>*[ \t]*\n?/g, '<<<OPTIONS>>>\n')
 }
 
 function join(...parts: (string | null | undefined)[]): string {
@@ -95,10 +134,11 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
     emitted: [],
     allowedHandoffs: config.handoffs.map((h) => h.to),
     enabledAreas: ENABLED_AREAS,
+    today: lagosDate(input.now),
   }
-  const result = await runAgent({
+  const run = (correction?: string) => runAgent({
     route: `chat.property.${area}`,
-    system: buildAreaSystem(matter, input.now, handoff),
+    system: buildAreaSystem(matter, input.now, handoff, correction),
     tools: SHARED_PROPERTY_TOOLS,
     messages: convo,
     ctx,
@@ -108,6 +148,13 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
     cacheConversation: true,
     call: input.call,
   })
+  let result = await run()
+  // A document or a tool call written into the message: try the turn once more with a correction.
+  const problem = result.ok === true && !result.stop ? replyProblem(result.text) : null
+  if (problem) {
+    console.warn(`Property agent (${area}) reply problem "${problem}" for case ${input.caseId}; retrying`)
+    result = await run(CORRECTIONS[problem])
+  }
   if (result.ok === false) {
     if (result.kind === 'max_steps') console.error(`Property agent (${area}) hit max steps for case ${input.caseId}`)
     return { ok: false, status: result.notConfigured ? 503 : 502, error: 'The legal agent is temporarily unavailable. Please try again shortly.' }
@@ -121,8 +168,31 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
     return { ok: true, response: join(result.text, second.response) }
   }
 
-  if (result.stop?.kind === 'escalate') return { ok: true, response: result.text.trim() || ESCALATED_REPLY }
-  return { ok: true, response: join(result.text, ctx.emitted[0]?.block) || 'Could you tell me a little more?' }
+  if (result.stop?.kind === 'escalate') return { ok: true, response: repairMarkers(result.text.trim() || ESCALATED_REPLY) }
+
+  let text = result.text
+  const stillWrong = result.stop ? null : replyProblem(text)
+  if (stillWrong === 'inline-document') {
+    console.error(`Property agent (${area}) wrote a document inline twice for case ${input.caseId}; withheld`)
+    text = INLINE_DOCUMENT_FALLBACK
+  } else if (stillWrong === 'tool-as-text') {
+    console.error(`Property agent (${area}) wrote a tool call as text twice for case ${input.caseId}`)
+    // It meant to escalate or hand off and couldn't: a lawyer taking the matter on is the safe
+    // way to honour either, rather than leaving the client with nothing.
+    if (/\b(escalate_to_lawyer|handoff_to)\s*\(/.test(text)) {
+      const said = text.split('\n').filter((line) => !TOOL_AS_TEXT_RE.test(line)).join('\n').trim()
+      await input.repo.setStatus(input.caseId, 'escalated')
+      await input.repo.logEvent(input.caseId, 'escalated', { area, reason: 'The agent tried to escalate or hand off but wrote the call as text.', reply: text.slice(0, 500) })
+      return { ok: true, response: repairMarkers(join(said, ESCALATED_REPLY)) }
+    }
+    text = text.split('\n').filter((line) => !TOOL_AS_TEXT_RE.test(line)).join('\n')
+  }
+  // The client was told a lawyer will be in touch, but nothing escalated: make it true.
+  if (!result.stop && promisesLawyer(text)) {
+    await input.repo.setStatus(input.caseId, 'escalated')
+    await input.repo.logEvent(input.caseId, 'escalated', { area, reason: 'The agent told the client a lawyer would contact them.', reply: text.slice(0, 500) })
+  }
+  return { ok: true, response: repairMarkers(join(text, ctx.emitted[0]?.block)) || 'Could you tell me a little more?' }
 }
 
 export async function runPropertyOrchestrator(input: OrchestratorInput): Promise<OrchestratorResult> {
