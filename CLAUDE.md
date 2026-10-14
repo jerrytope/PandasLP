@@ -43,6 +43,7 @@ ADMIN_EMAILS               — Comma-separated staff allowlist checked by lib/ad
 GOOGLE_REVIEW_URL          — Link included in the resolution email (lib/sendCaseEmail.ts) once a case closes. Omitted gracefully if unset — no fabricated URL.
 ALLOW_STUB_PAYMENTS        — Set to "true" to allow stub (unverified) payments in real production (isProduction() in lib/appEnv.ts). Dangerous if left on — it means /api/verify-payment trusts the client-reported amount instead of checking with Paystack. Should not be set in normal operation; see app/api/verify-payment/route.ts.
 NEXT_PUBLIC_CALENDLY_URL   — Calendly booking link embedded in the lawyer-consultation flow (components/LawyerConsult.jsx).
+NEXT_PUBLIC_PROPERTY_AGENT_V2 — "true" switches the Property Law Agent to the rebuilt router + sub-agents (docs/property_agent_plans/). Read by the browser (starter menu) and /api/chat. Unset/false = the old single prompt.
 GOOGLE_OAUTH_CLIENT_ID     — OAuth client (Web application) from the firm's Google Cloud project. Brand sheets, see "Brand sheets" below.
 GOOGLE_OAUTH_CLIENT_SECRET — Its secret. Server-only.
 GOOGLE_BRANDS_ROOT_FOLDER_ID — Drive folder (in the connected account) that holds every brand's folder.
@@ -160,6 +161,12 @@ The `recovery-of-premises` agent is being rebuilt as a router + 7 sub-agents wit
 - `lib/property/`: `types.ts` (the 7 areas), `calc.ts` (arrears, mesne profits, Notice to Quit, Seven Days' Notice, Lagos advance rent — every naira figure and date), `matterStore.ts` (`property_matters` / `property_matter_events`, schema `add-property-matters.sql`), `tools/` (the shared tools; `emit_document` sets the price via `getFee` and renders the usual `<<<DOCUMENT>>>` block).
 - `lib/propertyPricing.ts`: `PROPERTY_DOCUMENTS` (type → area, fee) and `getFee`. A fee not yet set is `null` and is emitted as PRICE 0 with "a lawyer will confirm the fee".
 - `AgentChat.tsx` creates the property agent's case before its first message.
+
+Phase 2 (router + the 5 existing areas) is built behind `NEXT_PUBLIC_PROPERTY_AGENT_V2=true` (off = the old prompt, unchanged):
+- `/api/chat` hands `recovery-of-premises` to `lib/property/orchestrator.ts`: route (starter button, or free text through `router.ts` on `claude-haiku-4-5`) → state → Lagos area → the area's sub-agent (`runAgent` with `SHARED_PROPERTY_TOOLS`). One hand-off per turn, answered by the new area at once.
+- `lib/property/starter.ts` (menu, button → area, state questions; browser-safe), `jurisdictions.ts` (12 covered states in 4 groups), `shared.ts` (shared prompt block), `areas/` (one config per area; wills-probate and land-dispute are disabled until Phase 4), `templates.ts` / `templatesNew.ts`.
+- Prompt order for caching: identical tool list for every area → shared block (1h) → area block (1h) → jurisdiction → matter record + date.
+- Area rules are PENDING LAWYER SIGN-OFF; the scope document they should be checked against is not in the repo yet.
 
 ### Blog
 - `lib/blogPosts.ts` — 4 debt recovery articles as TypeScript objects with inline HTML content.

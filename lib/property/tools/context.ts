@@ -20,6 +20,10 @@ export interface PropertyToolContext {
   store: MatterStore
   /** Filled by emit_document; the orchestrator appends these to the reply. */
   emitted: EmittedDocument[]
+  /** Areas the current area may hand to (its config's handoffs). Unset = any. */
+  allowedHandoffs?: readonly PropertyArea[]
+  /** Areas that are live. A hand-off to any other area is refused. Unset = all. */
+  enabledAreas?: readonly PropertyArea[]
 }
 
 // ----- Input helpers: a RangeError goes back to the model as a fixable tool error. -----

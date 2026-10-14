@@ -94,6 +94,12 @@ export const handoffTo: Tool = {
     const area = requireString(input, 'area', 40)
     if (!isPropertyArea(area)) throw new RangeError(`area must be one of: ${PROPERTY_AREAS.join(', ')}.`)
     if (area === ctx.area) throw new RangeError('The matter is already in that area.')
+    if (ctx.enabledAreas && !ctx.enabledAreas.includes(area)) {
+      throw new RangeError(`The ${area} area is not available yet. Use escalate_to_lawyer instead.`)
+    }
+    if (ctx.allowedHandoffs && !ctx.allowedHandoffs.includes(area)) {
+      throw new RangeError(`This area may only hand off to: ${ctx.allowedHandoffs.join(', ') || 'none'}. If the matter needs something else, use escalate_to_lawyer.`)
+    }
     const reason = requireString(input, 'reason', 500)
     const facts = input.facts === undefined ? {} : checkFacts(requireObject(input, 'facts'))
     if (Object.keys(facts).length) await ctx.store.mergeFacts(ctx.caseId, facts)

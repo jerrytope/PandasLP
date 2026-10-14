@@ -4,7 +4,7 @@
 // produces, so AgentChat, /api/save-document, the PDF and payments work unchanged.
 
 import type { AgentTool } from '../../agentRuntime/types'
-import { getFee, isPropertyDocumentKey, PROPERTY_DOCUMENTS, type PropertyFee } from '../../propertyPricing'
+import { documentAreas, getFee, isPropertyDocumentKey, PROPERTY_DOCUMENTS, type PropertyFee } from '../../propertyPricing'
 import type { EmittedDocument, PropertyToolContext } from './context'
 import { naira, requireString } from './context'
 
@@ -59,8 +59,9 @@ export const emitDocument: AgentTool<PropertyToolContext> = {
     const type = requireString(input, 'documentType', 60)
     if (!isPropertyDocumentKey(type)) throw new RangeError(`Unknown documentType. Use one of: ${Object.keys(PROPERTY_DOCUMENTS).join(', ')}.`)
     const spec = PROPERTY_DOCUMENTS[type]
-    if (ctx.area !== spec.area) {
-      throw new RangeError(`A ${spec.title} belongs to the ${spec.area} area, not ${ctx.area ?? 'an unrouted matter'}. Hand the matter off instead of drafting it here.`)
+    const areas = documentAreas(type)
+    if (!ctx.area || !areas.includes(ctx.area)) {
+      throw new RangeError(`A ${spec.title} belongs to the ${areas.join(' or ')} area, not ${ctx.area ?? 'an unrouted matter'}. Hand the matter off instead of drafting it here.`)
     }
 
     const title = oneLine(requireString(input, 'title', 200))

@@ -88,5 +88,11 @@ export async function events(caseId: string, kind?: MatterEventKind): Promise<Ma
   return (data ?? []).map((e) => ({ kind: e.kind as MatterEventKind, payload: (e.payload ?? {}) as Record<string, unknown>, createdAt: e.created_at as string }))
 }
 
-/** The database-backed store the tools use in production. */
-export const matterStore: MatterStore = { mergeFacts, setArea, setStatus, logEvent, events }
+/** Everything the orchestrator needs: the tools' store plus loading the matter and its state. */
+export interface MatterRepository extends MatterStore {
+  getOrCreateMatter(caseId: string): Promise<PropertyMatter>
+  setState(caseId: string, state: string, lagosArea?: string | null): Promise<void>
+}
+
+/** The database-backed store used in production. */
+export const matterStore: MatterRepository = { getOrCreateMatter, setState, mergeFacts, setArea, setStatus, logEvent, events }

@@ -4,6 +4,7 @@
 
 import type { AgentTool } from '../../agentRuntime/types'
 import { CALC_TOOLS } from './calcTools'
+import { prepareConsentApplication } from './consentApplication'
 import type { PropertyToolContext } from './context'
 import { emitDocument } from './emitDocument'
 import { escalateToLawyer, getFeeTool, handoffTo, recordFacts, recordFeeAcceptance } from './matterTools'
@@ -15,6 +16,7 @@ export const SHARED_PROPERTY_TOOLS: AgentTool<PropertyToolContext>[] = [
   recordFeeAcceptance,
   handoffTo,
   escalateToLawyer,
+  prepareConsentApplication,
   emitDocument,
 ]
 

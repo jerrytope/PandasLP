@@ -27,20 +27,20 @@ All tasks in one list. Details for each are in the phase files. Tick here **and*
 - [x] 1.13 `emit_document` with validation (placeholders, area, price from code, fee acceptance)
 
 ## Phase 2: Router and the 5 existing areas ([details](phase-2-router-and-existing-areas.md))
-- [ ] 2.1 `lib/property/jurisdictions.ts` (groups, Lagos excluded areas, unsupported → escalate)
-- [ ] 2.2 `lib/property/shared.ts` (shared block moved over + citation and "use calc tools" rules)
-- [ ] 2.3 Prompt assembly + cache check in `ai_usage`
-- [ ] 2.4 Starter menu (7 areas) + state/Lagos-area buttons
-- [ ] 2.5 Button → area mapping (no model call)
-- [ ] 2.6 Free-text router (Haiku 4.5) with occupant test and not-covered list
-- [ ] 2.7 Hand-off mechanics (facts carried over, nothing re-asked)
-- [ ] 2.8 Recovery of premises sub-agent
-- [ ] 2.9 Tenancy, lease and sublease sub-agent (+ Deed of Lease and Deed of Sublease templates)
-- [ ] 2.10 Conveyancing sub-agent + 2.5% acceptance flow
-- [ ] 2.11 `prepare_consent_application` shared tool
-- [ ] 2.12 Other instruments sub-agent (mortgage by state, POA irrevocability rule, Deed of Release)
-- [ ] 2.13 Searches & due diligence sub-agent
-- [ ] 2.14 `orchestrator.ts` + `/api/chat` branch behind `PROPERTY_AGENT_V2`
+- [x] 2.1 `lib/property/jurisdictions.ts` (groups, Lagos excluded areas, unsupported → escalate)
+- [x] 2.2 `lib/property/shared.ts` (shared block moved over + citation and "use calc tools" rules)
+- [ ] 2.3 Prompt assembly + cache check in `ai_usage` (assembly built and tested; cache check needs a real API key)
+- [x] 2.4 Starter menu (7 areas) + state/Lagos-area buttons
+- [x] 2.5 Button → area mapping (no model call)
+- [x] 2.6 Free-text router (Haiku 4.5) with occupant test and not-covered list
+- [x] 2.7 Hand-off mechanics (facts carried over, nothing re-asked)
+- [x] 2.8 Recovery of premises sub-agent
+- [x] 2.9 Tenancy, lease and sublease sub-agent (+ Deed of Lease and Deed of Sublease templates)
+- [x] 2.10 Conveyancing sub-agent + 2.5% acceptance flow
+- [x] 2.11 `prepare_consent_application` shared tool
+- [x] 2.12 Other instruments sub-agent (mortgage by state, POA irrevocability rule, Deed of Release)
+- [x] 2.13 Searches & due diligence sub-agent
+- [x] 2.14 `orchestrator.ts` + `/api/chat` branch behind `NEXT_PUBLIC_PROPERTY_AGENT_V2`
 - [ ] 2.15 Lawyer sign-off for the 5 areas recorded
 
 ## Phase 3: Law library ([details](phase-3-law-library.md))

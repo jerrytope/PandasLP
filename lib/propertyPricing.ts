@@ -72,6 +72,8 @@ export const PROPERTY_PRICING = {
   codicil: null,
   probate: null,
   disputeBrief: null,
+  /* The Governor's (or Minister's) Consent application the firm files for a deed it drafted. */
+  consentApplication: null,
 } as const
 
 export const TENANCY_FEE_LABEL = '₦25,000'
@@ -119,7 +121,8 @@ export const LAWYER_CONFIRMS_FEE_LABEL =
 
 export interface PropertyDocumentType {
   title: string
-  area: PropertyArea
+  /** The area, or areas, allowed to emit it. */
+  area: PropertyArea | readonly PropertyArea[]
   fee: FeeKey
   /** A deed that transfers title: needs the client's recorded acceptance of the 2.5% fee. */
   transfersTitle?: boolean
@@ -146,12 +149,20 @@ export const PROPERTY_DOCUMENTS = {
   'probate-papers': { title: 'Probate / Letters of Administration Papers', area: 'wills-probate', fee: 'probate' },
   assent: { title: "Executors' Assent", area: 'wills-probate', fee: 'probate' },
   'dispute-brief': { title: 'Lawyer Brief: Land Title Dispute', area: 'land-dispute', fee: 'disputeBrief' },
+  // Each area that drafts a deed needing consent prepares the application for it.
+  'consent-application': { title: "Application for Governor's Consent", area: ['conveyancing', 'other-instruments', 'tenancy'], fee: 'consentApplication' },
 } as const satisfies Record<string, PropertyDocumentType>
 
 export type PropertyDocumentKey = keyof typeof PROPERTY_DOCUMENTS
 
 export function isPropertyDocumentKey(value: unknown): value is PropertyDocumentKey {
   return typeof value === 'string' && Object.prototype.hasOwnProperty.call(PROPERTY_DOCUMENTS, value)
+}
+
+/** The areas allowed to emit a document. */
+export function documentAreas(documentType: PropertyDocumentKey): readonly PropertyArea[] {
+  const area: PropertyArea | readonly PropertyArea[] = PROPERTY_DOCUMENTS[documentType].area
+  return typeof area === 'string' ? [area] : area
 }
 
 /** The fee for a document, or null for an unknown document type. */

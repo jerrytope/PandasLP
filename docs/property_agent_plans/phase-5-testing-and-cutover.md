@@ -23,7 +23,7 @@
 - [ ] A Conveyancing matter: the 2.5% acceptance → PRICE 0 → "the firm will invoice" message.
 
 ### Cut-over
-- [ ] Turn on `PROPERTY_AGENT_V2` in production.
+- [ ] Turn on `NEXT_PUBLIC_PROPERTY_AGENT_V2` in production.
 - [ ] Watch the first live matters (`property_matter_events`, `ai_usage`, escalations).
 - [ ] After a stable period, remove the old monolithic prompt from `lib/agents.ts` and the flag.
 - [ ] Update `CLAUDE.md` (agents table, key files) and `lib/agentCapabilities.ts` / marketing copy (7 areas, nine-document claim).

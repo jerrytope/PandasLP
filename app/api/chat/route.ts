@@ -5,6 +5,9 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { buildCurrentDateContext } from '@/lib/currentDateContext'
 import { isAdminEmail } from '@/lib/adminAuth'
 import { callClaude } from '@/lib/claude'
+import { propertyAgentV2Enabled } from '@/lib/property/starter'
+import { runPropertyOrchestrator } from '@/lib/property/orchestrator'
+import { matterStore } from '@/lib/property/matterStore'
 
 // Stable for every conversation with a given agent, so it sits inside the cached system block.
 const DOCUMENT_CONTEXT_RULE = `DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`
@@ -97,6 +100,23 @@ export async function POST(req: Request) {
   if (typeof caseId === 'string' && caseId) {
     const { data: owned } = await supabaseAdmin.from('cases').select('id, user_id').eq('id', caseId).maybeSingle()
     if (owned && (owned.user_id === callerData.user.id || isAdminEmail(callerData.user.email))) usageCaseId = owned.id
+  }
+
+  // The rebuilt Property Law Agent (docs/property_agent_plans/): a router and sub-agents with
+  // tools and a saved matter record, which is keyed by the case, so the case must be given
+  // (AgentChat creates it before the first message).
+  if (agent.id === 'recovery-of-premises' && !lawyerIntake && propertyAgentV2Enabled()) {
+    if (!usageCaseId) {
+      return Response.json({ error: 'Missing or invalid case for this conversation. Please refresh and try again.' }, { status: 400 })
+    }
+    try {
+      const result = await runPropertyOrchestrator({ caseId: usageCaseId, messages: capHistory(messages), now: new Date(), repo: matterStore })
+      if (result.ok === false) return Response.json({ error: result.error }, { status: result.status })
+      return Response.json({ response: result.response })
+    } catch (err) {
+      console.error('Property agent error:', err)
+      return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
+    }
   }
 
   try {
