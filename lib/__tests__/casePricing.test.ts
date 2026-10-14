@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { resolveCasePrice, judgmentEnforcementFee } from '../casePricing'
-import { PROPERTY_PRICING } from '../propertyPricing'
+import { getFee, PROPERTY_DOCUMENTS, PROPERTY_PRICING, propertyOnlineFees } from '../propertyPricing'
 
 describe('resolveCasePrice', () => {
   describe('small-claims', () => {
@@ -29,6 +29,12 @@ describe('resolveCasePrice', () => {
 
     it('rejects an unlisted fee', () => {
       expect(resolveCasePrice('recovery-of-premises', 5000, null).ok).toBe(false)
+    })
+
+    it('allows exactly the online fees in the property document list, plus 0', () => {
+      expect(propertyOnlineFees()).toEqual([25_000, 30_000, 50_000])
+      // The comprehensive search floor is a lawyer's quote, never paid online.
+      expect(resolveCasePrice('recovery-of-premises', 100_000, null).ok).toBe(false)
     })
   })
 
@@ -61,5 +67,29 @@ describe('resolveCasePrice', () => {
 describe('judgmentEnforcementFee', () => {
   it('rounds the 5% to whole naira', () => {
     expect(judgmentEnforcementFee(123_457)).toBe(10000 + 6173)
+  })
+})
+
+describe('getFee', () => {
+  it('prices every property document type', () => {
+    for (const type of Object.keys(PROPERTY_DOCUMENTS)) expect(getFee(type)).not.toBeNull()
+  })
+
+  it('charges the tenancy fee for tenancy documents and short subleases, the flat fee for instruments', () => {
+    expect(getFee('notice-to-quit')).toMatchObject({ kind: 'flat', amount: 25_000 })
+    expect(getFee('sublease-agreement')).toMatchObject({ kind: 'flat', amount: 25_000 })
+    expect(getFee('deed-of-release')).toMatchObject({ kind: 'flat', amount: 30_000 })
+    expect(getFee('search-instruction-standard')).toMatchObject({ kind: 'flat', amount: 50_000 })
+  })
+
+  it('has no price for fees the firm has not set, or that a lawyer quotes', () => {
+    for (const type of ['deed-of-sublease', 'will', 'codicil', 'probate-papers', 'assent', 'dispute-brief', 'search-instruction-comprehensive']) {
+      expect(getFee(type)).toMatchObject({ kind: 'lawyer-confirms', amount: null })
+    }
+  })
+
+  it('returns null for an unknown document', () => {
+    expect(getFee('deed-of-everything')).toBeNull()
+    expect(getFee('toString')).toBeNull()
   })
 })

@@ -437,6 +437,15 @@ export default function AgentChat({
     setError('')
     setLoading(true)
     try {
+      // The Property Law Agent keeps a saved record of each matter on the server
+      // (property_matters, keyed by the case), so its case must exist before the first
+      // message rather than after the first reply like the other agents.
+      if (agent.id === 'recovery-of-premises' && !caseIdRef.current) {
+        if (!(await ensureCase())) {
+          setError("We couldn't start your case. Please check your connection and try again.")
+          return
+        }
+      }
       const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

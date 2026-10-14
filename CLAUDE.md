@@ -154,6 +154,13 @@ Lenders ("brands") send borrowers in bulk through their own Google Sheet, one bo
 - `lib/brands.ts`, `app/api/admin/brands/route.ts` (list/create/update/retry/delete), `app/api/admin/google/{connect,callback}`, UI in `app/admin/components/brands/BrandsView.tsx` (sidebar "Brands").
 - One-time Google setup for the owner: create the Drive folder and template sheet, then a Cloud project with the Sheets and Drive APIs enabled. Set up the OAuth consent screen as External, with the drive and spreadsheets scopes, **published to Production** (in Testing, tokens expire after 7 days). Create a Web OAuth client with redirect URIs `http://localhost:3000/api/admin/google/callback` and `https://pandaslp.com.ng/api/admin/google/callback`. Set the env vars, then Admin → Brands → Connect Google Drive.
 
+### Property Law Agent rebuild — in progress
+The `recovery-of-premises` agent is being rebuilt as a router + 7 sub-agents with tools and a saved matter record. **Plan and progress: `docs/property_agent_plans/`** (README status table, `tasks.md`, one file per phase). Tick tasks there as they finish. Phase 1 (foundation, no client-visible change) is built:
+- `lib/claude.ts` takes `tools`/`toolChoice` and returns `content` blocks. `lib/agentRuntime/runAgent.ts` is the tool loop (`maxSteps`, `is_error` results, early stop on hand-off/escalation).
+- `lib/property/`: `types.ts` (the 7 areas), `calc.ts` (arrears, mesne profits, Notice to Quit, Seven Days' Notice, Lagos advance rent — every naira figure and date), `matterStore.ts` (`property_matters` / `property_matter_events`, schema `add-property-matters.sql`), `tools/` (the shared tools; `emit_document` sets the price via `getFee` and renders the usual `<<<DOCUMENT>>>` block).
+- `lib/propertyPricing.ts`: `PROPERTY_DOCUMENTS` (type → area, fee) and `getFee`. A fee not yet set is `null` and is emitted as PRICE 0 with "a lawyer will confirm the fee".
+- `AgentChat.tsx` creates the property agent's case before its first message.
+
 ### Blog
 - `lib/blogPosts.ts` — 4 debt recovery articles as TypeScript objects with inline HTML content.
 - `app/blog/page.tsx` — Blog index with SEO metadata.

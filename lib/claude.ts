@@ -33,6 +33,20 @@ export interface ClaudeMessage {
   content: string | unknown[]
 }
 
+/** A tool the model may call. The schema is JSON Schema; the handler lives with the caller. */
+export interface ClaudeTool {
+  name: string
+  description: string
+  input_schema: Record<string, unknown>
+}
+
+export type ClaudeToolChoice = { type: 'auto' | 'any' | 'none' } | { type: 'tool'; name: string }
+
+export type ClaudeContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+  | { type: string; [key: string]: unknown }
+
 export interface ClaudeCallOptions {
   /** Where the call comes from, for cost reporting, e.g. "chat.small-claims". */
   route: string
@@ -44,10 +58,26 @@ export interface ClaudeCallOptions {
   cacheConversation?: boolean
   /** The case this call is for, so its cost counts toward that matter. */
   caseId?: string | null
+  /**
+   * Tools the model may call. Tools come before the system prompt in the cache prefix, so the
+   * list must be identical (same tools, same order) from one call to the next or every cached
+   * system block after it is lost.
+   */
+  tools?: ClaudeTool[]
+  toolChoice?: ClaudeToolChoice
 }
 
 export type ClaudeResult =
-  | { ok: true; text: string; stopReason: string | null; usage: TokenUsage; costUsd: number; model: string }
+  | {
+      ok: true
+      text: string
+      /** The raw response blocks: text and, when tools were offered, tool_use. */
+      content: ClaudeContentBlock[]
+      stopReason: string | null
+      usage: TokenUsage
+      costUsd: number
+      model: string
+    }
   | { ok: false; status: number; error: string; notConfigured?: boolean }
 
 function cacheControl(ttl: CacheTtl) {
@@ -64,6 +94,8 @@ export function buildClaudeRequest(opts: ClaudeCallOptions) {
   return {
     model: opts.model ?? CLAUDE_MODEL,
     max_tokens: opts.maxTokens,
+    ...(opts.tools?.length ? { tools: opts.tools } : {}),
+    ...(opts.tools?.length && opts.toolChoice ? { tool_choice: opts.toolChoice } : {}),
     ...(system.length ? { system } : {}),
     messages: opts.messages,
     // Top-level automatic caching moves its breakpoint to the end of the conversation on every
@@ -134,12 +166,11 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<ClaudeResult>
   }
 
   const data = await res.json()
-  const text: string = Array.isArray(data?.content)
-    ? data.content
-        .filter((b: { type: string }) => b.type === 'text')
-        .map((b: { text: string }) => b.text)
-        .join('\n')
-    : ''
+  const content: ClaudeContentBlock[] = Array.isArray(data?.content) ? data.content : []
+  const text: string = content
+    .filter((b): b is { type: 'text'; text: string } => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n')
   const model: string = data?.model ?? body.model
   const usage = normaliseUsage(data?.usage, usesOneHourCache(opts))
   const cost = costUsd(body.model, usage)
@@ -155,5 +186,5 @@ export async function callClaude(opts: ClaudeCallOptions): Promise<ClaudeResult>
     stopReason,
   })
 
-  return { ok: true, text, stopReason, usage, costUsd: cost, model }
+  return { ok: true, text, content, stopReason, usage, costUsd: cost, model }
 }

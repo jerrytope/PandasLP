@@ -10,7 +10,7 @@
 
 import type { AgentId } from './agents'
 import { getAgentPayment } from './agentServiceMap'
-import { PROPERTY_PRICING } from './propertyPricing'
+import { propertyOnlineFees } from './propertyPricing'
 
 export const SMALL_CLAIMS_SELF_SERVE = 10_000
 export const SMALL_CLAIMS_PANDAS_SERVES = 25_000
@@ -60,8 +60,10 @@ export function resolveCasePrice(
     }
 
     case 'recovery-of-premises': {
-      // 0 = a transfer of title, invoiced by the firm rather than paid online (see AgentChat's invoicedByFirm).
-      const allowed = [PROPERTY_PRICING.tenancy, PROPERTY_PRICING.standardSearch, PROPERTY_PRICING.flatDocument, 0]
+      // Every online fee in lib/propertyPricing.ts's document list, plus 0: nothing collected
+      // online, either a transfer of title invoiced by the firm or a fee a lawyer confirms (see
+      // AgentChat's invoicedByFirm).
+      const allowed = [...propertyOnlineFees(), 0]
       const amount = pickFrom(allowed, getAgentPayment(agentId).amount)
       if (amount === null) return notListed
       return { ok: true, amount, deliveryOption: null }

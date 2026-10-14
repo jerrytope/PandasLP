@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('../supabaseAdmin', () => ({ supabaseAdmin: { from: () => ({ insert: async () => ({ error: null }) }) } }))
 
-import { buildClaudeRequest } from '../claude'
+import { buildClaudeRequest, callClaude } from '../claude'
 import { costUsd, normaliseUsage, uncachedCostUsd } from '../aiPricing'
 
 describe('buildClaudeRequest', () => {
@@ -29,6 +29,55 @@ describe('buildClaudeRequest', () => {
     const body = buildClaudeRequest({ route: 'x', system: 'PROMPT', messages: [], maxTokens: 10 })
     expect(body.system).toEqual([{ type: 'text', text: 'PROMPT' }])
     expect('cache_control' in body).toBe(false)
+  })
+})
+
+describe('buildClaudeRequest with tools', () => {
+  const tool = { name: 'get_fee', description: 'Fee for a document.', input_schema: { type: 'object', properties: {} } }
+
+  it('sends tools (and tool_choice) without changing the caching layout', () => {
+    const body = buildClaudeRequest({
+      route: 'x',
+      system: [{ text: 'STABLE', cache: '1h' }, { text: 'DATE' }],
+      messages: [{ role: 'user', content: 'hi' }],
+      maxTokens: 100,
+      cacheConversation: true,
+      tools: [tool],
+      toolChoice: { type: 'auto' },
+    })
+    expect(body.tools).toEqual([tool])
+    expect(body.tool_choice).toEqual({ type: 'auto' })
+    expect(body.system).toEqual([
+      { type: 'text', text: 'STABLE', cache_control: { type: 'ephemeral', ttl: '1h' } },
+      { type: 'text', text: 'DATE' },
+    ])
+    expect(body.cache_control).toEqual({ type: 'ephemeral' })
+  })
+
+  it('leaves tools and tool_choice out when there are no tools', () => {
+    const body = buildClaudeRequest({ route: 'x', system: 'P', messages: [], maxTokens: 10, tools: [], toolChoice: { type: 'auto' } })
+    expect('tools' in body).toBe(false)
+    expect('tool_choice' in body).toBe(false)
+  })
+})
+
+describe('callClaude', () => {
+  it('returns the raw content blocks as well as the joined text', async () => {
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+    const content = [
+      { type: 'text', text: 'Let me check the fee.' },
+      { type: 'tool_use', id: 'tu_1', name: 'get_fee', input: { documentType: 'deed-of-gift' } },
+    ]
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ content, model: 'claude-sonnet-4-6', stop_reason: 'tool_use', usage: { input_tokens: 10, output_tokens: 5 } })),
+    )
+    try {
+      const result = await callClaude({ route: 'x', system: 'P', messages: [{ role: 'user', content: 'hi' }], maxTokens: 10 })
+      expect(result).toMatchObject({ ok: true, text: 'Let me check the fee.', content, stopReason: 'tool_use' })
+    } finally {
+      fetchMock.mockRestore()
+      delete process.env.ANTHROPIC_API_KEY
+    }
   })
 })
 
