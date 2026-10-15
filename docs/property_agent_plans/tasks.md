@@ -44,15 +44,17 @@ All tasks in one list. Details for each are in the phase files. Tick here **and*
 - [ ] 2.15 Lawyer sign-off for the 5 areas recorded
 
 ## Phase 3: Law library ([details](phase-3-law-library.md))
-- [ ] 3.1 `manifest.json` for all obtained laws
+- [ ] 3.1 `manifest.json` for all obtained laws (on hold: the legal team sent `docs/pandaslp-law-library-seed.sql` instead, 6 laws in, 9 not sourced)
 - [ ] 3.2 `scripts/law-ingest.mjs`: extraction, OCR fallback, section splitting
 - [ ] 3.3 Ingest quality report
-- [ ] 3.4 Migration: `law_documents`, `law_sections` (tsvector + GIN)
+- [x] 3.4 Migration: `law_documents`, `law_sections` (tsvector + GIN), matching the legal team's seed (`add-law-library.sql`; not yet run on Supabase)
 - [ ] 3.5 Load Lagos, FCT, nationwide, then the remaining states
 - [ ] 3.6 Human spot-check of key sections
-- [ ] 3.7 `get_section` and `lookup_law` tools (state/area filtered)
-- [ ] 3.8 Citation rule enforced in `emit_document`
+- [x] 3.7 `get_section` and `lookup_law` tools (state filtered)
+- [x] 3.8 Citation rule enforced in `emit_document`
 - [ ] 3.9 Evaluation set (10 questions per area); decide on vectors
+- [ ] 3.10 Identify the seed's embedding model (384 dims) and turn on vector search (step 2)
+- [ ] 3.11 Web search fallback for laws not in the library: trusted sites only, logged (step 3; needs an Anthropic key to test)
 
 ## Phase 4: Wills & probate, Land title disputes ([details](phase-4-wills-probate-and-disputes.md))
 - [ ] 4.1 Wills & probate rules per group

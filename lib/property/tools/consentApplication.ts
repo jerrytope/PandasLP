@@ -7,6 +7,7 @@
 import type { AgentTool } from '../../agentRuntime/types'
 import { normaliseState } from '../jurisdictions'
 import type { PropertyArea } from '../types'
+import { extractCitations } from '../lawLookup'
 import type { PropertyToolContext } from './context'
 import { optionalBoolean, optionalNumber, requireString } from './context'
 
@@ -87,15 +88,16 @@ export const prepareConsentApplication: AgentTool<PropertyToolContext> = {
     if (!(INSTRUMENTS as string[]).includes(instrument)) throw new RangeError(`instrument must be one of: ${INSTRUMENTS.join(', ')}.`)
     const titleType = requireString(input, 'titleType', 20)
     if (!(TITLE_TYPES as readonly string[]).includes(titleType)) throw new RangeError(`titleType must be one of: ${TITLE_TYPES.join(', ')}.`)
-    return {
-      ok: true,
-      result: consentAdvice({
+    const advice = consentAdvice({
         instrument: instrument as ConsentInstrument,
         state: requireString(input, 'state', 60),
         titleType: titleType as (typeof TITLE_TYPES)[number],
         termYears: optionalNumber(input, 'termYears'),
         partyIsCompany: optionalBoolean(input, 'partyIsCompany'),
-      }),
-    }
+    })
+    // The application quotes this provision, so it may be cited in the documents that follow.
+    ctx.citable ??= new Set()
+    for (const c of extractCitations(advice.provision ?? '')) ctx.citable.add(c.key)
+    return { ok: true, result: advice }
   },
 }

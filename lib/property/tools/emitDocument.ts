@@ -7,6 +7,7 @@ import type { AgentTool } from '../../agentRuntime/types'
 import { documentAreas, getFee, isPropertyDocumentKey, PROPERTY_DOCUMENTS, type PropertyFee } from '../../propertyPricing'
 import type { EmittedDocument, PropertyToolContext } from './context'
 import { naira, requireString } from './context'
+import { extractCitations } from '../lawLookup'
 
 /** [LANDLORD_NAME]-style blanks and {{TOKENS}} left in the body. {{REF_NUMBER}} is filled in by AgentChat. */
 const PLACEHOLDER_RE = /\[[A-Z][A-Z0-9_ /'’,()-]*\]|\{\{(?!REF_NUMBER\}\})[^}]*\}\}/g
@@ -74,6 +75,17 @@ export const emitDocument: AgentTool<PropertyToolContext> = {
     const blanks = findPlaceholders(body)
     if (blanks.length) {
       throw new RangeError(`The document still has blanks: ${blanks.join(', ')}. Ask the client for these, or remove them, then emit it again.`)
+    }
+
+    // The citation rule: a section may be cited only if it was looked up for this matter
+    // (get_section / lookup_law) or is in the area's own rules. Checked only when the matter
+    // has the library wired in (ctx.standingCitations set by the orchestrator).
+    if (ctx.standingCitations) {
+      const unchecked = extractCitations(body).filter((c) => !ctx.standingCitations!.has(c.key) && !ctx.citable?.has(c.key))
+      if (unchecked.length) {
+        const list = [...new Set(unchecked.map((c) => `"${c.quoted}"`))].join(', ')
+        throw new RangeError(`The document cites ${list}, which has not been looked up for this matter. Call get_section to check it and use its exact wording, or remove the section number and name the law generally.`)
+      }
     }
 
     const { price, priceLabel } = await priceFor(getFee(type)!, type, ctx)

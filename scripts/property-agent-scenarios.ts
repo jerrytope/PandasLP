@@ -6,7 +6,7 @@
 //   npm run property:scenarios               all scenarios
 //   npm run property:scenarios -- 01 06 18   only these
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 for (const file of ['.env.local', '.env']) {
@@ -29,6 +29,11 @@ if (!process.env.GROQ_API_KEY) {
 const { SqliteMatterRepo } = await import('../lib/dev/sqliteMatterRepo')
 const { createGroqCaller, groqModelFor } = await import('../lib/dev/groqCaller')
 const { runPropertyOrchestrator } = await import('../lib/property/orchestrator')
+const { SqliteLawLibrary } = await import('../lib/dev/sqliteLawLibrary')
+// The law library from the legal team's seed file, if it is in the repo.
+const seedPath = path.resolve('docs', 'pandaslp-law-library-seed.sql')
+const library = existsSync(seedPath) ? SqliteLawLibrary.fromFile(seedPath) : undefined
+if (!library) console.warn('No law library seed at docs/pandaslp-law-library-seed.sql: get_section and lookup_law will say it is unavailable.')
 const { PROPERTY_V2_STARTER } = await import('../lib/property/starter')
 const { extractDocument, extractOptions } = await import('../lib/agentChatParsing')
 const { SCENARIOS } = await import('./property-scenarios')
@@ -105,7 +110,7 @@ for (const scenario of scenarios) {
     out.push('', `**Client:** ${text}`, '')
     messages.push({ role: 'user', content: text })
 
-    const result = await runPropertyOrchestrator({ caseId, messages, now: new Date('2026-10-14T09:00:00Z'), repo, call })
+    const result = await runPropertyOrchestrator({ caseId, messages, now: new Date('2026-10-14T09:00:00Z'), repo, call, library })
     if (result.ok === false) {
       errors.push(result.error)
       out.push(`**ERROR (${result.status}):** ${result.error}`)

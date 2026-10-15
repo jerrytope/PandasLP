@@ -83,12 +83,12 @@ export const calcMesneProfits: Tool = {
 export const calcNoticeToQuit: Tool = {
   definition: {
     name: 'calc_notice_to_quit',
-    description: "Decides whether a Notice to Quit is needed, how long it must be, and the earliest date the tenant can be required to quit. Applies the agreement's own period, the yearly anniversary rule, expired fixed terms and the Lagos arrears rule. Always use its quit date; never work one out yourself.",
+    description: "Decides whether a Notice to Quit is needed, how long it must be, and the earliest date the tenant can be required to quit. Applies the agreement's own period, the yearly anniversary rule (not in Lagos: Tenancy Law s.13(4)), expired fixed terms and the Lagos arrears rule. Always use its quit date; never work one out yourself.",
     input_schema: {
       type: 'object',
       properties: {
         tenancyType: { type: 'string', enum: TENANCY_TYPES, description: 'How rent is paid decides the type. fixed-term for a lease for a set term.' },
-        tenancyStart: { ...DATE, description: 'First day of the tenancy (needed for a yearly tenancy).' },
+        tenancyStart: { ...DATE, description: 'First day of the tenancy (needed for a yearly tenancy outside Lagos).' },
         agreementPeriodCount: { type: 'integer', description: 'Only if the tenancy agreement sets its own notice period: how many units.' },
         agreementPeriodUnit: { type: 'string', enum: ['days', 'weeks', 'months'] },
         fixedTermEnd: { ...DATE, description: 'The last day of a fixed term.' },

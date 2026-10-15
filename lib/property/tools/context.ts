@@ -1,3 +1,4 @@
+import type { LawLibrary } from '../lawLibrary'
 import type { MatterStore } from '../matterStore'
 import type { PropertyArea } from '../types'
 import type { PropertyDocumentKey } from '../../propertyPricing'
@@ -26,6 +27,15 @@ export interface PropertyToolContext {
   enabledAreas?: readonly PropertyArea[]
   /** Today, as YYYY-MM-DD in Lagos. Arrears are never counted past it. Unset = no limit. */
   today?: string
+  /** The law library (get_section, lookup_law). Unset = those tools say it's unavailable. */
+  library?: LawLibrary
+  /** The matter's state and Lagos area, for which laws apply. */
+  matterState?: string | null
+  lagosArea?: string | null
+  /** Citation keys (lawLookup.citationKey) of sections looked up for this matter. */
+  citable?: Set<string>
+  /** Citation keys a document may use without a look-up: those in the area's own rules. */
+  standingCitations?: Set<string>
 }
 
 // ----- Input helpers: a RangeError goes back to the model as a fixable tool error. -----

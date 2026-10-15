@@ -189,6 +189,8 @@ export type NoticeToQuitResult =
       quitDate: string
       jurisdiction: Jurisdiction
       tenancyType: Exclude<TenancyType, 'fixed-term'>
+      /** Whether the quit date had to fall on the last day of a tenancy year. */
+      anniversaryRule: boolean
       notes: string[]
     }
   | {
@@ -210,8 +212,8 @@ export type NoticeToQuitResult =
  *  - Lagos (outside the excluded areas): a monthly tenant owing 6 months' rent, or a quarterly
  *    or half-yearly tenant owing a year's, needs no Notice to Quit.
  *  - The agreement's own notice period wins; otherwise the default for the tenancy type.
- *  - A yearly tenancy ends on the last day of a tenancy year, and the notice must run its full
- *    six months before that day.
+ *  - Outside Lagos, a yearly tenancy ends on the last day of a tenancy year, and the notice must
+ *    run its full six months before that day. In Lagos (Tenancy Law areas) it need not: s.13(4).
  */
 export function noticeToQuit(input: NoticeToQuitInput): NoticeToQuitResult {
   const received = parseDate(input.receivedOn, 'receivedOn')
@@ -254,7 +256,13 @@ export function noticeToQuit(input: NoticeToQuitInput): NoticeToQuitResult {
   const period = fromAgreement ?? DEFAULT_NOTICE[periodic]
   let quit = earliestQuitDate(received, period)
 
-  if (periodic === 'yearly' && !fromAgreement) {
+  // Lagos Tenancy Law 2011, s.13(4): notice to a quarterly, half-yearly or yearly tenant "need not
+  // terminate on the anniversary of the tenancy". The anniversary rule applies only elsewhere.
+  const anniversaryRule = periodic === 'yearly' && !fromAgreement && jurisdiction !== 'lagos'
+  if (periodic === 'yearly' && !fromAgreement && jurisdiction === 'lagos') {
+    notes.push("Under section 13(4) of the Tenancy Law of Lagos State 2011, a yearly tenant's notice need not end on the anniversary of the tenancy: six months from the day after the tenant receives it is enough.")
+  }
+  if (anniversaryRule) {
     if (!input.tenancyStart) throw new RangeError('tenancyStart is needed for a yearly tenancy, to find the end of the tenancy year.')
     const start = parseDate(input.tenancyStart, 'tenancyStart')
     // The last day of tenancy year k is the day before its kth anniversary.
@@ -264,7 +272,7 @@ export function noticeToQuit(input: NoticeToQuitInput): NoticeToQuitResult {
     notes.push('A yearly tenancy ends on the last day of a tenancy year, so the quit date is the first year-end at least six months after the tenant receives the notice.')
   }
 
-  return { needed: true, period, periodSource: fromAgreement ? 'agreement' : 'default', quitDate: formatDate(quit), jurisdiction, tenancyType: periodic, notes }
+  return { needed: true, period, periodSource: fromAgreement ? 'agreement' : 'default', quitDate: formatDate(quit), jurisdiction, tenancyType: periodic, anniversaryRule, notes }
 }
 
 /** Is a notice that names `quitDate` long enough? A notice short by even one day is invalid. */
@@ -274,7 +282,7 @@ export function isNoticeLongEnough(input: NoticeToQuitInput & { quitDate: string
   const quit = parseDate(input.quitDate, 'quitDate')
   const valid = quit >= parseDate(result.quitDate) &&
     // A yearly notice must also end on a tenancy year-end, not just be long enough.
-    (result.tenancyType !== 'yearly' || result.periodSource === 'agreement' || isYearEnd(input.tenancyStart!, quit))
+    (!result.anniversaryRule || isYearEnd(input.tenancyStart!, quit))
   return { valid, earliestQuitDate: result.quitDate }
 }
 

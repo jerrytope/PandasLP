@@ -14,7 +14,7 @@
 //
 // Lines can be piped in too, for a scripted run:  cat scenario.txt | npm run property:chat -- --new --memory
 
-import { mkdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import readline from 'node:readline'
 
@@ -55,6 +55,11 @@ if (!apiKey) {
 const { SqliteMatterRepo } = await import('../lib/dev/sqliteMatterRepo')
 const { createGroqCaller, groqModelFor } = await import('../lib/dev/groqCaller')
 const { runPropertyOrchestrator } = await import('../lib/property/orchestrator')
+const { SqliteLawLibrary } = await import('../lib/dev/sqliteLawLibrary')
+// The law library from the legal team's seed file, if it is in the repo.
+const seedPath = path.resolve('docs', 'pandaslp-law-library-seed.sql')
+const library = existsSync(seedPath) ? SqliteLawLibrary.fromFile(seedPath) : undefined
+if (!library) console.warn('No law library seed at docs/pandaslp-law-library-seed.sql: get_section and lookup_law will say it is unavailable.')
 const { PROPERTY_V2_STARTER } = await import('../lib/property/starter')
 const { extractDocument, extractOptions } = await import('../lib/agentChatParsing')
 
@@ -160,7 +165,7 @@ for await (const raw of rl) {
   if (text !== line) console.log(dim(`  → ${text}`))
 
   const messages = [...repo.messages(caseId), { role: 'user' as const, content: text }]
-  const result = await runPropertyOrchestrator({ caseId, messages, now: new Date(), repo, call })
+  const result = await runPropertyOrchestrator({ caseId, messages, now: new Date(), repo, call, library })
   if (result.ok === false) {
     console.log(`\n  ERROR (${result.status}): ${result.error}`)
     prompt(); continue

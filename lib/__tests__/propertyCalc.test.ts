@@ -105,6 +105,14 @@ describe('noticeToQuit', () => {
     it('needs the tenancy start date', () => {
       expect(() => noticeToQuit(oyo({ tenancyType: 'yearly' }))).toThrow(RangeError)
     })
+
+    it('in Lagos, need not end on the anniversary (Tenancy Law s.13(4))', () => {
+      const lagos = noticeToQuit({ tenancyType: 'yearly', state: 'Lagos', lagosArea: 'Surulere', receivedOn: '2026-10-20' })
+      expect(lagos).toMatchObject({ needed: true, quitDate: '2027-04-20', anniversaryRule: false })
+      expect(lagos.notes.join(' ')).toMatch(/13\(4\)/)
+      // ...but the Lagos excluded areas are not under the Tenancy Law, so the anniversary rule stays.
+      expect(noticeToQuit({ tenancyType: 'yearly', state: 'Lagos', lagosArea: 'Ikoyi', tenancyStart: '2025-01-01', receivedOn: '2026-10-20' })).toMatchObject({ quitDate: '2027-12-31', anniversaryRule: true })
+    })
   })
 
   describe('fixed term', () => {
@@ -170,6 +178,12 @@ describe('isNoticeLongEnough', () => {
     expect(isNoticeLongEnough({ ...input, quitDate: '2026-12-30' }).valid).toBe(false)
     expect(isNoticeLongEnough({ ...input, quitDate: '2026-12-31' }).valid).toBe(true)
     expect(isNoticeLongEnough({ ...input, quitDate: '2027-01-15' }).valid).toBe(false)
+  })
+
+  it('accepts any long-enough date for a Lagos yearly notice', () => {
+    const input: NoticeToQuitInput = { tenancyType: 'yearly', state: 'Lagos', receivedOn: '2026-10-20' }
+    expect(isNoticeLongEnough({ ...input, quitDate: '2027-04-19' }).valid).toBe(false)
+    expect(isNoticeLongEnough({ ...input, quitDate: '2027-05-03' }).valid).toBe(true)
   })
 })
 

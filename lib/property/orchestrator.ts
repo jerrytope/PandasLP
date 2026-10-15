@@ -15,6 +15,8 @@ import type { ClaudeMessage, SystemBlock } from '../claude'
 import { buildCurrentDateContext } from '../currentDateContext'
 import { AREAS, ENABLED_AREAS, areaBlock } from './areas'
 import { groupOf, jurisdictionBlock, findStateInText, normaliseLagosArea, normaliseState, type SupportedState } from './jurisdictions'
+import type { LawLibrary } from './lawLibrary'
+import { citationKey, extractCitations } from './lawLookup'
 import type { MatterRepository } from './matterStore'
 import { routeFreeText } from './router'
 import { SHARED_PROPERTY_BLOCK } from './shared'
@@ -41,6 +43,8 @@ export interface OrchestratorInput {
   messages: { role: 'user' | 'assistant'; content: string }[]
   now: Date
   repo: MatterRepository
+  /** The law library for get_section / lookup_law. Unset = those tools say it is unavailable. */
+  library?: LawLibrary
   call?: ModelCaller
 }
 
@@ -85,6 +89,27 @@ async function escalate(input: OrchestratorInput, reason: string, reply: string,
 /** YYYY-MM-DD in Lagos (WAT, UTC+1, no daylight saving). */
 export function lagosDate(now: Date): string {
   return new Date(now.getTime() + 60 * 60 * 1000).toISOString().slice(0, 10)
+}
+
+// ----- Citations -----
+
+/** Cited in the firm's own (lawyer-approved) rules, so a document may cite them without a look-up. */
+const ALWAYS_CITABLE = [citationKey('Companies and Allied Matters Act', '102')]
+
+/** Every "section N of the X" in the prompt blocks the area works from (rules and templates). */
+export function standingCitations(system: SystemBlock[]): Set<string> {
+  const keys = new Set(ALWAYS_CITABLE)
+  for (const block of system.slice(0, 3)) for (const c of extractCitations(block.text)) keys.add(c.key)
+  return keys
+}
+
+/** Sections looked up in earlier turns of this matter stay citable. */
+async function citableFromEarlierTurns(input: OrchestratorInput, caseId: string): Promise<Set<string>> {
+  const keys = new Set<string>()
+  for (const e of await input.repo.events(caseId, 'law_lookup')) {
+    for (const s of (e.payload.sections as { title: string; section: string }[] | undefined) ?? []) keys.add(citationKey(s.title, s.section))
+  }
+  return keys
 }
 
 // ----- Checks on what the model wrote, before the client sees it -----
@@ -135,6 +160,11 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
     allowedHandoffs: config.handoffs.map((h) => h.to),
     enabledAreas: ENABLED_AREAS,
     today: lagosDate(input.now),
+    library: input.library,
+    matterState: matter.state,
+    lagosArea: matter.lagosArea,
+    citable: await citableFromEarlierTurns(input, matter.caseId),
+    standingCitations: standingCitations(buildAreaSystem(matter, input.now)),
   }
   const run = (correction?: string) => runAgent({
     route: `chat.property.${area}`,
