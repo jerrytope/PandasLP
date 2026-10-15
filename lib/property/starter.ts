@@ -79,4 +79,6 @@ export const ESCALATED_REPLY = 'A Pandas LP lawyer is now handling this matter a
 
 export const UNSUPPORTED_STATE_REPLY = "Thank you. We don't yet handle property matters in that state through this chat, so I've passed your matter to a Pandas LP lawyer, who will contact you directly about how we can help."
 
+export const CLOSED_REPLY = 'This matter has been closed by Pandas LP. To start something new, open the Property Law Agent again from the menu, or contact us if you have a question about this matter.'
+
 export const AREA_NOT_LIVE_REPLY = "Thank you. That kind of matter is handled directly by our lawyers for now, so I've passed it to a Pandas LP lawyer, who will contact you shortly."

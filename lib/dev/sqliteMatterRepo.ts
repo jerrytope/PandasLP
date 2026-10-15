@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto'
 import type { MatterRepository } from '../property/matterStore'
 import { isPropertyArea, type MatterEvent, type MatterEventKind, type MatterStatus, type PropertyArea, type PropertyMatter } from '../property/types'
 
-const EVENT_KINDS: MatterEventKind[] = ['routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search']
+const EVENT_KINDS: MatterEventKind[] = ['routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search', 'lawyer_taken']
 const STATUSES: MatterStatus[] = ['routing', 'active', 'escalated', 'closed']
 
 const SCHEMA = `
@@ -31,13 +31,17 @@ CREATE TABLE IF NOT EXISTS property_matters (
   area        TEXT CHECK (area IS NULL OR area IN ('recovery', 'tenancy', 'conveyancing', 'other-instruments', 'searches', 'wills-probate', 'land-dispute')),
   facts       TEXT NOT NULL DEFAULT '{}' CHECK (json_type(facts) = 'object'),
   status      TEXT NOT NULL DEFAULT 'routing' CHECK (status IN ('routing', 'active', 'escalated', 'closed')),
+  needs_lawyer_at     TEXT,
+  needs_lawyer_reason TEXT,
+  lawyer_taken_at     TEXT,
+  lawyer_taken_by     TEXT,
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
 CREATE TABLE IF NOT EXISTS property_matter_events (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   case_id     TEXT NOT NULL REFERENCES property_matters(case_id) ON DELETE CASCADE,
-  kind        TEXT NOT NULL CHECK (kind IN ('routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search')),
+  kind        TEXT NOT NULL CHECK (kind IN ('routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search', 'lawyer_taken')),
   payload     TEXT NOT NULL DEFAULT '{}',
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
@@ -128,6 +132,18 @@ export class SqliteMatterRepo implements MatterRepository {
     const merged = { ...JSON.parse(row.facts), ...facts }
     this.update(caseId, 'facts = ?', JSON.stringify(merged))
     return merged
+  }
+
+  async flagForLawyer(caseId: string, reason: string): Promise<void> {
+    this.update(caseId, "needs_lawyer_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), needs_lawyer_reason = ?, lawyer_taken_at = NULL, lawyer_taken_by = NULL", reason.slice(0, 2000))
+  }
+
+  /** The lawyer queue: flagged and not yet taken (what Admin → Action Queue shows). */
+  lawyerQueue(): { caseId: string; reason: string; area: string | null; status: string }[] {
+    return (this.db
+      .prepare('SELECT case_id, needs_lawyer_reason, area, status FROM property_matters WHERE needs_lawyer_at IS NOT NULL AND lawyer_taken_at IS NULL ORDER BY needs_lawyer_at')
+      .all() as { case_id: string; needs_lawyer_reason: string; area: string | null; status: string }[])
+      .map((r) => ({ caseId: r.case_id, reason: r.needs_lawyer_reason, area: r.area, status: r.status }))
   }
 
   async logEvent(caseId: string, kind: MatterEventKind, payload: Record<string, unknown> = {}): Promise<void> {

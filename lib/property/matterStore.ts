@@ -88,11 +88,24 @@ export async function events(caseId: string, kind?: MatterEventKind): Promise<Ma
   return (data ?? []).map((e) => ({ kind: e.kind as MatterEventKind, payload: (e.payload ?? {}) as Record<string, unknown>, createdAt: e.created_at as string }))
 }
 
+/**
+ * Puts the matter in the lawyer queue (add-property-lawyer-queue.sql): flagged now, with the
+ * reason, and not taken yet. A matter already taken and flagged again goes back in the queue.
+ */
+export async function flagForLawyer(caseId: string, reason: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('property_matters')
+    .update({ needs_lawyer_at: new Date().toISOString(), needs_lawyer_reason: reason.slice(0, 2000), lawyer_taken_at: null, lawyer_taken_by: null })
+    .eq('case_id', caseId)
+  if (error) fail('flag the matter for a lawyer', error)
+}
+
 /** Everything the orchestrator needs: the tools' store plus loading the matter and its state. */
 export interface MatterRepository extends MatterStore {
   getOrCreateMatter(caseId: string): Promise<PropertyMatter>
   setState(caseId: string, state: string, lagosArea?: string | null): Promise<void>
+  flagForLawyer(caseId: string, reason: string): Promise<void>
 }
 
 /** The database-backed store used in production. */
-export const matterStore: MatterRepository = { getOrCreateMatter, setState, mergeFacts, setArea, setStatus, logEvent, events }
+export const matterStore: MatterRepository = { getOrCreateMatter, setState, mergeFacts, setArea, setStatus, logEvent, events, flagForLawyer }

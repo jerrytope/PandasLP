@@ -115,7 +115,7 @@ for (const scenario of scenarios) {
     out.push('', `**Client:** ${text}`, '')
     messages.push({ role: 'user', content: text })
 
-    const result = await runPropertyOrchestrator({ caseId, messages, now: new Date('2026-10-14T09:00:00Z'), repo, call, library, webSearch })
+    const result = await runPropertyOrchestrator({ caseId, messages, now: new Date('2026-10-14T09:00:00Z'), repo, call, library, webSearch, notify: async (a) => console.log(`  [lawyer alert] ${a.reason}`) })
     if (result.ok === false) {
       errors.push(result.error)
       out.push(`**ERROR (${result.status}):** ${result.error}`)

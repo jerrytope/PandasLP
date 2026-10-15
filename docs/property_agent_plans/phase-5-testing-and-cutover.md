@@ -32,3 +32,12 @@
 - All scenarios pass and the lawyer has graded them.
 - The flag is on in production with no regressions for a week.
 - The old prompt is removed.
+
+## Progress notes (15 Oct 2026)
+
+**Built before cut-over: the lawyer queue.** Until now an escalated matter, or a document nothing is paid for online (a transfer deed the firm invoices, a will, probate papers, a dispute brief; these never reach the paid-order alert), only lived in `property_matters` and its events: no member of staff was told.
+- After each turn the orchestrator checks the turn's events (`lawyerReasons`): an `escalated` event, or a `document_emitted` at PRICE 0, flags the matter (`add-property-lawyer-queue.sql`: `needs_lawyer_at`, `needs_lawyer_reason`, `lawyer_taken_at`, `lawyer_taken_by`). One check at the end of the turn catches every way the agent can escalate (router, tool, unsupported state, a promise of a lawyer, a tool call written as text).
+- Staff are emailed at the firm's inbox with a link to the matter (`lib/property/lawyerAlerts.ts`, client's words HTML-escaped; best effort: a failed email never fails the client's turn).
+- Admin → Action Queue → "Property matters needing a lawyer" (`PropertyLawyerQueue.tsx`, `/api/admin/property-matters`): "I'll handle it", "Back to the agent" (status active, the client can carry on), "Close matter" (the client gets a closed reply). Each logs a `lawyer_taken` event.
+- Tested (`lib/__tests__/lawyerQueue.test.ts`; 489 tests pass). The admin screen is type-checked but not yet clicked through in a browser.
+- **To run:** `add-property-lawyer-queue.sql` in Supabase after `add-law-library.sql`.

@@ -170,7 +170,7 @@ for await (const raw of rl) {
   if (text !== line) console.log(dim(`  → ${text}`))
 
   const messages = [...repo.messages(caseId), { role: 'user' as const, content: text }]
-  const result = await runPropertyOrchestrator({ caseId, messages, now: new Date(), repo, call, library, webSearch })
+  const result = await runPropertyOrchestrator({ caseId, messages, now: new Date(), repo, call, library, webSearch, notify: async (a) => console.log(`  [lawyer alert] ${a.reason}`) })
   if (result.ok === false) {
     console.log(`\n  ERROR (${result.status}): ${result.error}`)
     prompt(); continue

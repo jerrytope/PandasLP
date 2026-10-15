@@ -25,6 +25,7 @@ import {
   ANOTHER_STATE,
   AREA_NOT_LIVE_REPLY,
   DESCRIBE_PROMPT,
+  CLOSED_REPLY,
   ESCALATED_REPLY,
   UNSUPPORTED_STATE_REPLY,
   areaFromButton,
@@ -33,7 +34,7 @@ import {
   stateQuestion,
 } from './starter'
 import { SHARED_PROPERTY_TOOLS, type PropertyToolContext } from './tools'
-import type { PropertyArea, PropertyMatter } from './types'
+import type { MatterEvent, PropertyArea, PropertyMatter } from './types'
 
 export const AREA_MAX_STEPS = 8
 export const AREA_MAX_TOKENS = 8192
@@ -48,6 +49,8 @@ export interface OrchestratorInput {
   library?: LawLibrary
   /** Web search of the trusted law sites (search_law_web). Unset = not available. */
   webSearch?: WebSearcher | null
+  /** Tells staff a matter needs a lawyer. Unset = the matter is only flagged in the queue. */
+  notify?: (alert: LawyerAlert) => Promise<void>
   call?: ModelCaller
 }
 
@@ -229,7 +232,52 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
   return { ok: true, response: repairMarkers(join(text, ctx.emitted[0]?.block)) || 'Could you tell me a little more?' }
 }
 
+/** What staff are told when a matter needs a lawyer (lib/property/lawyerAlerts.ts sends it). */
+export interface LawyerAlert {
+  caseId: string
+  area: PropertyArea | null
+  state: string | null
+  reason: string
+}
+
+/** Why the events of one turn put the matter in the lawyer queue, if they do. */
+export function lawyerReasons(fresh: MatterEvent[]): string[] {
+  const reasons: string[] = []
+  for (const e of fresh) {
+    if (e.kind === 'escalated') reasons.push(`Escalated: ${String(e.payload.reason ?? 'no reason given')}`)
+    if (e.kind === 'document_emitted' && e.payload.price === 0) {
+      reasons.push(`Document needs the firm (nothing paid online): ${String(e.payload.title ?? e.payload.documentType ?? 'document')}`)
+    }
+  }
+  return reasons
+}
+
+/**
+ * One chat turn. After it, if the agent escalated the matter or produced a document nothing is
+ * paid for online, the matter is put in the lawyer queue and staff are told (input.notify).
+ * A failed alert never fails the client's turn.
+ */
 export async function runPropertyOrchestrator(input: OrchestratorInput): Promise<OrchestratorResult> {
+  await input.repo.getOrCreateMatter(input.caseId)
+  const before = (await input.repo.events(input.caseId)).length
+  const result = await runTurn(input)
+
+  try {
+    const fresh = (await input.repo.events(input.caseId)).slice(before)
+    const reasons = lawyerReasons(fresh)
+    if (reasons.length) {
+      const reason = reasons.join(' · ')
+      await input.repo.flagForLawyer(input.caseId, reason)
+      const matter = await input.repo.getOrCreateMatter(input.caseId)
+      await input.notify?.({ caseId: input.caseId, area: matter.area, state: matter.state, reason })
+    }
+  } catch (err) {
+    console.error(`Property matter ${input.caseId}: could not flag it for a lawyer:`, err)
+  }
+  return result
+}
+
+async function runTurn(input: OrchestratorInput): Promise<OrchestratorResult> {
   const { caseId, repo } = input
   const convo = conversation(input.messages)
   const last = convo.length ? String(convo[convo.length - 1].content) : ''
@@ -237,6 +285,7 @@ export async function runPropertyOrchestrator(input: OrchestratorInput): Promise
 
   let matter = await repo.getOrCreateMatter(caseId)
   if (matter.status === 'escalated') return { ok: true, response: ESCALATED_REPLY }
+  if (matter.status === 'closed') return { ok: true, response: CLOSED_REPLY }
 
   // 1. Route: a starter button, or free text through the router.
   if (!matter.area) {

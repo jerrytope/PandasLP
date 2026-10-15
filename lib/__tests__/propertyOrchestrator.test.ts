@@ -13,7 +13,9 @@ import type { MatterEvent, PropertyMatter } from '../property/types'
 function memoryRepo(initial: Partial<PropertyMatter> = {}) {
   const matter: PropertyMatter = { caseId: 'case-1', state: null, lagosArea: null, area: null, facts: {}, status: 'routing', ...initial }
   const log: MatterEvent[] = []
+  const flags: string[] = []
   const repo: MatterRepository = {
+    flagForLawyer: async (_id, reason) => { flags.push(reason) },
     getOrCreateMatter: async () => structuredClone(matter),
     setState: async (_id, state, lagosArea = null) => { matter.state = state; matter.lagosArea = lagosArea },
     setArea: async (_id, area) => { matter.area = area; matter.status = 'active' },
@@ -22,7 +24,7 @@ function memoryRepo(initial: Partial<PropertyMatter> = {}) {
     logEvent: async (_id, kind, payload = {}) => { log.push({ kind, payload, createdAt: '' }) },
     events: async (_id, kind) => log.filter((e) => !kind || e.kind === kind),
   }
-  return { repo, matter, log }
+  return { repo, matter, log, flags }
 }
 
 type Reply = ClaudeContentBlock[]

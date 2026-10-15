@@ -21,8 +21,8 @@ export function isPropertyArea(value: unknown): value is PropertyArea {
 
 export type MatterStatus = 'routing' | 'active' | 'escalated' | 'closed'
 
-/** One row per thing that happened to a matter. Also the CHECK list in add-law-library.sql (which replaced add-property-matters.sql's). */
-export type MatterEventKind = 'routed' | 'handoff' | 'escalated' | 'fee_accepted' | 'document_emitted' | 'law_lookup' | 'web_search'
+/** One row per thing that happened to a matter. Also the CHECK list in add-property-lawyer-queue.sql (the latest to replace it). */
+export type MatterEventKind = 'routed' | 'handoff' | 'escalated' | 'fee_accepted' | 'document_emitted' | 'law_lookup' | 'web_search' | 'lawyer_taken'
 
 export interface PropertyMatter {
   caseId: string

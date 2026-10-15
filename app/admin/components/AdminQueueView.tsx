@@ -3,6 +3,7 @@
 import { DAY_MS, inReviewStage, type AdminCaseRow, type CaseAction } from './types'
 import CaseCard from './CaseCard'
 import AwaitingBrandDecision from './brands/AwaitingBrandDecision'
+import PropertyLawyerQueue from './PropertyLawyerQueue'
 import NegotiationFollowUps from './NegotiationFollowUps'
 import { AlertTriangle, Clock, Scale, Inbox } from 'lucide-react'
 
@@ -60,6 +61,9 @@ export default function AdminQueueView({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+      {/* Property Law Agent matters escalated, or documents the firm must take forward */}
+      <PropertyLawyerQueue cases={cases} onOpenDrawer={onOpenDrawer} />
+
       {/* Negotiation next actions falling due — undertakings, reply deadlines */}
       <NegotiationFollowUps cases={cases} onOpenDrawer={onOpenDrawer} />
 
