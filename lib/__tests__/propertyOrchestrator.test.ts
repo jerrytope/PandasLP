@@ -7,7 +7,7 @@ import { extractDocument, extractOptions } from '../agentChatParsing'
 import type { ClaudeCallOptions, ClaudeContentBlock } from '../claude'
 import type { MatterRepository } from '../property/matterStore'
 import { promisesLawyer, repairMarkers, replyProblem, runPropertyOrchestrator } from '../property/orchestrator'
-import { AREA_NOT_LIVE_REPLY, DESCRIBE_PROMPT, ESCALATED_REPLY, PROPERTY_V2_STARTER, UNSUPPORTED_STATE_REPLY } from '../property/starter'
+import { DESCRIBE_PROMPT, ESCALATED_REPLY, PROPERTY_V2_STARTER, UNSUPPORTED_STATE_REPLY } from '../property/starter'
 import type { MatterEvent, PropertyMatter } from '../property/types'
 
 function memoryRepo(initial: Partial<PropertyMatter> = {}) {
@@ -98,10 +98,13 @@ describe('routing without a model call', () => {
     expect(await turn(other.repo, model().call, 'x', 'state?', 'Another state')).toBe(UNSUPPORTED_STATE_REPLY)
   })
 
-  it('escalates an area that is not live yet', async () => {
-    const { repo, matter } = memoryRepo()
-    expect(await turn(repo, model().call, "A will, or a dead relative's estate")).toBe(AREA_NOT_LIVE_REPLY)
-    expect(matter.status).toBe('escalated')
+  it('routes the Phase 4 areas like any other (they are live now)', async () => {
+    const wills = memoryRepo()
+    expect(extractOptions(await turn(wills.repo, model().call, "A will, or a dead relative's estate")).options).toContain('Lagos')
+    expect(wills.matter).toMatchObject({ area: 'wills-probate', status: 'active' })
+    const dispute = memoryRepo()
+    await turn(dispute.repo, model().call, 'A dispute over who owns land')
+    expect(dispute.matter.area).toBe('land-dispute')
   })
 
   it('an escalated matter gets the fixed reply, with no model call', async () => {
@@ -197,14 +200,14 @@ describe('the area sub-agent', () => {
   it('refuses a hand-off the area is not allowed to make, back to the model', async () => {
     const { repo, matter } = memoryRepo(ready)
     const { call, calls } = model(
-      [use('handoff_to', { area: 'land-dispute', reason: 'Rival claimant.' })],
-      [use('escalate_to_lawyer', { reason: 'Rival claimant; disputes not live yet.' })],
+      [use('handoff_to', { area: 'conveyancing', reason: 'Client also wants to sell.' })],
+      [use('escalate_to_lawyer', { reason: 'Client wants a sale handled too.' })],
       [text('A Pandas LP lawyer will take this over.')],
     )
-    await turn(repo, call, 'The man says he bought the land from my uncle')
+    await turn(repo, call, 'Once he is out I want to sell the house')
     const refused = (calls[1].messages.at(-1)!.content as { is_error?: boolean; content: string }[])[0]
     expect(refused).toMatchObject({ is_error: true })
-    expect(refused.content).toMatch(/not available yet/)
+    expect(refused.content).toMatch(/may only hand off to/)
     expect(matter).toMatchObject({ area: 'recovery', status: 'escalated' })
   })
 

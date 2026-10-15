@@ -19,7 +19,7 @@ Full plan: [implementation_plan.md](implementation_plan.md) · All tasks in one 
 | 1 | [Runtime, matter state, calculators, fees](phase-1-runtime-state-calculators.md) | Code done; migration not yet applied to a database |
 | 2 | [Router and the 5 existing areas](phase-2-router-and-existing-areas.md) | Built behind the flag; needs a real-API run and lawyer sign-off |
 | 3 | [Law library](phase-3-law-library.md) | Steps 1-3 built (tables, lookup tools, citation rule, meaning search, web search fallback); waiting on a Tavily key, the lawyer's site list, and running the SQL on Supabase |
-| 4 | [Wills & probate, Land title disputes](phase-4-wills-probate-and-disputes.md) | Not started |
+| 4 | [Wills & probate, Land title disputes](phase-4-wills-probate-and-disputes.md) | Built and unit-tested; needs a model run and the lawyer's review |
 | 5 | [Testing and switching the live agent over](phase-5-testing-and-cutover.md) | Not started |
 
 When a task is finished, tick it in its phase file **and** in `tasks.md`, and update this table in the same change.

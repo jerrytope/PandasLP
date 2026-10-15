@@ -9,6 +9,7 @@ import type { PropertyToolContext } from './context'
 import { emitDocument } from './emitDocument'
 import { getSection, lookupLaw } from './lawTools'
 import { searchLawWeb } from './webTools'
+import { checkLimitationTool, chooseProbatePathTool } from './estateTools'
 import { escalateToLawyer, getFeeTool, handoffTo, recordFacts, recordFeeAcceptance } from './matterTools'
 
 export const SHARED_PROPERTY_TOOLS: AgentTool<PropertyToolContext>[] = [
@@ -19,6 +20,8 @@ export const SHARED_PROPERTY_TOOLS: AgentTool<PropertyToolContext>[] = [
   handoffTo,
   escalateToLawyer,
   prepareConsentApplication,
+  chooseProbatePathTool,
+  checkLimitationTool,
   getSection,
   lookupLaw,
   searchLawWeb,

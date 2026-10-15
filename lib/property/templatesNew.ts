@@ -210,3 +210,173 @@ Yours faithfully,
 ________________________
 For: Pandas LP
 Solicitors to [APPLICANT_NAME]`
+
+// ─── Phase 4: Wills & probate, Land title disputes. LAWYER TO CHECK every one. ───
+
+export const WILL = `THIS IS THE LAST WILL AND TESTAMENT of me, [TESTATOR_NAME], of [TESTATOR_ADDRESS], [OCCUPATION], made this ____ day of ____________ 20____.
+
+1. REVOCATION
+I revoke all former wills, codicils and other testamentary dispositions made by me.
+
+2. EXECUTORS AND TRUSTEES
+I appoint [EXECUTOR_1_NAME] of [EXECUTOR_1_ADDRESS] and [EXECUTOR_2_NAME] of [EXECUTOR_2_ADDRESS] (together "my Executors") to be the executors and trustees of this my Will.
+
+3. GUARDIAN
+[GUARDIAN_CLAUSE — only if the testator has children under 18: "I appoint (name) of (address) to be the guardian of any of my children who are minors at my death." Otherwise leave this clause out and renumber.]
+
+4. GIFTS OF PROPERTY
+[SPECIFIC_GIFTS — one numbered sub-clause per gift: "I give my property situate at (address), covered by (title document and its registration particulars), to (beneficiary's full name and relationship to me) absolutely."]
+
+5. RESIDUARY ESTATE
+I give all the rest of my estate, of whatever kind and wherever situate, not otherwise disposed of by this Will ("my Residuary Estate"), to [RESIDUARY_BENEFICIARIES, with their shares].
+
+6. DEBTS AND EXPENSES
+My Executors shall pay my just debts, funeral and testamentary expenses out of my Residuary Estate.
+
+7. GIFTS TO MINORS
+Any gift under this Will to a person under the age of eighteen years shall be held by my Executors on trust for that person until they reach that age, and my Executors may apply the income or capital for that person's maintenance, education or benefit in the meantime.
+
+IN WITNESS WHEREOF I have signed this Will on the day and year first above written.
+
+SIGNED by the above-named Testator, [TESTATOR_NAME], as his/her last Will, in our presence, both of us being present at the same time, and by us in his/her presence and in the presence of each other:
+
+________________________
+[TESTATOR_NAME]
+Testator
+
+FIRST WITNESS
+Name: ______________________
+Address: ______________________
+Occupation: ______________________
+Signature: ______________________
+
+SECOND WITNESS
+Name: ______________________
+Address: ______________________
+Occupation: ______________________
+Signature: ______________________`
+
+export const CODICIL = `THIS IS A CODICIL to the last Will of me, [TESTATOR_NAME], of [TESTATOR_ADDRESS], which Will is dated [WILL_DATE], made this ____ day of ____________ 20____.
+
+1. [CHANGES — one numbered clause per change, e.g. "I revoke clause 4(b) of my Will." or "I give my property situate at (address) to (beneficiary) absolutely, in place of the gift in clause 4(b) of my Will."]
+
+2. In all other respects I confirm my Will.
+
+IN WITNESS WHEREOF I have signed this Codicil on the day and year first above written.
+
+SIGNED by the above-named Testator, [TESTATOR_NAME], as a Codicil to his/her last Will, in our presence, both of us being present at the same time, and by us in his/her presence and in the presence of each other:
+
+________________________
+[TESTATOR_NAME]
+Testator
+
+FIRST WITNESS
+Name: ______________________
+Address: ______________________
+Occupation: ______________________
+Signature: ______________________
+
+SECOND WITNESS
+Name: ______________________
+Address: ______________________
+Occupation: ______________________
+Signature: ______________________`
+
+/** Given to the client in the message with a will or codicil. Not a document: no price. */
+export const WILL_SIGNING_INSTRUCTIONS = `HOW TO SIGN YOUR WILL (a will signed the wrong way may not be valid):
+1. Sign at the end, in the presence of TWO witnesses who are both in the room at the same time, watching you sign.
+2. Each witness then signs, in your presence and in each other's presence, and writes their name, address and occupation.
+3. A witness must NOT be someone who receives anything under the will, nor the husband or wife of such a person: a gift to a witness or a witness's spouse fails.
+4. Use adult witnesses who can read, and who are not your executors if you can avoid it.
+5. Do not staple, unstaple or attach anything to the will after signing, and do not write on it afterwards. To change it, ask us for a codicil.
+6. Keep the original somewhere safe and tell your executors where it is. Pandas LP or the Probate Registry can keep it for you.
+7. A later marriage under the Marriage Act cancels this will unless it was made expressly in contemplation of that marriage: come back to us if you marry.`
+
+export const PROBATE_APPLICATION = `[DATE]
+
+The Probate Registrar
+[PROBATE_REGISTRY — from choose_probate_path]
+
+Dear Sir/Madam,
+
+APPLICATION FOR [GRANT — "PROBATE" / "LETTERS OF ADMINISTRATION" / "LETTERS OF ADMINISTRATION WITH THE WILL ANNEXED" / "RESEALING OF A GRANT"] IN THE ESTATE OF [DECEASED_NAME] (DECEASED)
+
+We are Solicitors to [APPLICANT_NAMES] ("our Clients"), the [APPLICANT_CAPACITY — e.g. "executors named in the Will dated (date)" / "widow and eldest son"] of [DECEASED_NAME] (deceased), late of [DECEASED_ADDRESS], who died on [DATE_OF_DEATH] at [PLACE_OF_DEATH].
+
+On our Clients' instructions, we apply for the grant of [GRANT] in respect of the estate of the deceased, and enclose the documents listed in the Schedule below.
+
+We shall be grateful to be advised of the fees payable and of any further requirement of the Registry.
+
+Yours faithfully,
+
+
+________________________
+For: Pandas LP
+Solicitors to [APPLICANT_NAMES]
+
+SCHEDULE OF DOCUMENTS ENCLOSED
+[DOCUMENTS — one per line, from choose_probate_path]`
+
+export const ASSENT = `DEED OF ASSENT
+
+THIS ASSENT is made this ____ day of ____________ 20____
+
+BY [PERSONAL_REPRESENTATIVES — full names and addresses] (hereinafter called "the Personal Representatives"), the personal representatives of [DECEASED_NAME] (deceased), late of [DECEASED_ADDRESS]
+
+IN FAVOUR OF [BENEFICIARY_NAME] of [BENEFICIARY_ADDRESS] (hereinafter called "the Beneficiary")
+
+WHEREAS:
+(a) [DECEASED_NAME] (hereinafter called "the Deceased") died on [DATE_OF_DEATH] seised of the property described in the Schedule hereto ("the Property"), held under [ROOT_OF_TITLE].
+(b) [GRANT — "Probate of the Will dated (date) of the Deceased" / "Letters of Administration of the estate of the Deceased"] was granted to the Personal Representatives by the Probate Registry of the High Court of [STATE] on [GRANT_DATE].
+(c) [ENTITLEMENT — "By clause (N) of the said Will the Deceased gave the Property to the Beneficiary." / "The Beneficiary is entitled to the Property under the Administration of Estates Law of (State)."]
+(d) The Personal Representatives have paid or provided for the debts and expenses of the estate, and the Property is not required for their payment.
+
+NOW THIS DEED WITNESSES that the Personal Representatives, as personal representatives of the Deceased, HEREBY ASSENT to the vesting in the Beneficiary of ALL THAT the Property described in the Schedule hereto, TO HOLD UNTO the Beneficiary absolutely, subject to the provisions of the Land Use Act Cap L5, LFN, 2004.
+
+SCHEDULE
+(Property description: [PROPERTY_DESCRIPTION])
+
+IN WITNESS WHEREOF the Personal Representatives have executed this Deed on the day and year first above written.
+
+[EXECUTION BLOCK — one "SIGNED, SEALED AND DELIVERED" block for each Personal Representative, with a witness]`
+
+export const DISPUTE_BRIEF = `LAWYER BRIEF: LAND TITLE DISPUTE
+For the Pandas LP litigation team. Prepared from the client's account; NOTHING IN IT HAS BEEN VERIFIED.
+
+Client: [CLIENT_NAME]
+Contact number: [CLIENT_PHONE]
+Date of brief: [DATE]
+
+1. THE LAND
+Address and description: [PROPERTY_DESCRIPTION]
+State and Local Government Area: [STATE_AND_LGA]
+Size and survey plan, if any: [SIZE_AND_SURVEY — or "None given"]
+
+2. THE CLIENT'S CLAIM TO THE LAND
+How the client says they hold it: [TITLE_ROUTE — which of the five ways of proving title the facts point to: traditional history, documents of title, acts of ownership, long possession and enjoyment, possession of connected or adjacent land]
+Documents the client holds (unverified): [DOCUMENTS — one per line, with numbers and dates, or "None"]
+Possession history: [POSSESSION — who has been in possession, since when, and what they did on the land]
+
+3. THE OTHER SIDE
+Who they are: [OTHER_PARTY]
+Their claim, as the client understands it: [OTHER_CLAIM]
+What they have done (entry, building, threats, sale to others): [OTHER_ACTS]
+
+4. PROCEEDINGS AND REPORTS
+Any court case, past or pending (court, suit number, stage): [COURT_CASES — or "None known"]
+Any police report or petition: [POLICE — or "None"]
+
+5. KEY DATES
+[DATES — when the client acquired the land; when possession was lost or the dispute began; any other date that matters]
+
+6. ISSUES
+[ISSUES — the questions the dispute turns on, in plain words]
+
+7. REMEDIES TO CONSIDER
+[REMEDIES — e.g. declaration of title, damages for trespass, injunction, recovery of possession]
+
+8. FLAGS
+Limitation: [LIMITATION — from check_limitation: years since possession was lost, and its flag]
+Pending case / land under litigation: [PENDING_CASE_FLAG]
+Land grabbers: [LAND_GRABBER_FLAG — in Lagos, note the Lagos State Properties Protection Law 2016]
+Urgency (building in progress, threats, a sale about to happen): [URGENCY]`

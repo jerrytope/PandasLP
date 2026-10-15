@@ -57,13 +57,13 @@ All tasks in one list. Details for each are in the phase files. Tick here **and*
 - [x] 3.11 Web search fallback for laws not in the library: trusted sites only, logged (step 3; built and unit-tested; needs a TAVILY_API_KEY to run for real, and the lawyer's approval of the site list)
 
 ## Phase 4: Wills & probate, Land title disputes ([details](phase-4-wills-probate-and-disputes.md))
-- [ ] 4.1 Wills & probate rules per group
-- [ ] 4.2 Will and Codicil templates + signing instruction sheet
-- [ ] 4.3 Probate path chooser + application papers + Assent
-- [ ] 4.4 Wills escalation triggers (family provision, customary property, Islamic law, non-Marriage Act intestacy)
-- [ ] 4.5 Land title dispute rules + intake
-- [ ] 4.6 Lawyer Brief template + flags (limitation, pending case, land grabber, urgency)
-- [ ] 4.7 Router: occupant test routes to Dispute
+- [x] 4.1 Wills & probate rules per group
+- [x] 4.2 Will and Codicil templates + signing instruction sheet
+- [x] 4.3 Probate path chooser + application papers + Assent
+- [x] 4.4 Wills escalation triggers (family provision, customary property, Islamic law, non-Marriage Act intestacy)
+- [x] 4.5 Land title dispute rules + intake
+- [x] 4.6 Lawyer Brief template + flags (limitation, pending case, land grabber, urgency)
+- [x] 4.7 Router: occupant test routes to Dispute
 - [ ] 4.8 Lawyer sign-off for both areas recorded
 
 ## Phase 5: Testing and cut-over ([details](phase-5-testing-and-cutover.md))

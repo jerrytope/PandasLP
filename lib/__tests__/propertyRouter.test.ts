@@ -70,8 +70,8 @@ describe('jurisdictions', () => {
 })
 
 describe('area configs', () => {
-  it('Phase 2 enables the five existing areas only', () => {
-    expect(ENABLED_AREAS).toEqual(['recovery', 'tenancy', 'conveyancing', 'other-instruments', 'searches'])
+  it('all seven areas are live since Phase 4', () => {
+    expect(ENABLED_AREAS).toEqual(['recovery', 'tenancy', 'conveyancing', 'other-instruments', 'searches', 'wills-probate', 'land-dispute'])
   })
 
   it('give every enabled area its rules for all four state groups', () => {
@@ -90,6 +90,8 @@ describe('area configs', () => {
       'power-of-attorney': /TEMPLATE — POWER OF ATTORNEY/, 'agreement-for-sale': /TEMPLATE — AGREEMENT FOR SALE/,
       'deed-of-release': /TEMPLATE — DEED OF RELEASE/, 'search-instruction-standard': /TEMPLATE — PROPERTY SEARCH INSTRUCTION/,
       'consent-application': /TEMPLATE — APPLICATION FOR GOVERNOR'S CONSENT/,
+      will: /TEMPLATE — WILL:/, codicil: /TEMPLATE — CODICIL/, 'probate-papers': /TEMPLATE — PROBATE \/ ADMINISTRATION APPLICATION/,
+      assent: /TEMPLATE — EXECUTORS' ASSENT/, 'dispute-brief': /TEMPLATE — LAWYER BRIEF: LAND TITLE DISPUTE/,
     }
     for (const id of ENABLED_AREAS) {
       const block = areaBlock(AREAS[id])

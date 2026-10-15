@@ -288,12 +288,66 @@ export const SCENARIOS: Scenario[] = [
   },
   {
     id: '26',
-    title: 'Hand-off to a disabled area — gift on death',
+    title: 'Hand-off — gift on death goes to Wills',
     turns: [
       { press: 'gift, mortgage, power of attorney' }, ...LAGOS,
       'I want my house at 4 Ojora Close, Lekki to go to my son only after I die. Can we do a deed of gift for that?',
     ],
     nudges: 0,
-    mustInclude: 'Explains a gift on death is a will; the hand-off to wills-probate is refused (not live yet) and the matter is escalated instead.',
+    mustInclude: 'Explains a gift on death is a will and hands off to Wills & probate in the same turn, which starts the will interview without re-asking the address.',
+  },
+  // ----- Phase 4: Wills & probate, Land title disputes -----
+  {
+    id: '27',
+    title: 'Will — married man, two children, one minor',
+    turns: [
+      { press: 'A will, or a dead relative' }, ...LAGOS,
+      'I want to make a will. I am Mr Tunde Afolabi, 52, an engineer, of 7 Akanbi Crescent, Surulere, Lagos. I married my wife Mrs Bola Afolabi in church (Marriage Act). We have two children: Seun (24) and Kemi (15). I own a house at 7 Akanbi Crescent, Surulere (C of O No. 18/18/2009) and a plot at Plot 9, Ibeju-Lekki (registered deed of assignment, 2018). The house goes to my wife; the plot to Seun; everything else shared equally between my wife and both children. Executors: my brother Mr Femi Afolabi of 3 Ojuelegba Road, Surulere, and my friend Barr. Ngozi Uche of 12 Adeola Odeku Street, VI. Guardian for Kemi: my wife. I am not a Muslim; none of it is family land.',
+      'Please draft it.',
+    ],
+    nudges: 1,
+    mustInclude: 'A will from the template: revocation, two executors, guardian for Kemi, the two gifts and the residue in equal shares, minors clause, two-witness attestation; the signing instructions in the message; PRICE 0 with "a lawyer will confirm".',
+  },
+  {
+    id: '28',
+    title: 'Estate — no will, church marriage',
+    turns: [
+      { press: 'A will, or a dead relative' }, { press: 'Oyo' },
+      'My husband Mr Bayo Ojo died on 3 March 2026 at Ibadan. He did not leave a will. We were married in church under the Marriage Act. We have three children. He owned a house at 4 Iwo Road, Ibadan and had bank accounts. He was not a Muslim and no grant has been made anywhere. I am his widow, Mrs Funmi Ojo of 4 Iwo Road, Ibadan.',
+      'Please prepare the application.',
+    ],
+    nudges: 1,
+    mustInclude: 'choose_probate_path → letters of administration, Probate Registry of the High Court of Oyo State, documents list; does not work out the shares (a lawyer confirms them under the Administration of Estates Law); offers the application letter.',
+  },
+  {
+    id: '29',
+    title: 'Estate — no will, customary marriage',
+    turns: [
+      { press: 'A will, or a dead relative' }, { press: 'Enugu' },
+      'My father died last year in Enugu without a will. He married my mother under native law and custom. There is family land in our village and a house in Enugu town. How do we share it?',
+    ],
+    nudges: 0,
+    mustInclude: 'choose_probate_path escalates (customary intestacy); explains a lawyer must advise; no shares worked out; no document.',
+  },
+  {
+    id: '30',
+    title: 'Land dispute — double sale, brief',
+    turns: [
+      { press: 'A dispute over who owns land' }, { press: 'Ogun' },
+      'I bought a plot at 12 Lafenwa Road, Abeokuta from Mr Kola Bankole in March 2019 for N4m. I have a receipt, a signed agreement and a survey plan (OG/2019/221), and I fenced it in 2019. Last month I found Mr Dayo Aina building on it. He says he bought it from the same Mr Bankole in 2021 and has a deed. No court case yet; I reported to the police at Lafenwa on 2 October 2026. I am Mrs Yetunde Alabi, 0803 555 1212.',
+      'Please prepare the brief.',
+    ],
+    nudges: 1,
+    mustInclude: 'A Lawyer Brief (no court papers): title by purchase/documents and possession, the other side\'s later purchase (double sale: earlier buyer generally better), check_limitation within time, URGENCY flagged (building now) and said to the client; PRICE 0 "a lawyer will confirm".',
+  },
+  {
+    id: '31',
+    title: 'Land dispute — demolition happening now',
+    turns: [
+      { press: 'A dispute over who owns land' }, ...LAGOS,
+      'Right now some men with a court paper are demolishing my fence at 3 Agege Motor Road, Lagos. They say the land belongs to their family. What do I do?',
+    ],
+    nudges: 0,
+    mustInclude: 'Escalates at once (demolition happening now); tells the client a lawyer will contact them promptly; no brief drafted first.',
   },
 ]
