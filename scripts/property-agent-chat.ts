@@ -57,6 +57,9 @@ const { createGroqCaller, groqModelFor } = await import('../lib/dev/groqCaller')
 const { runPropertyOrchestrator } = await import('../lib/property/orchestrator')
 const { SqliteLawLibrary } = await import('../lib/dev/sqliteLawLibrary')
 const { gteSmallEmbedder } = await import('../lib/property/embeddings')
+const { configuredWebSearcher } = await import('../lib/property/webSearch')
+// Web search of the trusted law sites, if TAVILY_API_KEY is set (.env.local or .env).
+const webSearch = configuredWebSearcher()
 // The law library from the legal team's seed file, if it is in the repo.
 const seedPath = path.resolve('docs', 'pandaslp-law-library-seed.sql')
 // Meaning search with the same model as the server (downloaded once, then cached).
@@ -167,7 +170,7 @@ for await (const raw of rl) {
   if (text !== line) console.log(dim(`  → ${text}`))
 
   const messages = [...repo.messages(caseId), { role: 'user' as const, content: text }]
-  const result = await runPropertyOrchestrator({ caseId, messages, now: new Date(), repo, call, library })
+  const result = await runPropertyOrchestrator({ caseId, messages, now: new Date(), repo, call, library, webSearch })
   if (result.ok === false) {
     console.log(`\n  ERROR (${result.status}): ${result.error}`)
     prompt(); continue

@@ -1,4 +1,5 @@
 import type { LawLibrary } from '../lawSearch'
+import type { WebSearcher } from '../webSearch'
 import type { MatterStore } from '../matterStore'
 import type { PropertyArea } from '../types'
 import type { PropertyDocumentKey } from '../../propertyPricing'
@@ -36,6 +37,10 @@ export interface PropertyToolContext {
   citable?: Set<string>
   /** Citation keys a document may use without a look-up: those in the area's own rules. */
   standingCitations?: Set<string>
+  /** Web search of the trusted law sites (search_law_web). Unset = not available. */
+  webSearch?: WebSearcher | null
+  /** Web searches made this turn (capped). */
+  webSearches?: number
 }
 
 // ----- Input helpers: a RangeError goes back to the model as a fixable tool error. -----

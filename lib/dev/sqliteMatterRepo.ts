@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto'
 import type { MatterRepository } from '../property/matterStore'
 import { isPropertyArea, type MatterEvent, type MatterEventKind, type MatterStatus, type PropertyArea, type PropertyMatter } from '../property/types'
 
-const EVENT_KINDS: MatterEventKind[] = ['routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup']
+const EVENT_KINDS: MatterEventKind[] = ['routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search']
 const STATUSES: MatterStatus[] = ['routing', 'active', 'escalated', 'closed']
 
 const SCHEMA = `
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS property_matters (
 CREATE TABLE IF NOT EXISTS property_matter_events (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
   case_id     TEXT NOT NULL REFERENCES property_matters(case_id) ON DELETE CASCADE,
-  kind        TEXT NOT NULL CHECK (kind IN ('routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup')),
+  kind        TEXT NOT NULL CHECK (kind IN ('routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search')),
   payload     TEXT NOT NULL DEFAULT '{}',
   created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );

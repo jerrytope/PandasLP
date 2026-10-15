@@ -16,6 +16,7 @@ import { buildCurrentDateContext } from '../currentDateContext'
 import { AREAS, ENABLED_AREAS, areaBlock } from './areas'
 import { groupOf, jurisdictionBlock, findStateInText, normaliseLagosArea, normaliseState, type SupportedState } from './jurisdictions'
 import type { LawLibrary } from './lawSearch'
+import type { WebSearcher } from './webSearch'
 import { citationKey, extractCitations } from './lawLookup'
 import type { MatterRepository } from './matterStore'
 import { routeFreeText } from './router'
@@ -45,6 +46,8 @@ export interface OrchestratorInput {
   repo: MatterRepository
   /** The law library for get_section / lookup_law. Unset = those tools say it is unavailable. */
   library?: LawLibrary
+  /** Web search of the trusted law sites (search_law_web). Unset = not available. */
+  webSearch?: WebSearcher | null
   call?: ModelCaller
 }
 
@@ -161,6 +164,7 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
     enabledAreas: ENABLED_AREAS,
     today: lagosDate(input.now),
     library: input.library,
+    webSearch: input.webSearch ?? null,
     matterState: matter.state,
     lagosArea: matter.lagosArea,
     citable: await citableFromEarlierTurns(input, matter.caseId),

@@ -8,6 +8,7 @@ import { prepareConsentApplication } from './consentApplication'
 import type { PropertyToolContext } from './context'
 import { emitDocument } from './emitDocument'
 import { getSection, lookupLaw } from './lawTools'
+import { searchLawWeb } from './webTools'
 import { escalateToLawyer, getFeeTool, handoffTo, recordFacts, recordFeeAcceptance } from './matterTools'
 
 export const SHARED_PROPERTY_TOOLS: AgentTool<PropertyToolContext>[] = [
@@ -20,6 +21,7 @@ export const SHARED_PROPERTY_TOOLS: AgentTool<PropertyToolContext>[] = [
   prepareConsentApplication,
   getSection,
   lookupLaw,
+  searchLawWeb,
   emitDocument,
 ]
 

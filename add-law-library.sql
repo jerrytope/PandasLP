@@ -115,7 +115,8 @@ REVOKE ALL ON public.law_documents, public.law_sections FROM anon, authenticated
 REVOKE ALL ON FUNCTION public.search_law_sections(TEXT, TEXT, INTEGER) FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.match_law_sections(extensions.vector, TEXT, INTEGER) FROM PUBLIC, anon, authenticated;
 
--- A section looked up by the agent, so it may be cited in a later turn of the same matter.
+-- law_lookup: a section looked up by the agent, so it may be cited in a later turn of the same matter.
+-- web_search: a search of the trusted law websites (query and the URLs found), for the lawyer to see.
 ALTER TABLE public.property_matter_events DROP CONSTRAINT IF EXISTS property_matter_events_kind_check;
 ALTER TABLE public.property_matter_events ADD CONSTRAINT property_matter_events_kind_check
-  CHECK (kind IN ('routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup'));
+  CHECK (kind IN ('routed', 'handoff', 'escalated', 'fee_accepted', 'document_emitted', 'law_lookup', 'web_search'));

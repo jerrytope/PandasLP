@@ -80,3 +80,12 @@ Search approach (decided): **exact lookup + Postgres keyword search** first. Vec
   So the default is **meaning search**, falling back to keywords if the model can't load (`LAW_VECTOR_SEARCH=off` forces keywords). Hybrid stays available; re-run the evaluation when laws are added.
 - Still missed by meaning search (6/21): a landlord entering at will (ss.6/8), self-help lockouts (s.44), mesne profits for overstaying (s.31), serving an evasive tenant (ss.17-19), governor's approval to sell (LUA s.22), which court for a C of O dispute (LUA ss.39/41). The agent's own rules already cover several of these, and `get_section` fetches a known section directly.
 - **Hosting:** the server needs outbound access to huggingface.co on first use and a writable cache path, or the model files baked into the deployment. On AWS Lambda, set `TRANSFORMERS_CACHE_DIR=/tmp/...` (cold starts re-download) or package the model.
+
+### Step 3, web search: built (15 Oct 2026)
+
+- **Our own tool, not a model's built-in search.** Groq's Browser Search can't be limited to chosen sites and returns only the model's summary (and Groq's Compound models were retired on 21 Sep 2026); Claude's web search tool would tie it to one model. `search_law_web` works the same whichever model runs.
+- `lib/property/webSearch.ts`: the trusted-site list (`TRUSTED_LAW_SITES`, each marked confirmed or to-check, **for the lawyer to approve**), `trustedSite(url)` (the domain or its subdomains; lookalikes like `placng.org.evil.com` refused), and the Tavily searcher (`TAVILY_API_KEY`; basic search, 1 credit, Nigeria-boosted).
+- `lib/property/tools/webTools.ts`: `search_law_web(query)`. The search service is asked for the trusted sites only, and every result is checked again in code. Returns title, URL, site and an excerpt, marked UNVERIFIED. At most 3 per turn. Each search is logged as a `web_search` matter event (query, URLs, how many results were dropped) for the lawyer. Nothing it returns becomes citable.
+- Prompt (`lib/property/shared.ts`): last resort only, after the library says it doesn't have the law; tell the client a lawyer will verify; never put a web-found section number in a document; escalate if the matter turns on exact wording.
+- Wired into `/api/chat` (on when `TAVILY_API_KEY` is set) and both harness scripts.
+- **To do:** get a Tavily key and run a real search (e.g. scenario 02, FCT, whose Recovery of Premises Act is not in the library); the lawyer approves or prunes the site list.
