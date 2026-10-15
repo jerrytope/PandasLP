@@ -30,9 +30,11 @@ const { SqliteMatterRepo } = await import('../lib/dev/sqliteMatterRepo')
 const { createGroqCaller, groqModelFor } = await import('../lib/dev/groqCaller')
 const { runPropertyOrchestrator } = await import('../lib/property/orchestrator')
 const { SqliteLawLibrary } = await import('../lib/dev/sqliteLawLibrary')
+const { gteSmallEmbedder } = await import('../lib/property/embeddings')
 // The law library from the legal team's seed file, if it is in the repo.
 const seedPath = path.resolve('docs', 'pandaslp-law-library-seed.sql')
-const library = existsSync(seedPath) ? SqliteLawLibrary.fromFile(seedPath) : undefined
+// Meaning search with the same model as the server (downloaded once, then cached).
+const library = existsSync(seedPath) ? SqliteLawLibrary.fromFile(seedPath, { embed: gteSmallEmbedder() }) : undefined
 if (!library) console.warn('No law library seed at docs/pandaslp-law-library-seed.sql: get_section and lookup_law will say it is unavailable.')
 const { PROPERTY_V2_STARTER } = await import('../lib/property/starter')
 const { extractDocument, extractOptions } = await import('../lib/agentChatParsing')

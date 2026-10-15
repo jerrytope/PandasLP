@@ -8,9 +8,9 @@
 --   law_sections   the text, one row per section (a long section is split into chunks),
 --                  with a keyword index (tsv) and a 384-number embedding for meaning search.
 --
--- Keyword search (search_law_sections) is what the agent uses now. The embedding column is
--- filled by the seed but not searched yet: the query side needs the same embedding model the
--- seed was built with, which is still to be identified (Phase 3, step 2).
+-- Search combines keywords (search_law_sections) and meaning (match_law_sections, over the
+-- seed's gte-small embeddings); the app merges the two rankings. The query is embedded by the
+-- app with the same model (lib/property/embeddings.ts).
 --
 -- Server-only: RLS on with no policies, no privileges for the browser's roles.
 -- Also: the 'law_lookup' event kind on property_matter_events, so a section looked up in one
@@ -86,10 +86,34 @@ AS $$
    LIMIT LEAST(GREATEST(p_limit, 1), 10);
 $$;
 
+-- Meaning search: the sections whose embedding is closest to the question's (cosine), over the
+-- same laws as search_law_sections. The question is embedded by the app with the same model as
+-- the seed (gte-small, lib/property/embeddings.ts). Results from both searches are merged in
+-- the app (lib/property/lawLookup.ts fuseRankings).
+CREATE INDEX IF NOT EXISTS law_sections_embedding_idx
+  ON public.law_sections USING hnsw (embedding extensions.vector_cosine_ops);
+
+CREATE OR REPLACE FUNCTION public.match_law_sections(p_embedding extensions.vector(384), p_state TEXT, p_limit INTEGER DEFAULT 5)
+RETURNS TABLE (slug TEXT, title TEXT, section TEXT, chunk INTEGER, heading TEXT, content TEXT, similarity REAL)
+LANGUAGE sql STABLE
+SET search_path = public, extensions
+AS $$
+  SELECT d.slug, d.title, s.section, s.chunk, s.heading, s.content,
+         (1 - (s.embedding <=> p_embedding))::REAL AS similarity
+    FROM public.law_sections s
+    JOIN public.law_documents d ON d.id = s.document_id
+   WHERE s.embedding IS NOT NULL
+     AND d.status = 'ingested'
+     AND (d.state = 'All states' OR d.state = p_state)
+   ORDER BY s.embedding <=> p_embedding
+   LIMIT LEAST(GREATEST(p_limit, 1), 20);
+$$;
+
 ALTER TABLE public.law_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.law_sections  ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.law_documents, public.law_sections FROM anon, authenticated;
 REVOKE ALL ON FUNCTION public.search_law_sections(TEXT, TEXT, INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.match_law_sections(extensions.vector, TEXT, INTEGER) FROM PUBLIC, anon, authenticated;
 
 -- A section looked up by the agent, so it may be cited in a later turn of the same matter.
 ALTER TABLE public.property_matter_events DROP CONSTRAINT IF EXISTS property_matter_events_kind_check;

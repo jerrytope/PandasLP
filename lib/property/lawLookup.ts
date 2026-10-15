@@ -101,6 +101,21 @@ export function orQueryTerms(text: string): string[] {
   return [...new Set(words.filter((w) => w.length > 1 && !STOPWORDS.has(w)))].slice(0, 12)
 }
 
+/**
+ * Merges ranked result lists (keyword search, meaning search) into one ranking by reciprocal
+ * rank fusion: an item's score is the sum of 1 / (k + rank) over the lists it appears in, so an
+ * item near the top of both lists beats one at the top of only one. k = 60 is the usual value.
+ * `weights` scales each list (default 1 each).
+ */
+export function fuseRankings(lists: string[][], k = 60, weights: number[] = []): string[] {
+  const score = new Map<string, number>()
+  lists.forEach((list, l) => {
+    const w = weights[l] ?? 1
+    list.forEach((key, i) => score.set(key, (score.get(key) ?? 0) + w / (k + i + 1)))
+  })
+  return [...score.entries()].sort((a, b) => b[1] - a[1]).map(([key]) => key)
+}
+
 export function citationKey(lawName: string, section: string): string {
   return `${normaliseLawName(lawName)}|${normaliseSection(section) ?? section}`
 }

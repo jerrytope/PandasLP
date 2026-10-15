@@ -6,7 +6,8 @@ vi.mock('../supabaseAdmin', () => ({ supabaseAdmin: {} }))
 
 import { parseLawSeed, SqliteLawLibrary } from '../dev/sqliteLawLibrary'
 import { SqliteMatterRepo } from '../dev/sqliteMatterRepo'
-import { citationKey, extractCitations, normaliseLawName, normaliseSection, orQueryTerms, resolveLaw, type LawDocument } from '../property/lawLookup'
+import { citationKey, extractCitations, fuseRankings, normaliseLawName, normaliseSection, orQueryTerms, resolveLaw, type LawDocument } from '../property/lawLookup'
+import { hybridSearch } from '../property/lawSearch'
 import { buildAreaSystem, standingCitations } from '../property/orchestrator'
 import { SHARED_PROPERTY_TOOLS, type PropertyToolContext } from '../property/tools'
 
@@ -148,6 +149,46 @@ describe('prepare_consent_application', () => {
     const tool = SHARED_PROPERTY_TOOLS.find((t) => t.definition.name === 'prepare_consent_application')!
     await tool.handler({ instrument: 'assignment', state: 'Enugu', titleType: 'customary' }, ctx)
     expect(ctx.citable?.has('land use act|21')).toBe(true)
+  })
+})
+
+describe('search modes', () => {
+  const hit = (section: string) => ({ slug: 'law', title: 'Law', section, heading: null, content: '' })
+  const keyword = async () => [hit('1'), hit('2')]
+  const sections = (hits: { section: string }[]) => hits.map((h) => h.section)
+
+  it('merges rankings, weighted', () => {
+    expect(fuseRankings([['a', 'b'], ['b', 'c']])).toEqual(['b', 'a', 'c'])
+    // Weighting the second list puts its top item (c) ahead of the first list's (a).
+    expect(fuseRankings([['a', 'b'], ['c', 'b']])).toEqual(['b', 'a', 'c'])
+    expect(fuseRankings([['a', 'b'], ['c', 'b']], 60, [1, 3])).toEqual(['b', 'c', 'a'])
+  })
+
+  it('meaning mode uses embeddings, and falls back to keywords if they fail or find nothing', async () => {
+    expect(sections(await hybridSearch({ limit: 2, mode: 'meaning', keyword, vector: async () => [hit('9')] }))).toEqual(['9'])
+    expect(sections(await hybridSearch({ limit: 2, mode: 'meaning', keyword, vector: async () => { throw new Error('no model') } }))).toEqual(['1', '2'])
+    expect(sections(await hybridSearch({ limit: 2, mode: 'meaning', keyword, vector: async () => [] }))).toEqual(['1', '2'])
+    expect(sections(await hybridSearch({ limit: 2, mode: 'meaning', keyword, vector: null }))).toEqual(['1', '2'])
+  })
+
+  it('keyword and hybrid modes', async () => {
+    expect(sections(await hybridSearch({ limit: 2, mode: 'keyword', keyword, vector: async () => [hit('9')] }))).toEqual(['1', '2'])
+    expect(sections(await hybridSearch({ limit: 3, mode: 'hybrid', keyword, vector: async () => [hit('9')] }))).toEqual(['9', '1', '2'])
+  })
+})
+
+describe.skipIf(!hasSeed)('meaning search over the seed', () => {
+  it("finds a section from its own stored vector, within the matter's state", async () => {
+    const library = SqliteLawLibrary.fromFile(SEED)
+    const parsed = parseLawSeed((await import('node:fs')).readFileSync(SEED, 'utf8'))
+    const docId = parsed.documents.find((d) => d.slug === 'lagos-tenancy-law-2011')!.id
+    const s4 = parsed.sections.find((s) => s.document_id === docId && s.section === '4')!
+    const vector = String(s4.embedding).replace(/[[\]]/g, '').split(',').map(Number)
+    expect(library.nearest(vector, 'Lagos', 1)[0]).toMatchObject({ slug: 'lagos-tenancy-law-2011', section: '4' })
+    expect(library.nearest(vector, 'Oyo', 3).some((h) => h.slug === 'lagos-tenancy-law-2011')).toBe(false)
+    // Through search(), with an embedder that returns that vector:
+    const withEmbed = SqliteLawLibrary.fromFile(SEED, { embed: async () => vector })
+    expect((await withEmbed.search('anything at all', 'Lagos', 1))[0]).toMatchObject({ section: '4' })
   })
 })
 

@@ -1,4 +1,4 @@
-import type { LawLibrary } from '../lawLibrary'
+import type { LawLibrary } from '../lawSearch'
 import type { MatterStore } from '../matterStore'
 import type { PropertyArea } from '../types'
 import type { PropertyDocumentKey } from '../../propertyPricing'

@@ -63,3 +63,20 @@ Search approach (decided): **exact lookup + Postgres keyword search** first. Vec
 - Likely good, to check: `nigerialii.org` (Nigeria Legal Information Institute: legislation and judgments), `lawnigeria.com` (statutes, including some state laws).
 - Official government sites, to check that they actually publish their laws: `lagosstate.gov.ng` (including the Ministry of Justice), `fcta.gov.ng`, `oyostate.gov.ng`, `ogunstate.gov.ng`, `ondostate.gov.ng`, `osunstate.gov.ng`, `ekitistate.gov.ng`, `edostate.gov.ng`, `deltastate.gov.ng`, `anambrastate.gov.ng`, `enugustate.gov.ng`, `crossriverstate.gov.ng`.
 - Excluded: blogs, law-firm articles, and paid databases that need a login (LawPavilion, NWLR).
+
+### Step 2, vector search: built (15 Oct 2026)
+
+- **The seed's model is gte-small** (`thenlper/gte-small`, run as `Supabase/gte-small`; mean pooling, normalised). Found by re-embedding seed sections with the likely 384-dimension models: gte-small matched the stored vectors at cosine 0.99; e5-small-v2 0.59, all-MiniLM-L6-v2 0.27. The text that best reproduces the stored vectors is `"<title> (<citation>), section <N>: <heading>\n\n<content>"`: use it when adding laws.
+- It runs inside the server (`lib/property/embeddings.ts`, `@huggingface/transformers`, the smaller q8 model): no API key, no cost per search. Downloaded on first use to `TRANSFORMERS_CACHE_DIR`.
+- SQL: `match_law_sections(p_embedding, p_state, p_limit)` and an HNSW index, in `add-law-library.sql`.
+- **Evaluation** (`npm run laws:eval`: 21 client-style questions with known right sections, on the real seed):
+
+  | Search | Right section first | In the top 3 |
+  |---|---|---|
+  | Keyword | 5/21 | 8/21 |
+  | Meaning (gte-small) | 11/21 | 15/21 |
+  | Hybrid (best weighting, 1:3) | 10-11/21 | 12-14/21 |
+
+  So the default is **meaning search**, falling back to keywords if the model can't load (`LAW_VECTOR_SEARCH=off` forces keywords). Hybrid stays available; re-run the evaluation when laws are added.
+- Still missed by meaning search (6/21): a landlord entering at will (ss.6/8), self-help lockouts (s.44), mesne profits for overstaying (s.31), serving an evasive tenant (ss.17-19), governor's approval to sell (LUA s.22), which court for a C of O dispute (LUA ss.39/41). The agent's own rules already cover several of these, and `get_section` fetches a known section directly.
+- **Hosting:** the server needs outbound access to huggingface.co on first use and a writable cache path, or the model files baked into the deployment. On AWS Lambda, set `TRANSFORMERS_CACHE_DIR=/tmp/...` (cold starts re-download) or package the model.

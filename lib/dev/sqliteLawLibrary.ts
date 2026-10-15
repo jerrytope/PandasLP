@@ -6,7 +6,8 @@
 import { DatabaseSync } from 'node:sqlite'
 import { readFileSync } from 'node:fs'
 import { orQueryTerms, toLawDocument, type DocRow, type LawDocument } from '../property/lawLookup'
-import type { LawLibrary, LawSearchHit, LawSectionChunk } from '../property/lawLibrary'
+import type { Embedder } from '../property/embeddings'
+import { DEFAULT_SEARCH_MODE, hybridSearch, type LawLibrary, type LawSearchHit, type LawSectionChunk, type SearchMode } from '../property/lawSearch'
 
 type Value = string | number | null
 
@@ -68,10 +69,24 @@ export function parseLawSeed(sql: string): ParsedSeed {
   return out
 }
 
+/** One section's stored embedding, with what a search hit needs. */
+interface VectorRow {
+  hit: LawSearchHit
+  state: string
+  status: string
+  vector: Float32Array
+}
+
 export class SqliteLawLibrary implements LawLibrary {
   readonly db = new DatabaseSync(':memory:')
+  private readonly vectors: VectorRow[] = []
+  private readonly embed: Embedder | null
+  private readonly mode: SearchMode
 
-  constructor(seed: ParsedSeed) {
+  /** `embed` turns the question into a vector (gte-small); null = keyword search only. */
+  constructor(seed: ParsedSeed, opts: { embed?: Embedder | null; mode?: SearchMode } = {}) {
+    this.embed = opts.embed ?? null
+    this.mode = opts.mode ?? DEFAULT_SEARCH_MODE
     this.db.exec(`
       CREATE TABLE law_documents (id TEXT PRIMARY KEY, slug TEXT UNIQUE, title TEXT, citation TEXT, state TEXT, applies_in TEXT,
         status TEXT, source_name TEXT, source_url TEXT, retrieved_on TEXT, notes TEXT, topics TEXT);
@@ -85,10 +100,35 @@ export class SqliteLawLibrary implements LawLibrary {
     const sec = this.db.prepare('INSERT INTO law_sections (document_id, section, chunk, heading, part, content) VALUES (?,?,?,?,?,?)')
     for (const s of seed.sections) sec.run(s.document_id, s.section, s.chunk ?? 1, s.heading, s.part, s.content)
     this.db.exec("INSERT INTO law_fts(law_fts) VALUES ('rebuild')")
+
+    // The seed's embeddings, kept in memory for meaning search (cosine = dot product: they are normalised).
+    const docsById = new Map(seed.documents.map((d) => [d.id, d]))
+    for (const s of seed.sections) {
+      const d = docsById.get(s.document_id)
+      if (!d || typeof s.embedding !== 'string') continue
+      this.vectors.push({
+        hit: { slug: String(d.slug), title: String(d.title), section: String(s.section), chunk: Number(s.chunk ?? 1), heading: (s.heading as string | null) ?? null, content: String(s.content) },
+        state: String(d.state),
+        status: String(d.status),
+        vector: Float32Array.from(s.embedding.replace(/[[\]]/g, '').split(',').map(Number)),
+      })
+    }
   }
 
-  static fromFile(path: string): SqliteLawLibrary {
-    return new SqliteLawLibrary(parseLawSeed(readFileSync(path, 'utf8')))
+  static fromFile(path: string, opts: { embed?: Embedder | null; mode?: SearchMode } = {}): SqliteLawLibrary {
+    return new SqliteLawLibrary(parseLawSeed(readFileSync(path, 'utf8')), opts)
+  }
+
+  /** The sections closest in meaning to a question vector, among the laws that apply in the state. */
+  nearest(query: ArrayLike<number>, state: string, n: number): LawSearchHit[] {
+    const scored: { hit: LawSearchHit; score: number }[] = []
+    for (const row of this.vectors) {
+      if (row.status !== 'ingested' || (row.state !== 'All states' && row.state !== state)) continue
+      let dot = 0
+      for (let i = 0; i < row.vector.length; i++) dot += row.vector[i] * query[i]
+      scored.push({ hit: row.hit, score: dot })
+    }
+    return scored.sort((a, b) => b.score - a.score).slice(0, n).map((s) => s.hit)
   }
 
   async documents(): Promise<LawDocument[]> {
@@ -102,14 +142,25 @@ export class SqliteLawLibrary implements LawLibrary {
       .all(slug, section) as unknown as LawSectionChunk[]
   }
 
-  async search(query: string, state: string, limit: number): Promise<LawSearchHit[]> {
+  /** Keyword search alone (FTS5, BM25 with headings weighted double). */
+  keywordSearch(query: string, state: string, n: number): LawSearchHit[] {
     const terms = orQueryTerms(query)
     if (!terms.length) return []
     return this.db
-      .prepare(`SELECT d.slug, d.title, s.section, s.heading, s.content FROM law_fts f
+      .prepare(`SELECT d.slug, d.title, s.section, s.chunk, s.heading, s.content FROM law_fts f
                   JOIN law_sections s ON s.id = f.rowid JOIN law_documents d ON d.id = s.document_id
                  WHERE law_fts MATCH ? AND d.status = 'ingested' AND (d.state = 'All states' OR d.state = ?)
                  ORDER BY bm25(law_fts, 2.0, 1.0) LIMIT ?`)
-      .all(terms.map((t) => `"${t}"`).join(' OR '), state, Math.min(Math.max(limit, 1), 10)) as unknown as LawSearchHit[]
+      .all(terms.map((t) => `"${t}"`).join(' OR '), state, Math.max(n, 1)) as unknown as LawSearchHit[]
+  }
+
+  async search(query: string, state: string, limit: number): Promise<LawSearchHit[]> {
+    const embed = this.embed
+    return hybridSearch({
+      limit,
+      mode: this.mode,
+      keyword: async (n) => this.keywordSearch(query, state, n),
+      vector: embed ? async (n) => this.nearest(await embed(query), state, n) : null,
+    })
   }
 }

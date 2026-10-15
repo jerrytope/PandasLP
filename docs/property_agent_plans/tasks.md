@@ -52,8 +52,8 @@ All tasks in one list. Details for each are in the phase files. Tick here **and*
 - [ ] 3.6 Human spot-check of key sections
 - [x] 3.7 `get_section` and `lookup_law` tools (state filtered)
 - [x] 3.8 Citation rule enforced in `emit_document`
-- [ ] 3.9 Evaluation set (10 questions per area); decide on vectors
-- [ ] 3.10 Identify the seed's embedding model (384 dims) and turn on vector search (step 2)
+- [ ] 3.9 Evaluation set (10 questions per area); decide on vectors (21 questions on the 6 laws in `scripts/law-search-eval.ts`; vectors decided: yes. Grows as laws are added)
+- [x] 3.10 Identify the seed's embedding model (384 dims) and turn on vector search (step 2): gte-small, meaning search is the default
 - [ ] 3.11 Web search fallback for laws not in the library: trusted sites only, logged (step 3; needs an Anthropic key to test)
 
 ## Phase 4: Wills & probate, Land title disputes ([details](phase-4-wills-probate-and-disputes.md))
