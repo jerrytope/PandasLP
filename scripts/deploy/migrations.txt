@@ -1,0 +1,24 @@
+# The database files, in the order they must run on a NEW database.
+# scripts/deploy/setup-server.sh runs each one once (recorded in deploy.migrations).
+# A new SQL file goes at the END of this list (and into supabase/migrations/ for the local database).
+supabase-schema.sql
+add-recoveries-table.sql
+add-debt-checks.sql
+add-billing-and-ai-usage.sql
+add-negotiation-next-actions.sql
+fix-missing-columns.sql
+fix-review-and-stamp.sql
+lock-case-columns.sql
+add-payment-references.sql
+add-brands.sql
+add-brand-sync.sql
+add-brand-serving.sql
+add-brand-billing.sql
+add-brand-api.sql
+add-brand-webhooks.sql
+add-brand-test-mode.sql
+add-property-matters.sql
+add-law-library.sql
+docs/pandaslp-law-library-seed.sql
+add-property-lawyer-queue.sql
+add-agent-instructions.sql
