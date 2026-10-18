@@ -97,7 +97,7 @@ const STOPWORDS = new Set(
 
 /** The client's words as an OR-query: "landlord | increase | rent | notice". Empty when nothing is left. */
 export function orQueryTerms(text: string): string[] {
-  const words = text.toLowerCase().match(/[a-z0-9]+/g) ?? []
+  const words: string[] = text.toLowerCase().match(/[a-z0-9]+/g) ?? []
   return [...new Set(words.filter((w) => w.length > 1 && !STOPWORDS.has(w)))].slice(0, 12)
 }
 

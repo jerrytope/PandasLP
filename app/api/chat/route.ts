@@ -11,6 +11,8 @@ import { matterStore } from '@/lib/property/matterStore'
 import { supabaseLawLibrary } from '@/lib/property/lawLibrary'
 import { configuredWebSearcher } from '@/lib/property/webSearch'
 import { emailLawyerAlert } from '@/lib/property/lawyerAlerts'
+import { allLiveInstructions, instructionsFor } from '@/lib/agentInstructions'
+import { withDraftingInstructions } from '@/lib/agentInstructionTargets'
 
 // Stable for every conversation with a given agent, so it sits inside the cached system block.
 const DOCUMENT_CONTEXT_RULE = `DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`
@@ -113,7 +115,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Missing or invalid case for this conversation. Please refresh and try again.' }, { status: 400 })
     }
     try {
-      const result = await runPropertyOrchestrator({ caseId: usageCaseId, messages: capHistory(messages), now: new Date(), repo: matterStore, library: supabaseLawLibrary, webSearch: configuredWebSearcher(), notify: emailLawyerAlert })
+      const result = await runPropertyOrchestrator({ caseId: usageCaseId, messages: capHistory(messages), now: new Date(), repo: matterStore, library: supabaseLawLibrary, webSearch: configuredWebSearcher(), notify: emailLawyerAlert, draftingInstructions: await allLiveInstructions() })
       if (result.ok === false) return Response.json({ error: result.error }, { status: result.status })
       return Response.json({ response: result.response })
     } catch (err) {
@@ -127,13 +129,17 @@ export async function POST(req: Request) {
     // client, so they are one cached block with a 1-hour lifetime; the conversation itself is
     // cached turn by turn. Today's date changes, so it comes after the cached block — placed
     // inside it, it would invalidate the cache every day and cost full price on every turn.
+    // The lead lawyer's drafting instructions (/manageai) go at the end of the cached block:
+    // they change only when he publishes, so the cache refreshes then and not otherwise.
+    // Lawyer intake drafts small-claims letters, so it follows the small-claims instructions.
     const currentDateContext = buildCurrentDateContext(new Date())
+    const instructions = await instructionsFor(agent.id)
     const result = await callClaude({
       route: `chat.${lawyerIntake ? 'lawyer-intake' : agent.id}`,
       system: [
-        { text: `${lawyerIntake ? SMALL_CLAIMS_LAWYER_INTAKE_PROMPT : agent.systemPrompt}
+        { text: withDraftingInstructions(`${lawyerIntake ? SMALL_CLAIMS_LAWYER_INTAKE_PROMPT : agent.systemPrompt}
 
-${DOCUMENT_CONTEXT_RULE}`, cache: '1h' },
+${DOCUMENT_CONTEXT_RULE}`, instructions), cache: '1h' },
         { text: currentDateContext },
       ],
       messages: capHistory(messages).map((m) => ({ role: m.role, content: m.content })),

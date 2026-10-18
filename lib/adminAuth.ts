@@ -9,9 +9,19 @@ import type { User } from '@supabase/supabase-js'
 // Vercel env var ended up named the singular form, so both are accepted rather than
 // requiring an exact name match that's easy to get wrong when setting this up by hand.
 export function isAdminEmail(email: string | null | undefined): boolean {
+  return onAllowlist(email, process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL)
+}
+
+// Who may open /manageai and change how the agents draft documents (the owner and the lead
+// lawyer). A separate list from ADMIN_EMAILS on purpose: being on one gives nothing on the
+// other. Comma-separated, like ADMIN_EMAILS.
+export function isAiManagerEmail(email: string | null | undefined): boolean {
+  return onAllowlist(email, process.env.AI_MANAGER_EMAILS)
+}
+
+function onAllowlist(email: string | null | undefined, raw: string | undefined): boolean {
   if (!email) return false
-  const raw = process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? ''
-  const allowlist = raw
+  const allowlist = (raw ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean)
@@ -22,6 +32,15 @@ export function isAdminEmail(email: string | null | undefined): boolean {
 // caller's user object on success, or a Response to return immediately on failure —
 // callers do `const result = await requireAdmin(req); if (result instanceof Response) return result`.
 export async function requireAdmin(req: Request): Promise<{ user: User } | Response> {
+  return requireListed(req, isAdminEmail)
+}
+
+// The same check for every /api/manageai/* route, against AI_MANAGER_EMAILS.
+export async function requireAiManager(req: Request): Promise<{ user: User } | Response> {
+  return requireListed(req, isAiManagerEmail)
+}
+
+async function requireListed(req: Request, allowed: (email: string | null | undefined) => boolean): Promise<{ user: User } | Response> {
   const authHeader = req.headers.get('authorization') ?? ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null
   if (!token) {
@@ -31,7 +50,7 @@ export async function requireAdmin(req: Request): Promise<{ user: User } | Respo
   if (error || !data?.user) {
     return Response.json({ error: 'Invalid or expired session.' }, { status: 401 })
   }
-  if (!isAdminEmail(data.user.email)) {
+  if (!allowed(data.user.email)) {
     return Response.json({ error: 'Forbidden.' }, { status: 403 })
   }
   return { user: data.user }

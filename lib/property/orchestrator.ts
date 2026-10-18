@@ -6,6 +6,8 @@
 // System prompt order, for caching (see lib/claude.ts):
 //   tools (the same list for every area) → shared block (1h) → area block (1h)
 //   → jurisdiction block → matter record + today's date.
+// The lead lawyer's drafting instructions (/manageai) end the area block: they change only when
+// he publishes. A section of a law he names there may be cited like one in the area's rules.
 // The first two cached blocks are identical across clients; the jurisdiction and matter record
 // change per matter, so they come after them.
 
@@ -13,6 +15,7 @@ import { runAgent } from '../agentRuntime/runAgent'
 import type { ModelCaller } from '../agentRuntime/types'
 import type { ClaudeMessage, SystemBlock } from '../claude'
 import { buildCurrentDateContext } from '../currentDateContext'
+import { applicableTargets, withDraftingInstructions, type InstructionTarget } from '../agentInstructionTargets'
 import { AREAS, ENABLED_AREAS, areaBlock } from './areas'
 import { groupOf, jurisdictionBlock, findStateInText, normaliseLagosArea, normaliseState, type SupportedState } from './jurisdictions'
 import type { LawLibrary } from './lawSearch'
@@ -52,6 +55,8 @@ export interface OrchestratorInput {
   /** Tells staff a matter needs a lawyer. Unset = the matter is only flagged in the queue. */
   notify?: (alert: LawyerAlert) => Promise<void>
   call?: ModelCaller
+  /** The lead lawyer's live drafting instructions, by target (lib/agentInstructions.ts). Unset = none. */
+  draftingInstructions?: Partial<Record<InstructionTarget, string>>
 }
 
 export type OrchestratorResult =
@@ -69,7 +74,7 @@ function matterRecord(matter: PropertyMatter): string {
   return `MATTER RECORD (facts already saved for this matter; never ask for these again):\n${facts}`
 }
 
-export function buildAreaSystem(matter: PropertyMatter, now: Date, handoff?: { from: PropertyArea | null; reason: string }, correction?: string): SystemBlock[] {
+export function buildAreaSystem(matter: PropertyMatter, now: Date, handoff?: { from: PropertyArea | null; reason: string }, correction?: string, instructions?: OrchestratorInput['draftingInstructions']): SystemBlock[] {
   const config = AREAS[matter.area!]
   const state = normaliseState(matter.state!) as SupportedState
   const group = groupOf(state)!
@@ -80,7 +85,7 @@ export function buildAreaSystem(matter: PropertyMatter, now: Date, handoff?: { f
   if (correction) volatile.push(correction)
   return [
     { text: SHARED_PROPERTY_BLOCK, cache: '1h' },
-    { text: areaBlock(config, ENABLED_AREAS), cache: '1h' },
+    { text: withDraftingInstructions(areaBlock(config, ENABLED_AREAS), applicableTargets(`property:${config.id}`).map((t) => instructions?.[t])), cache: '1h' },
     { text: `${jurisdictionBlock(state, matter.lagosArea)}\n\n${config.jurisdictionRules[group]}` },
     { text: volatile.join('\n\n') },
   ]
@@ -171,11 +176,11 @@ async function runArea(input: OrchestratorInput, matter: PropertyMatter, convo: 
     matterState: matter.state,
     lagosArea: matter.lagosArea,
     citable: await citableFromEarlierTurns(input, matter.caseId),
-    standingCitations: standingCitations(buildAreaSystem(matter, input.now)),
+    standingCitations: standingCitations(buildAreaSystem(matter, input.now, undefined, undefined, input.draftingInstructions)),
   }
   const run = (correction?: string) => runAgent({
     route: `chat.property.${area}`,
-    system: buildAreaSystem(matter, input.now, handoff, correction),
+    system: buildAreaSystem(matter, input.now, handoff, correction, input.draftingInstructions),
     tools: SHARED_PROPERTY_TOOLS,
     messages: convo,
     ctx,

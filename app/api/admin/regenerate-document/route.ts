@@ -8,6 +8,8 @@ import { getAgentPayment } from '@/lib/agentServiceMap'
 import { capHistory, type ChatMessage } from '@/lib/chatHistory'
 import { extractDocument } from '@/lib/agentChatParsing'
 import { callClaude } from '@/lib/claude'
+import { instructionsFor } from '@/lib/agentInstructions'
+import { withDraftingInstructions } from '@/lib/agentInstructionTargets'
 
 const RATE_LIMIT = 10
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -98,7 +100,8 @@ export async function POST(req: Request) {
   try {
     const result = await callClaude({
       route: 'document.regenerate',
-      system: agent.systemPrompt,
+      // The lead lawyer's drafting instructions (/manageai), as in /api/chat.
+      system: withDraftingInstructions(agent.systemPrompt, await instructionsFor(agent.id)),
       messages: capHistory(history).map((m) => ({ role: m.role, content: m.content })),
       maxTokens: 4096,
       caseId,

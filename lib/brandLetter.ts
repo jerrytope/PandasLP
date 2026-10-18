@@ -6,6 +6,8 @@
 
 import { SMALL_CLAIMS_LAWYER_INTAKE_PROMPT } from './agents'
 import { callClaude } from './claude'
+import { instructionsFor } from './agentInstructions'
+import { withDraftingInstructions } from './agentInstructionTargets'
 import { buildCurrentDateContext } from './currentDateContext'
 import { extractDocument, extractOutstandingQuestions, type DraftDocument } from './agentChatParsing'
 import type { Borrower } from './brandRows'
@@ -61,8 +63,12 @@ export const draftBrandLetter: BrandDrafter = async ({ brand, borrower, caseRef,
   const result = await callClaude({
     route: 'brand.draft',
     // The agent's instructions are identical for every borrower, so they're one cached block;
-    // today's date changes, so it comes after (see lib/claude.ts on caching).
-    system: [{ text: SMALL_CLAIMS_LAWYER_INTAKE_PROMPT, cache: '1h' }, { text: buildCurrentDateContext(new Date()) }],
+    // today's date changes, so it comes after (see lib/claude.ts on caching). The lead lawyer's
+    // small-claims drafting instructions (/manageai) end the cached block, as in /api/chat.
+    system: [
+      { text: withDraftingInstructions(SMALL_CLAIMS_LAWYER_INTAKE_PROMPT, await instructionsFor('small-claims')), cache: '1h' },
+      { text: buildCurrentDateContext(new Date()) },
+    ],
     messages: [{ role: 'user', content: buildBrandFactsMessage(brand, borrower, caseRef) }],
     maxTokens: 4096,
     caseId,
