@@ -173,7 +173,6 @@ export default function App() {
     <>
       <Navbar
         onLogoClick={goToLanding}
-        onNavServices={() => { if (step !== 'landing') goToLanding() }}
         onStartLawyerConsult={() => openAgent('lawyer-consultation')}
         user={user}
         onAuthClick={() => setAuthOpen(true)}
