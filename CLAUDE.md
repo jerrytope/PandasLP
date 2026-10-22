@@ -18,7 +18,7 @@ This is NOT a document template tool. Pandas LP is a law firm that can represent
 | Email | Nodemailer + Gmail SMTP — follow-up emails at Day 0 / Day 7 / Day 14 after letter served (a scheduler drives Day 7/14, see "Hosting and scheduled jobs" below) |
 | PDF | jsPDF v4 — vector panda logo, letterhead, watermark, rich text |
 | Payments | Paystack Inline (stub when key is placeholder), independently verified server-side before a case is marked paid |
-| Fonts | next/font/google — Bricolage Grotesque (display), Inter (body), DM Mono (mono) |
+| Fonts | next/font/google — Manrope (display), Inter (body), JetBrains Mono (mono labels) |
 | Animations | CSS-only IntersectionObserver scroll reveals (`Reveal.jsx`) |
 
 ---
@@ -200,11 +200,26 @@ Where the owner and the lead lawyer decide how each agent drafts its documents, 
 - `lib/services.js` — `SERVICES` array, `CUSTOM_CLAIM_FEE = 10000`, `LAWYER_CONSULT_FEE = 15000`.
 - `lib/agentServiceMap.ts` — Maps AgentId → service. `getAgentPayment(agentId)` returns `{amount, description, kind}`.
 
-### Design System
-- `app/globals.css` — Light ivory + gold design system (it was navy + gold before that, and dark-green/amber before that; hardcoded `rgba(245,166,35,...)`, `rgba(62,207,142,...)` or `rgba(8,12,10,...)` anywhere is leftover old-palette drift). Core tokens: `--bg-0 #FAFAF8` (canvas), `--bg-1 #F5F3F0`, `--bg-2 #FFFFFF` (cards), `--border-subtle #E8E4DF`, `--accent #B8860B`, `--text-1 #1A1A1A`, `--text-2 #6B6B6B`, `--text-3 #7D7A72`, `--ease-out cubic-bezier(0.16,1,0.3,1)`. Fonts come from `app/layout.jsx` as `--font-display` / `--font-mono`. Legacy aliases (`--bg`, `--surface`, `--border`) map onto these so older component CSS didn't need touching. The old navy (`#182A3A`) survives only as the admin sidebar, defined in `app/admin/components/shell/AdminShell.module.css`.
+### Design System ("Ink & Brass", frontend revamp in progress)
+- **Plan and progress:** `docs/frontend-revamp-plan.md` (phases, craft rules, checklists). Tick items there as they finish.
+- **Theme:** `app/globals.css`. **Dark first:** `lib/theme.ts` (`DEFAULT_THEME = 'dark'`) and its head script start every visitor on dark until they pick light. `:root` holds the light ("parchment") values and `:root[data-theme="dark"]` the dark ("ink") ones.
+- **Tokens:**
+  - Dark: `--bg-0 #0B0A09`, `--bg-1 #141311`, `--bg-2 #1C1A17`, cream `--text-1 #EDE6D9`, and one brass `--accent #E2B04A`.
+  - Light: `#F4F1EA` / ink `#12110F` / brass `#8A5E0F`.
+  - Every text colour is AA on all three surfaces.
+  - Borders are translucent hairlines, not shadows. Radii are 2–4px; pills (`--radius-pill`) only for buttons and tags.
+  - Documents use `--paper` / `--paper-ink` (white in both themes).
+  - Type: `--fs-display`, `--fs-h2`, `--fs-h3`, `--fs-lede`. Spacing: `--section-y`, `--gutter`.
+  - Old names (`--bg`, `--surface`, `--gold`…) are kept as aliases.
+- **Building blocks:** `components/ui/` (`index.tsx`, `ui.module.css`): Section, Eyebrow, SitePhoto/PhotoPlaceholder, RunLog, DocumentPreview, StatRow, QuoteCard, Pipeline, Carousel, AnnouncementBar. See them all at `/styleguide` (noindex).
+- **Editable site content:** Admin → Site content (`app/admin/components/site/SiteContentView.tsx`; schema and rules in `lib/siteContentSchema.ts`; server side in `lib/siteContent.ts`; SQL `add-site-content.sql`, with a public `site-media` bucket for photos only). Public pages read `getSiteContent()` on the server, or `/api/site-content` from the browser. **Numbers, quotes and the founder's note show only once filled in and switched on**, through the `publishable*()` helpers. Never render the raw groups on a public page.
+- **Site chrome:** `components/Navbar.jsx` is the one header for every public page and the chat. It has the Practice mega-menu, the announcement prop and a mobile drawer, and it publishes `--site-header-h` with a spacer below it; pass `spacer={false}` when the page sizes itself to `--site-header-h`, as the chat does. `components/Footer.jsx` is the one footer. Practice facts shown in both (live practices, "opening later", documents, firm details) live in `lib/sitePractices.ts`. Only debt recovery and property law are open.
+- **Pages:** the homepage is `app/page.jsx` (server: published site content and the latest notes, revalidated every 60 s), then `components/home/HomeApp.jsx` (interactive: custom claim, payment, enforcement), then `components/LandingPage.jsx`. New pages use `components/site/PublicPage.tsx` (header with the announcement, page, footer): `/how-we-work`, `/about`, `/businesses`. Older pages keep their `.lp-` / `.ap-` classes, restyled by the overrides at the end of `globals.css`.
+- **Chat:** the full-page chat is a "matter workspace" (`MatterRail` at the end of `components/AgentChat.tsx`, shown at 1100px and wider).
+- `components/Reveal.jsx` — IntersectionObserver scroll reveal wrapper. Props: `delay` (ms). Don't wrap important content in it: anything inside starts invisible until it scrolls into view.
 
 ### Admin panel layout
-- `app/admin/layout.tsx` wraps every `/admin/*` page in `AdminShell` (`app/admin/components/shell/`): a navy left sidebar, a sticky top bar, and the content area. On screens under 1024px the sidebar becomes an off-canvas drawer.
+- `app/admin/layout.tsx` wraps every `/admin/*` page in `AdminShell` (`app/admin/components/shell/`): an ink left sidebar (dark in both themes), a sticky top bar, and the content area. On screens under 1024px the sidebar becomes an off-canvas drawer.
 - The shell does the one signed-in check for the whole admin. Pages get the user, `setTopbarMeta` and `denyAccess` (call it on a 403) from `useAdminShell()`. Staff status is still decided only by the server (`lib/adminAuth.ts`).
 - `/admin` is a single page. The visible section comes from `?section=overview|queue|leads|matters|claims|finance|waitlist` (and `&sub=invoices|settings` for Finance). `adminSections.ts` holds the list. `?caseId=` with no section opens All Matters, which keeps the staff email "review" links working. A new section means adding it to `adminSections.ts`, an icon in `AdminSidebar.tsx`, and a branch in `app/admin/page.tsx`.
 - `components/Reveal.jsx` — IntersectionObserver scroll reveal wrapper. Props: `delay` (ms).

@@ -68,7 +68,7 @@ export default function NegotiationFollowUps({
           <span
             className="badge"
             style={{
-              background: urgent > 0 ? 'rgba(220, 38, 38, 0.12)' : 'var(--bg-1)',
+              background: urgent > 0 ? 'rgba(var(--danger-rgb),  0.12)' : 'var(--bg-1)',
               color: urgent > 0 ? 'var(--danger)' : 'var(--text-3)',
             }}
           >

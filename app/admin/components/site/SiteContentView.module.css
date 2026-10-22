@@ -1,0 +1,55 @@
+.wrap { display: grid; gap: 20px; max-width: 1100px; }
+
+.intro { font-size: 14px; color: var(--text-2); line-height: 1.6; margin: 0; max-width: 760px; }
+
+.panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.panelHead { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.panelHead h2 { font-size: 17px; margin: 0 0 4px; }
+.changed { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+
+.muted { color: var(--text-2); font-size: 13px; margin: 0; }
+.hint { color: var(--text-3); font-size: 12px; line-height: 1.45; }
+.error { color: var(--danger); font-size: 13px; margin: 0; }
+.ok { color: var(--success); font-size: 13px; margin: 0; }
+
+.field { display: grid; gap: 6px; min-width: 0; align-content: start; }
+.field textarea { resize: vertical; font-family: inherit; }
+
+.row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+
+.item {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 14px;
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.item > .row, .item > .field { width: 100%; }
+
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.footer { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.photoGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.photoCard { display: grid; gap: 8px; align-content: start; }
+.photoFrame {
+  position: relative; /* the placeholder panel fills this frame, not the whole page */
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-1);
+}
+.photoFrame img { width: 100%; height: 100%; object-fit: cover; }
+
+.upload { position: relative; overflow: hidden; }
+.upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }

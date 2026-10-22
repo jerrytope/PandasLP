@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 200; /* above AgentChat's own .overlay (100) — this confirms a step inside that flow */
-  background: rgba(6, 6, 5, 0.78);
+  background: var(--overlay);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
@@ -195,13 +195,13 @@
 }
 
 .diffAdded {
-  background: rgba(184, 134, 11, 0.16);
+  background: rgba(var(--accent-rgb),  0.16);
   color: var(--text-1);
   border-radius: 3px;
 }
 
 .diffRemoved {
-  background: rgba(239, 68, 68, 0.22);
+  background: rgba(var(--danger-rgb),  0.22);
   color: var(--text-muted);
   text-decoration: line-through;
   border-radius: 3px;

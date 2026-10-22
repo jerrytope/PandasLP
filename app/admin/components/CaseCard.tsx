@@ -98,7 +98,7 @@ export default function CaseCard({
             {c.hasStampedDocument && (
               <>
                 <span>·</span>
-                <span style={{ color: '#16a34a', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500, fontSize: 12 }}>
+                <span style={{ color: 'var(--success)', display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 500, fontSize: 12 }}>
                   <ShieldCheck size={13} /> Stamped
                 </span>
               </>
@@ -148,7 +148,7 @@ export default function CaseCard({
         }}
       >
         <span>
-          Paid: <strong style={{ color: c.amount_paid > 0 ? '#16a34a' : 'inherit' }}>{formatNaira(c.amount_paid)}</strong>
+          Paid: <strong style={{ color: c.amount_paid > 0 ? 'var(--success)' : 'inherit' }}>{formatNaira(c.amount_paid)}</strong>
         </span>
 
         {c.expected_amount != null && (

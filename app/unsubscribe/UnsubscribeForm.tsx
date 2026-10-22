@@ -29,7 +29,7 @@ export default function UnsubscribeForm() {
   }
 
   const h1: React.CSSProperties = { fontSize: 34, lineHeight: 1.1, letterSpacing: '-0.025em', fontWeight: 500, marginBottom: 14 }
-  const p: React.CSSProperties = { fontSize: 16.5, color: '#3A3A38', lineHeight: 1.55 }
+  const p: React.CSSProperties = { fontSize: 16.5, color: 'var(--text-body)', lineHeight: 1.55 }
 
   if (!who || !t) {
     return (
@@ -55,7 +55,7 @@ export default function UnsubscribeForm() {
         type="button"
         onClick={unsubscribe}
         disabled={state === 'busy'}
-        style={{ marginTop: 22, background: '#1A1A1A', color: '#FAFAF8', border: 'none', padding: '15px 22px', fontSize: 16, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}
+        style={{ marginTop: 22, background: 'var(--text-1)', color: 'var(--bg-0)', border: 'none', padding: '15px 22px', fontSize: 16, fontWeight: 600, fontFamily: 'inherit', cursor: 'pointer' }}
       >
         {state === 'busy' ? 'Unsubscribing…' : 'Unsubscribe'}
       </button>

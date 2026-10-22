@@ -129,7 +129,7 @@ export default function ConsentPanel({ data, error, onChanged }: { data: Consent
                       <td style={{ padding: '6px 8px 6px 0', whiteSpace: 'nowrap' }}>{when(r.created_at)}</td>
                       <td style={{ padding: '6px 8px 6px 0' }}>{r.email ?? ''}{r.email && r.phone ? ' · ' : ''}{r.phone ? `+${r.phone}` : ''}</td>
                       <td style={{ padding: '6px 8px 6px 0', whiteSpace: 'nowrap' }}>{r.purpose === 'marketing' ? 'Marketing' : 'About their matter'}</td>
-                      <td style={{ padding: '6px 8px 6px 0', whiteSpace: 'nowrap', color: r.granted ? '#16803d' : 'var(--danger)', fontWeight: 600 }}>{r.granted ? 'Yes' : 'No / withdrawn'}</td>
+                      <td style={{ padding: '6px 8px 6px 0', whiteSpace: 'nowrap', color: r.granted ? 'var(--success)' : 'var(--danger)', fontWeight: 600 }}>{r.granted ? 'Yes' : 'No / withdrawn'}</td>
                       <td style={{ padding: '6px 8px 6px 0', whiteSpace: 'nowrap' }}>{SOURCE_LABEL[r.source] ?? r.source}{r.recorded_by ? ` (${r.recorded_by})` : ''}</td>
                       <td style={{ padding: '6px 0', color: 'var(--text-2)' }}>{r.note ? `${r.note} · ` : ''}<span title={r.wording}>{r.wording.length > 90 ? `${r.wording.slice(0, 90)}…` : r.wording}</span></td>
                     </tr>

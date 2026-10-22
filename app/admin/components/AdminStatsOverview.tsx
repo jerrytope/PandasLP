@@ -84,7 +84,7 @@ export default function AdminStatsOverview({ cases, onSelectFilter }: AdminStats
           className="card"
           style={{
             padding: '16px 20px',
-            borderLeft: '3px solid #16a34a',
+            borderLeft: '3px solid var(--success)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -92,7 +92,7 @@ export default function AdminStatsOverview({ cases, onSelectFilter }: AdminStats
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)' }}>Revenue This Week</span>
-            <DollarSign size={15} strokeWidth={1.8} style={{ color: '#16a34a' }} />
+            <DollarSign size={15} strokeWidth={1.8} style={{ color: 'var(--success)' }} />
           </div>
           <div style={{ marginTop: 8 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, lineHeight: 1.1 }}>
@@ -109,7 +109,7 @@ export default function AdminStatsOverview({ cases, onSelectFilter }: AdminStats
           className="card"
           style={{
             padding: '16px 20px',
-            borderLeft: '3px solid #0284c7',
+            borderLeft: '3px solid var(--blue)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -117,7 +117,7 @@ export default function AdminStatsOverview({ cases, onSelectFilter }: AdminStats
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-2)' }}>Active Pipeline</span>
-            <Briefcase size={15} strokeWidth={1.8} style={{ color: '#0284c7' }} />
+            <Briefcase size={15} strokeWidth={1.8} style={{ color: 'var(--blue)' }} />
           </div>
           <div style={{ marginTop: 8 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 700, lineHeight: 1.1 }}>
@@ -221,9 +221,9 @@ export default function AdminStatsOverview({ cases, onSelectFilter }: AdminStats
               onClick={() => onSelectFilter?.('paid')}
               className="badge"
               style={{
-                background: 'rgba(217, 119, 6, 0.12)',
-                color: '#d97706',
-                border: '1px solid rgba(217, 119, 6, 0.25)',
+                background: 'rgba(var(--caution-rgb),  0.12)',
+                color: 'var(--caution)',
+                border: '1px solid rgba(var(--caution-rgb),  0.25)',
                 cursor: 'pointer',
               }}
             >
@@ -235,9 +235,9 @@ export default function AdminStatsOverview({ cases, onSelectFilter }: AdminStats
             <span
               className="badge"
               style={{
-                background: 'rgba(239, 68, 68, 0.12)',
+                background: 'rgba(var(--danger-rgb),  0.12)',
                 color: 'var(--danger)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
+                border: '1px solid rgba(var(--danger-rgb),  0.25)',
               }}
             >
               {counterPendingCount} debtor counter-offer{counterPendingCount > 1 ? 's' : ''} awaiting reply

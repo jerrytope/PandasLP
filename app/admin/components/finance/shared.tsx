@@ -6,9 +6,9 @@ import type { BillingSettings, InvoiceStatus } from '@/lib/invoices'
 import { INVOICE_STATUS_LABEL } from '@/lib/invoices'
 
 // Series colours for finance charts, validated with the dataviz skill's palette checker against
-// the white card surface (light mode; the admin has no dark theme): CVD separation ΔE 27.4,
+// the card surface (light theme; the dark theme lifts both in globals.css): CVD separation ΔE 27.4,
 // normal-vision ΔE 30.4, both >= 3:1 contrast. Fixed order: fees first, invoices second.
-export const SERIES = { fees: '#2a78d6', invoices: '#B8860B' } as const
+export const SERIES = { fees: 'var(--chart-fees)', invoices: 'var(--chart-invoices)' } as const
 
 export function compactNaira(kobo: number): string {
   const n = kobo / 100
@@ -29,14 +29,14 @@ export function longDate(ymd: string | null | undefined): string {
 
 const STATUS_STYLE: Record<InvoiceStatus, { bg: string; fg: string }> = {
   draft: { bg: 'var(--bg-1)', fg: 'var(--text-2)' },
-  sent: { bg: 'rgba(42, 120, 214, 0.10)', fg: '#1d5fae' },
-  part_paid: { bg: 'rgba(184, 134, 11, 0.12)', fg: '#8a6508' },
-  paid: { bg: 'rgba(22, 128, 61, 0.10)', fg: '#16803d' },
+  sent: { bg: 'rgba(var(--blue-rgb),  0.10)', fg: 'var(--blue)' },
+  part_paid: { bg: 'rgba(var(--accent-rgb),  0.12)', fg: 'var(--accent-deep)' },
+  paid: { bg: 'rgba(var(--success-rgb),  0.10)', fg: 'var(--success)' },
   void: { bg: 'var(--bg-1)', fg: 'var(--text-3)' },
 }
 
 export function InvoiceStatusBadge({ status, overdue }: { status: InvoiceStatus; overdue?: boolean }) {
-  const s = overdue ? { bg: 'rgba(179, 64, 46, 0.10)', fg: 'var(--danger)' } : STATUS_STYLE[status]
+  const s = overdue ? { bg: 'rgba(var(--danger-rgb),  0.10)', fg: 'var(--danger)' } : STATUS_STYLE[status]
   return (
     <span className="badge" style={{ background: s.bg, color: s.fg, fontSize: 11, fontWeight: 600, textDecoration: status === 'void' ? 'line-through' : 'none' }}>
       {overdue ? 'Overdue' : INVOICE_STATUS_LABEL[status]}

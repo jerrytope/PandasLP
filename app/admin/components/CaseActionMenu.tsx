@@ -83,7 +83,7 @@ export default function CaseActionMenu({
           onClick={() => onAction(c.id, 'markPaidOffline')}
           title="Record offline client payment (transfer / cash)"
         >
-          <CheckCircle2 size={13} strokeWidth={1.8} style={{ color: '#16a34a' }} />
+          <CheckCircle2 size={13} strokeWidth={1.8} style={{ color: 'var(--success)' }} />
           {updatingId === c.id ? 'Saving…' : 'Mark Paid (Offline)'}
         </button>
       )}
@@ -219,7 +219,7 @@ export default function CaseActionMenu({
             <button
               type="button"
               className="btn btn-sm"
-              style={{ background: 'var(--danger)', color: 'white', borderColor: 'var(--danger)' }}
+              style={{ background: 'var(--danger)', color: 'var(--danger-foreground)', borderColor: 'var(--danger)' }}
               disabled={deletingId === c.id}
               onClick={() => onDeleteAction(c.id, 'confirm')}
             >

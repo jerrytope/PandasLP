@@ -126,9 +126,9 @@ function AgentPageInner() {
     <>
       <Navbar
         onLogoClick={() => router.push('/')}
-        onNavServices={() => router.push('/')}
         user={user}
         onAuthClick={() => setAuthOpen(true)}
+        spacer={false}
       />
 
       {approvedLawyer ? (

@@ -2,13 +2,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { Check } from 'lucide-react'
 import { PandasLogoMark } from './PandasLogo'
 import { STATES } from '@/lib/locations'
 import { LAGOS_DISTRICTS } from '@/lib/lagosDistricts'
 import { LAGOS_PROPERTY_DISTRICTS } from '@/lib/lagosPropertyDistricts'
-import { Check } from 'lucide-react'
 import { CONSENT_TEXT } from '@/lib/consent'
+import { LIVE_PRACTICES, FIRM } from '@/lib/sitePractices'
+import styles from './site/site.module.css'
 
+/* The site footer ("Ink & Brass"): four short columns, the firm's details stated exactly, and
+   the location pages folded into one "Locations" list (they matter for search, not for reading). */
 export default function Footer() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -43,137 +47,118 @@ export default function Footer() {
   }
 
   return (
-    <footer className="footer" id="contact" role="contentinfo">
-      <div className="container">
-        <div className="footer-grid">
-
-          {/* Brand */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <PandasLogoMark size={32} />
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, letterSpacing: '-0.025em', color: 'var(--text-1)' }}>
-                Pandas <span style={{ color: 'var(--accent)' }}>LP</span>
-              </span>
+    <footer className={styles.footer} id="contact">
+      <div className="container" style={{ maxWidth: 'var(--max-width)', padding: '0 var(--gutter)' }}>
+        <div className={styles.footerTop}>
+          <div className={styles.footerBrand}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <PandasLogoMark size={28} />
+              <span className={styles.wordmark}>Pandas <span>LP</span></span>
             </div>
-            <p className="footer-brand-tagline">
-              Debt recovery and property law in Lagos. Every document is signed by a
-              licensed practitioner before it is served or filed.
-            </p>
-            <div style={{ marginTop: 20 }}>
-              <p className="field-label" style={{ marginBottom: 8 }}>Legal tips for Nigerian businesses</p>
+            <p>Debt recovery and property law in Nigeria. Drafted by our agents, reviewed and signed by a licensed practitioner before anything is served or filed.</p>
+
+            <div className={styles.newsletter}>
+              <span className="field-label" style={{ margin: 0 }}>Legal notes for Nigerian businesses</span>
               {sent ? (
-                <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--secondary)', marginTop: 4 }}>
-                  <Check size={14} strokeWidth={2} aria-hidden="true" />
-                  You're subscribed
+                <p style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--success)', margin: 0 }}>
+                  <Check size={14} strokeWidth={2} aria-hidden="true" /> You’re subscribed
                 </p>
               ) : (
-                <form className="footer-newsletter" onSubmit={handleSubscribe} noValidate>
+                <form className={styles.newsletterRow} onSubmit={handleSubscribe} noValidate>
                   <input
                     type="email"
-                    className="footer-newsletter-input"
+                    className="input"
                     placeholder="your@email.com"
                     value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    aria-label="Email for newsletter"
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-label="Email for legal notes"
                     autoComplete="email"
                     required
                   />
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={!email || busy}>
-                    {busy ? 'Saving…' : 'Subscribe'}
-                  </button>
+                  <button type="submit" className="btn btn-outline btn-sm" disabled={!email || busy}>{busy ? 'Saving…' : 'Subscribe'}</button>
                 </form>
               )}
               {!sent && (
-                <p style={{ fontSize: 11.5, lineHeight: 1.45, color: 'var(--text-3)', marginTop: 8, maxWidth: 340 }}>
-                  {CONSENT_TEXT.newsletter_v1} <Link href="/privacy" style={{ color: 'inherit' }}>Privacy policy</Link>
+                <p className={styles.newsletterNote}>
+                  {CONSENT_TEXT.newsletter_v1} <Link href="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy policy</Link>
                 </p>
               )}
-              {error && <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)', marginTop: 6 }}>{error}</p>}
+              {error && <p role="alert" style={{ fontSize: 12.5, color: 'var(--danger)', margin: 0 }}>{error}</p>}
             </div>
           </div>
 
-          {/* Services */}
-          <div>
-            <p className="footer-col-title">Services</p>
-            <nav className="footer-links" aria-label="Services links">
-              <a href="#services">Debt Recovery</a>
-              <a href="#services">Judgment Enforcement</a>
-              <a href="#services">Recovery of Premises</a>
-              <a href="#services">Contracts & Commercial</a>
-              <a href="#services">CAC Registration</a>
-              <a href="#services">Lawyer Consultation</a>
-            </nav>
-          </div>
+          <nav className={styles.footerCol} aria-label="Practice">
+            <h2>Practice</h2>
+            <ul>
+              {LIVE_PRACTICES.map((p) => <li key={p.slug}><Link href={p.href}>{p.name}</Link></li>)}
+              <li><Link href="/agents">Opening later</Link></li>
+              <li><Link href="/debt-check">Free debt check</Link></li>
+              <li><Link href="/#fees">Fees</Link></li>
+            </ul>
+          </nav>
 
-          {/* Company */}
-          <div>
-            <p className="footer-col-title">Company</p>
-            <nav className="footer-links" aria-label="Company links">
-              <Link href="/debt-check">Free Debt Check</Link>
-              <Link href="/blog">Legal Resources</Link>
-              <a href="#how-it-works">How It Works</a>
-              <a href="#pricing">Pricing</a>
-              <Link href="/dashboard">My Cases</Link>
-              <Link href="/terms">Terms of Use</Link>
-              <Link href="/privacy">Privacy Policy</Link>
-              <Link href="/refund-policy">Refund Policy</Link>
-            </nav>
+          <nav className={styles.footerCol} aria-label="Businesses">
+            <h2>Businesses</h2>
+            <ul>
+              <li><Link href="/businesses">Loan recovery for lenders</Link></li>
+              <li><Link href="/developers/api">Borrower API</Link></li>
+              <li><Link href="/blog">Notes</Link></li>
+            </ul>
+          </nav>
 
-            <p className="footer-col-title" style={{ marginTop: 20 }}>Recover Debt By State</p>
-            <nav className="footer-links" aria-label="Debt recovery by state links">
-              {STATES.map((s) => (
-                <Link key={s.slug} href={`/recover-debt/${s.slug}`}>{s.name}</Link>
-              ))}
-            </nav>
+          <nav className={styles.footerCol} aria-label="Firm">
+            <h2>Firm</h2>
+            <ul>
+              <li><Link href="/how-we-work">How we work</Link></li>
+              <li><Link href="/about">About</Link></li>
+              <li><Link href="/dashboard">My matters</Link></li>
+              <li><a href={FIRM.phoneHref}>{FIRM.phone}</a></li>
+              <li><a href={`mailto:${FIRM.email}`} style={{ wordBreak: 'break-all' }}>{FIRM.email}</a></li>
+              <li className={styles.footerMuted}>{FIRM.address[0]}<br />{FIRM.address[1]}</li>
+            </ul>
+          </nav>
 
-            <p className="footer-col-title" style={{ marginTop: 20 }}>Debt Recovery — Lagos Areas</p>
-            <nav className="footer-links" aria-label="Debt recovery by Lagos area links">
-              {LAGOS_DISTRICTS.map((d) => (
-                <Link key={d.slug} href={`/recover-debt/lagos/${d.slug}`}>{d.name}</Link>
-              ))}
-            </nav>
-
-            <p className="footer-col-title" style={{ marginTop: 20 }}>Recovery of Premises — Lagos Areas</p>
-            <nav className="footer-links" aria-label="Recovery of premises by Lagos area links">
-              {LAGOS_PROPERTY_DISTRICTS.map((d) => (
-                <Link key={d.slug} href={`/recover-premises/lagos/${d.slug}`}>{d.name}</Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <p className="footer-col-title">Contact</p>
-            <div className="footer-links">
-              <a href="mailto:pandaslegalpractitioners@gmail.com" style={{ wordBreak: 'break-all' }}>
-                pandaslegalpractitioners@gmail.com
-              </a>
-              <a href="tel:+2348118080189">+234 811 808 0189</a>
-              <span style={{ color: 'var(--text-3)', fontSize: 13 }}>
-                3B Elegba Festival Drive, Oniru<br />Victoria Island, Lagos
-              </span>
-            </div>
-            <div style={{ marginTop: 20 }}>
-              <span className="badge badge-accent" style={{ fontSize: 10 }}>
-                CAC BN 9646741
-              </span>
-            </div>
-          </div>
+          <nav className={styles.footerCol} aria-label="Legal">
+            <h2>Legal</h2>
+            <ul>
+              <li><Link href="/terms">Terms of use</Link></li>
+              <li><Link href="/privacy">Privacy policy</Link></li>
+              <li><Link href="/refund-policy">Refund policy</Link></li>
+            </ul>
+          </nav>
         </div>
 
-        {/* Bottom bar */}
-        <div className="footer-bottom">
-          <p className="footer-disclaimer">
-            Pandas LP (CAC BN 9646741) is a CAC-registered business and law firm. A guided digital
-            interview prepares court-ready legal documents from Nigerian legal templates. For matters
-            requiring a licensed legal practitioner to advise, file, or appear in court, our lawyers are
-            available and handle all filings on your behalf. All documents are prepared for your
-            use and are reviewed by our legal team before service or filing.
-          </p>
-          <p className="footer-copyright">
-            © {new Date().getFullYear()} Pandas LP. All rights reserved.
-          </p>
+        <details className={styles.locations}>
+          <summary>Locations</summary>
+          <div className={styles.locationGroups}>
+            <div>
+              <h3>Recover a debt, by state</h3>
+              <div>{STATES.map((s) => <Link key={s.slug} href={`/recover-debt/${s.slug}`}>{s.name}</Link>)}</div>
+            </div>
+            <div>
+              <h3>Debt recovery in Lagos</h3>
+              <div>{LAGOS_DISTRICTS.map((d) => <Link key={d.slug} href={`/recover-debt/lagos/${d.slug}`}>{d.name}</Link>)}</div>
+            </div>
+            <div>
+              <h3>Recovery of premises in Lagos</h3>
+              <div>{LAGOS_PROPERTY_DISTRICTS.map((d) => <Link key={d.slug} href={`/recover-premises/lagos/${d.slug}`}>{d.name}</Link>)}</div>
+            </div>
+          </div>
+        </details>
+
+        <div className={styles.footerBottom}>
+          <div className={styles.credentials}>
+            <span>{FIRM.registration}</span>
+            <span>Registered business name</span>
+            <span>Signed by a licensed practitioner</span>
+          </div>
+          <span className={styles.footerMuted}>© {new Date().getFullYear()} {FIRM.name}</span>
         </div>
+        <p className={styles.disclaimer}>
+          Pandas LP ({FIRM.registration}) is a CAC-registered business and law firm. A guided digital interview prepares legal
+          documents from the firm’s Nigerian templates; each is reviewed by our legal team before it is served or filed. For
+          matters that need a licensed legal practitioner to advise, file or appear in court, our lawyers handle them on your behalf.
+        </p>
       </div>
     </footer>
   )

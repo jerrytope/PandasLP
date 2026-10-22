@@ -11,6 +11,7 @@ import {
   FileQuestion,
   Wallet,
   ClipboardList,
+  PanelsTopLeft,
   Activity,
   ExternalLink,
   Shield,
@@ -38,6 +39,7 @@ const SECTION_ICONS: Record<AdminSection, LucideIcon> = {
   claims: FileQuestion,
   finance: Wallet,
   waitlist: ClipboardList,
+  site: PanelsTopLeft,
 }
 
 interface AdminSidebarProps {

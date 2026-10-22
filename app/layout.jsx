@@ -1,25 +1,27 @@
 import Script from 'next/script'
-import { Playfair_Display, Source_Sans_3, IBM_Plex_Mono } from 'next/font/google'
+import { Manrope, Inter, JetBrains_Mono } from 'next/font/google'
 import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
+import { THEME_COLOR, THEME_INIT_SCRIPT } from '@/lib/theme'
 import './globals.css'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
-const display = Playfair_Display({
+// "Ink & Brass" (docs/frontend-revamp-plan.md): Manrope for headings, Inter for reading,
+// JetBrains Mono for the small labels, matter IDs, run-logs, prices and dates.
+const display = Manrope({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700', '800'],
+  weight: ['500', '600', '700'],
 })
 
-const sans = Source_Sans_3({
+const sans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
 })
 
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500'],
@@ -85,9 +87,12 @@ export const metadata = {
 
 // Split out of `metadata` per Next's viewport/themeColor API (moved out of the metadata
 // object in Next 14+) — this is what colors the Android status bar / task switcher when the
-// app is installed, matching the manifest's own theme_color.
+// app is installed, matching the manifest's own theme_color. One per theme; the theme script
+// (lib/theme.ts) rewrites both when the visitor picks a theme that differs from the device.
+// The site starts dark for everyone (lib/theme.ts), so the bar starts dark too; the theme
+// script rewrites it when a visitor picks light.
 export const viewport = {
-  themeColor: '#FAFAF8',
+  themeColor: THEME_COLOR.dark,
 }
 
 const legalServiceJsonLd = {
@@ -115,7 +120,12 @@ const legalServiceJsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads,
+    // so the server's <html> legitimately differs from the browser's on that one attribute.
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>
         <script
           type="application/ld+json"

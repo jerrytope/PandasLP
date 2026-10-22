@@ -682,6 +682,16 @@ export default function AgentChat({
             }
       }
     >
+      {fullPage && (
+        <MatterRail
+          agentName={agent.name}
+          caseId={caseId}
+          started={messages.some((m) => m.role === 'user')}
+          drafted={Boolean(draftDoc)}
+          paid={paid}
+          invoicedByFirm={invoicedByFirm}
+        />
+      )}
       <div
         className={fullPage ? styles.pageModal : styles.modal}
         role={fullPage ? undefined : 'dialog'}
@@ -1014,5 +1024,42 @@ export default function AgentChat({
         />
       )}
     </div>
+  )
+}
+
+// The left panel of the full-page chat (the "matter workspace", docs/frontend-revamp-plan.md):
+// which matter this is and where it stands. Wide screens only; it repeats nothing the chat needs.
+function MatterRail({ agentName, caseId, started, drafted, paid, invoicedByFirm }: {
+  agentName: string
+  caseId: string | null
+  started: boolean
+  drafted: boolean
+  paid: boolean
+  invoicedByFirm: boolean
+}) {
+  const approved = paid || (invoicedByFirm && drafted)
+  const steps = [
+    { label: 'Interview', done: drafted, current: !drafted },
+    { label: 'Draft ready', done: drafted && approved, current: drafted && !approved },
+    { label: invoicedByFirm ? 'You confirm the draft' : 'You approve and pay', done: approved, current: false },
+    { label: 'Lawyer reviews and signs', done: false, current: approved },
+    { label: 'Served', done: false, current: false },
+  ]
+  return (
+    <aside className={styles.rail} aria-label="This matter">
+      <div className={styles.railLabel}>Matter</div>
+      <div className={styles.railRef}>{caseId ? `PLP-${caseId.slice(0, 8).toUpperCase()}` : started ? 'Saving…' : 'New matter'}</div>
+      <div className={styles.railAgent}>{agentName}</div>
+      <ol className={styles.railSteps}>
+        {steps.map((st) => (
+          <li key={st.label} className={st.done ? styles.railDone : st.current ? styles.railCurrent : undefined} aria-current={st.current ? 'step' : undefined}>
+            <span aria-hidden="true">{st.done ? '✓' : st.current ? '→' : '·'}</span>
+            {st.label}
+          </li>
+        ))}
+      </ol>
+      <p className={styles.railNote}>Nothing is sent to anyone until a licensed practitioner has reviewed and signed it.</p>
+      <a className={styles.railLink} href="/dashboard">My matters</a>
+    </aside>
   )
 }

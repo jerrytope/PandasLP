@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 const TITLE = 'Legal Resources'
 const DESCRIPTION = 'Plain-English guides on Nigerian debt recovery, Letters of Demand, Small Claims Court, and your legal rights.'
@@ -30,18 +32,11 @@ function formatDate(iso: string) {
 export default function BlogIndexPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      <header className="navbar" role="banner">
-        <div className="container navbar-inner">
-          <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-            Pandas <span className="accent">LP</span>
-          </Link>
-          <Link href="/" className="btn btn-ghost" style={{ fontSize: 14 }}>← Home</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container" style={{ paddingTop: 64, paddingBottom: 96 }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <span className="label-mono">Legal Resources</span>
+          <span className="label-mono">Notes · Legal resources</span>
           <h1 style={{
             marginTop: 8, marginBottom: 12,
             fontFamily: 'var(--font-display)',
@@ -84,6 +79,7 @@ export default function BlogIndexPage() {
           </div>
         </div>
       </main>
+      <Footer />
       <WhatsAppFab />
     </div>
   )

@@ -66,6 +66,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    ...['/how-we-work', '/about', '/businesses'].map((path) => ({
+      url: `${SITE_URL}${path}`,
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     {
       url: `${SITE_URL}/debt-check`,
       lastModified: new Date(),

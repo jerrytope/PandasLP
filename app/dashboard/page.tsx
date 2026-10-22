@@ -8,6 +8,7 @@ import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { Phone, AlertTriangle } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 interface CaseRow {
   id: string
@@ -169,6 +170,7 @@ export default function DashboardPage() {
             Pandas <span className="accent">LP</span>
           </Link>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <ThemeToggle />
             <Link href="/" className="btn" style={{ fontSize: 13, padding: '10px 18px' }}>← Home</Link>
             <button type="button" className="btn btn-ghost" style={{ fontSize: 13, padding: '10px 18px' }} onClick={signOut}>
               Sign out
@@ -186,7 +188,7 @@ export default function DashboardPage() {
             fontSize: 'clamp(28px,4vw,44px)',
             fontWeight: 700, letterSpacing: '-0.02em',
           }}>
-            Case History
+            My matters
           </h1>
           {userEmail && <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: 14 }}>{userEmail}</p>}
         </div>
@@ -221,7 +223,7 @@ export default function DashboardPage() {
             <p style={{ color: 'var(--text-muted)', margin: '0 0 20px', fontSize: 14 }}>
               Start a conversation with one of our agents and your cases will appear here automatically.
             </p>
-            <Link href="/" className="btn btn-primary" style={{ display: 'inline-flex' }}>Get Started →</Link>
+            <Link href="/agents" className="btn btn-primary" style={{ display: 'inline-flex' }}>Get Started →</Link>
           </div>
         )}
 

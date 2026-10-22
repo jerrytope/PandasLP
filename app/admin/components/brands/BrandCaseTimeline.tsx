@@ -203,7 +203,7 @@ function CourtApproval({ info, onDone }: { info: BrandCaseInfo; onDone: () => vo
 
   if (info.court_approved_at) {
     return (
-      <div style={{ fontSize: 13, color: '#16a34a' }}>
+      <div style={{ fontSize: 13, color: 'var(--success)' }}>
         ✓ Brand’s written approval to go to court recorded by {info.court_approved_by} on {formatDate(info.court_approved_at)}: {info.court_approval_note}{' '}
         {info.court_approval_evidence_url && (
           <a href={info.court_approval_evidence_url} target="_blank" rel="noopener noreferrer">

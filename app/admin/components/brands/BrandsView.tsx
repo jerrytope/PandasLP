@@ -630,7 +630,7 @@ function BrandCard({
                 <button
                   type="button"
                   className="btn btn-sm"
-                  style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }}
+                  style={{ background: 'var(--danger)', color: 'var(--danger-foreground)', borderColor: 'var(--danger)' }}
                   disabled={busy || confirmCode !== brand.code}
                   onClick={confirmDelete}
                 >

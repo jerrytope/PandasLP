@@ -4,6 +4,8 @@ import { STATES, getStateBySlug } from '@/lib/locations'
 import { safeJsonLd } from '@/lib/jsonLd'
 import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 interface Props {
   params: Promise<{ state: string }>
@@ -62,14 +64,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }}
       />
-      <header className="navbar" role="banner">
-        <div className="container navbar-inner">
-          <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-            Pandas <span className="accent">LP</span>
-          </Link>
-          <Link href="/blog" className="btn btn-ghost" style={{ fontSize: 14 }}>← Resources</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container" style={{ paddingTop: 64, paddingBottom: 96 }}>
         <article style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -137,8 +132,8 @@ export default async function RecoverDebtStatePage({ params }: Props) {
 
           <div className="card" style={{
             padding: '32px',
-            background: 'linear-gradient(135deg,rgba(184, 134, 11, 0.08),rgba(245, 243, 240, 0.6))',
-            borderColor: 'rgba(184, 134, 11, 0.25)',
+            background: 'linear-gradient(135deg,rgba(var(--accent-rgb),  0.08),color-mix(in srgb, var(--bg-1) 60%, transparent))',
+            borderColor: 'rgba(var(--accent-rgb),  0.25)',
             textAlign: 'center',
           }}>
             <h3 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 22 }}>
@@ -154,6 +149,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
           </div>
         </article>
       </main>
+      <Footer />
       <WhatsAppFab />
     </div>
   )
