@@ -89,8 +89,8 @@ export default function AdminQueueView({
             <span
               className="badge"
               style={{
-                background: unserved.length > 0 ? 'rgba(217, 119, 6, 0.12)' : 'var(--bg-1)',
-                color: unserved.length > 0 ? '#d97706' : 'var(--text-3)',
+                background: unserved.length > 0 ? 'rgba(var(--caution-rgb),  0.12)' : 'var(--bg-1)',
+                color: unserved.length > 0 ? 'var(--caution)' : 'var(--text-3)',
               }}
             >
               {unserved.length}
@@ -151,7 +151,7 @@ export default function AdminQueueView({
             <span
               className="badge"
               style={{
-                background: deadlinePassed.length > 0 ? 'rgba(239, 68, 68, 0.12)' : 'var(--bg-1)',
+                background: deadlinePassed.length > 0 ? 'rgba(var(--danger-rgb),  0.12)' : 'var(--bg-1)',
                 color: deadlinePassed.length > 0 ? 'var(--danger)' : 'var(--text-3)',
               }}
             >
@@ -202,7 +202,7 @@ export default function AdminQueueView({
               color: 'var(--text-1)',
             }}
           >
-            <Scale size={18} strokeWidth={1.8} style={{ color: '#7c3aed' }} />
+            <Scale size={18} strokeWidth={1.8} style={{ color: 'var(--violet)' }} />
             <span>Filed in Court, Awaiting Hearing or Judgment</span>
             <span className="badge" style={{ background: 'var(--bg-1)', color: 'var(--text-3)' }}>
               {awaitingJudgment.length}

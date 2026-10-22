@@ -1,6 +1,7 @@
 'use client'
 
 import { Menu } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 import styles from './AdminShell.module.css'
 
 interface AdminTopbarProps {
@@ -25,6 +26,7 @@ export default function AdminTopbar({ title, meta, menuOpen, onOpenMenu }: Admin
       </button>
       <h1 className={styles.topbarTitle}>{title}</h1>
       {meta && <span className={styles.topbarMeta}>{meta}</span>}
+      <ThemeToggle className={styles.topbarTheme} />
     </header>
   )
 }

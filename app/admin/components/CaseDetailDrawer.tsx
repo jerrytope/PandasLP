@@ -453,8 +453,8 @@ export default function CaseDetailDrawer({
                           style={{
                             marginBottom: 14,
                             padding: '6px 12px',
-                            background: 'rgba(239,68,68,0.08)',
-                            border: '1px solid rgba(239,68,68,0.2)',
+                            background: 'rgba(var(--danger-rgb), 0.08)',
+                            border: '1px solid rgba(var(--danger-rgb), 0.2)',
                             borderRadius: 4,
                             fontSize: 11,
                             fontWeight: 700,
@@ -469,13 +469,13 @@ export default function CaseDetailDrawer({
                           style={{
                             marginBottom: 14,
                             padding: '6px 12px',
-                            background: 'rgba(22,163,74,0.08)',
-                            border: '1px solid rgba(22,163,74,0.2)',
+                            background: 'rgba(var(--success-rgb), 0.08)',
+                            border: '1px solid rgba(var(--success-rgb), 0.2)',
                             borderRadius: 4,
                             fontSize: 11,
                             fontWeight: 700,
                             letterSpacing: '0.06em',
-                            color: '#16a34a',
+                            color: 'var(--success)',
                           }}
                         >
                           OFFICIAL REVIEWED & VERIFIED DOCUMENT
@@ -834,7 +834,7 @@ export default function CaseDetailDrawer({
             >
               <div>
                 <div style={{ fontSize: 11, color: 'var(--text-3)' }}>Amount Paid</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: '#16a34a', marginTop: 2 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--success)', marginTop: 2 }}>
                   {formatNaira(c.amount_paid)}
                 </div>
               </div>

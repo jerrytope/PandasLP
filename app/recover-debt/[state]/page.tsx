@@ -137,8 +137,8 @@ export default async function RecoverDebtStatePage({ params }: Props) {
 
           <div className="card" style={{
             padding: '32px',
-            background: 'linear-gradient(135deg,rgba(184, 134, 11, 0.08),rgba(245, 243, 240, 0.6))',
-            borderColor: 'rgba(184, 134, 11, 0.25)',
+            background: 'linear-gradient(135deg,rgba(var(--accent-rgb),  0.08),color-mix(in srgb, var(--bg-1) 60%, transparent))',
+            borderColor: 'rgba(var(--accent-rgb),  0.25)',
             textAlign: 'center',
           }}>
             <h3 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 22 }}>

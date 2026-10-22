@@ -9,11 +9,11 @@
   font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-3);
 }
 .h1 { font-size: clamp(32px, 4.4vw, 48px); line-height: 1.05; letter-spacing: -0.03em; font-weight: 500; margin: 14px 0 14px; }
-.lede { font-size: 17px; line-height: 1.55; color: #3A3A38; max-width: 52ch; }
+.lede { font-size: 17px; line-height: 1.55; color: var(--text-body); max-width: 52ch; }
 
 .panel {
   margin-top: 32px; background: var(--bg-2); border: 1px solid var(--border-subtle);
-  box-shadow: 0 22px 50px -34px rgba(26, 26, 26, 0.25);
+  box-shadow: 0 22px 50px -34px rgba(var(--shadow-rgb),  0.25);
 }
 .panelBody { padding: 28px 28px 24px; }
 
@@ -71,16 +71,16 @@
 
 /* Result */
 .verdict { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
-.vStrong, .vGood { background: rgba(22, 128, 61, 0.09); color: #16603a; }
+.vStrong, .vGood { background: rgba(var(--success-rgb),  0.09); color: var(--success); }
 .vPossible { background: var(--accent-glow-soft); color: var(--accent-deep); }
-.vDifficult, .vReview { background: var(--bg-1); color: #3A3A38; }
+.vDifficult, .vReview { background: var(--bg-1); color: var(--text-body); }
 .resultHead { font-size: clamp(26px, 3.4vw, 34px); line-height: 1.12; letter-spacing: -0.025em; font-weight: 500; margin: 14px 0 18px; }
 
 .points { list-style: none; display: grid; gap: 12px; margin: 0 0 24px; padding: 0; }
-.point { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; font-size: 15.5px; line-height: 1.5; color: #2A2A28; }
+.point { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; font-size: 15.5px; line-height: 1.5; color: var(--text-body); }
 .pointIcon { width: 20px; height: 20px; display: grid; place-items: center; font-size: 12px; font-weight: 700; margin-top: 2px; }
-.pointGood { background: rgba(22, 128, 61, 0.1); color: #16603a; }
-.pointCaution { background: var(--accent-glow-soft); color: var(--accent-deep); border: 1px solid rgba(184, 134, 11, 0.25); }
+.pointGood { background: rgba(var(--success-rgb),  0.1); color: var(--success); }
+.pointCaution { background: var(--accent-glow-soft); color: var(--accent-deep); border: 1px solid rgba(var(--accent-rgb),  0.25); }
 
 .next { border-top: 2px solid var(--text-1); padding-top: 18px; }
 .nextText { font-size: 16.5px; line-height: 1.5; margin-bottom: 16px; }
@@ -97,7 +97,7 @@
 }
 .input:focus { border-color: var(--text-1); }
 .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--text-2); margin: 14px 0; line-height: 1.45; }
-.consent input { margin-top: 3px; width: 16px; height: 16px; accent-color: #1A1A1A; flex: none; }
+.consent input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--text-1); flex: none; }
 .honeypot { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
 
 .done { display: grid; gap: 6px; }

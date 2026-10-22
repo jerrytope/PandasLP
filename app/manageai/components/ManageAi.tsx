@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
+import ThemeToggle from '@/components/ThemeToggle'
 import TargetPanel from './TargetPanel'
 import type { TargetSummary } from './types'
 import styles from './ManageAi.module.css'
@@ -75,6 +76,7 @@ export default function ManageAi() {
         <div className={styles.brand}>
           <Link href="/">Pandas LP</Link>
           <span>Manage the agents</span>
+          <ThemeToggle className={styles.brandTheme} />
         </div>
         {state === 'loading' ? (
           <p className={styles.muted}>Loading…</p>

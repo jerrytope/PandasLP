@@ -6,17 +6,17 @@ interface LogoProps {
 }
 
 // The firm's actual monogram, cropped from the official lockup (ink-only, transparent
-// background). Black ink is the default because every surface that renders this — the
-// navbar and the footer — sits on --bg-0 ivory. Pass `light` for a dark surface.
-// See lib/pdfGenerator.js for the letterhead variant.
+// background). By default it follows the theme: black ink on the light canvas, white ink on
+// the dark one (both are rendered and CSS shows one, so there's no flash). Pass `light` for a
+// surface that is dark on both themes. See lib/pdfGenerator.js for the letterhead variant.
 export function PandasLogoMark({ size = 36, className = '', light = false }: LogoProps) {
+  const style = { height: size, width: 'auto', display: 'block' }
+  if (light) return <img src="/logo-mark-light.png" alt="Pandas LP" className={className} style={style} />
   return (
-    <img
-      src={light ? '/logo-mark-light.png' : '/logo-mark.png'}
-      alt="Pandas LP"
-      className={className}
-      style={{ height: size, width: 'auto', display: 'block' }}
-    />
+    <>
+      <img src="/logo-mark.png" alt="Pandas LP" className={`theme-light-only ${className}`.trim()} style={style} />
+      <img src="/logo-mark-light.png" alt="" aria-hidden="true" className={`theme-dark-only ${className}`.trim()} style={style} />
+    </>
   )
 }
 

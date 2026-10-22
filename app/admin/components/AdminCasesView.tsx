@@ -332,7 +332,7 @@ export default function AdminCasesView({
                 padding: '4px 10px',
                 minHeight: 28,
                 background: filterTest === opt.value ? 'var(--secondary)' : 'transparent',
-                color: filterTest === opt.value ? 'white' : 'inherit',
+                color: filterTest === opt.value ? 'var(--bg-0)' : 'inherit',
               }}
               onClick={() => onTestFilterChange(opt.value)}
             >
@@ -479,7 +479,7 @@ export default function AdminCasesView({
                         {STAGE_LABEL[c.status] ?? c.status}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', fontWeight: 600, color: c.amount_paid > 0 ? '#16a34a' : 'inherit' }}>
+                    <td style={{ padding: '12px 16px', fontWeight: 600, color: c.amount_paid > 0 ? 'var(--success)' : 'inherit' }}>
                       {formatNaira(c.amount_paid)}
                     </td>
                     <td style={{ padding: '12px 16px', color: 'var(--text-3)', fontSize: 12 }}>

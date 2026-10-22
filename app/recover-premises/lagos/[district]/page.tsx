@@ -155,7 +155,7 @@ export default async function RecoverPremisesLagosDistrictPage({ params }: Props
           <div className="card" style={{
             padding: '32px',
             background: 'color-mix(in srgb, var(--accent) 8%, var(--bg-2))',
-            borderColor: 'rgba(184, 134, 11, 0.25)',
+            borderColor: 'rgba(var(--accent-rgb),  0.25)',
             textAlign: 'center',
           }}>
             <h3 style={{ margin: '0 0 10px', fontFamily: 'var(--font-display)', fontSize: 22 }}>

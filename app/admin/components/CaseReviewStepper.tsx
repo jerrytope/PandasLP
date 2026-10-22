@@ -185,15 +185,15 @@ export default function CaseReviewStepper({
           Legal Review & Delivery Workflow
         </span>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 11, fontWeight: 600 }}>
-          <span style={{ color: isReviewed ? '#16a34a' : currentStep === 1 ? 'var(--text-1)' : 'var(--text-3)' }}>
+          <span style={{ color: isReviewed ? 'var(--success)' : currentStep === 1 ? 'var(--text-1)' : 'var(--text-3)' }}>
             1. Review
           </span>
           <span style={{ color: 'var(--text-3)' }}>➔</span>
-          <span style={{ color: hasStamp ? '#16a34a' : currentStep === 2 ? 'var(--text-1)' : 'var(--text-3)' }}>
+          <span style={{ color: hasStamp ? 'var(--success)' : currentStep === 2 ? 'var(--text-1)' : 'var(--text-3)' }}>
             2. Stamp
           </span>
           <span style={{ color: 'var(--text-3)' }}>➔</span>
-          <span style={{ color: isSent ? '#16a34a' : currentStep === 3 ? 'var(--text-1)' : 'var(--text-3)' }}>
+          <span style={{ color: isSent ? 'var(--success)' : currentStep === 3 ? 'var(--text-1)' : 'var(--text-3)' }}>
             3. Serve
           </span>
         </div>
@@ -211,7 +211,7 @@ export default function CaseReviewStepper({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isReviewed ? (
-              <CheckCircle2 size={16} strokeWidth={2.2} style={{ color: '#16a34a' }} />
+              <CheckCircle2 size={16} strokeWidth={2.2} style={{ color: 'var(--success)' }} />
             ) : (
               <span
                 style={{
@@ -219,7 +219,7 @@ export default function CaseReviewStepper({
                   height: 18,
                   borderRadius: '50%',
                   background: 'var(--accent)',
-                  color: 'white',
+                  color: 'var(--accent-foreground)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -307,7 +307,7 @@ export default function CaseReviewStepper({
               High-risk document — second lawyer review (recommended)
             </div>
             {c.second_reviewed_at ? (
-              <span style={{ color: '#16a34a', fontWeight: 500 }}>
+              <span style={{ color: 'var(--success)', fontWeight: 500 }}>
                 ✓ Second review confirmed by {c.second_reviewer_email} on {formatDate(c.second_reviewed_at)}
               </span>
             ) : onSecondReview ? (
@@ -347,7 +347,7 @@ export default function CaseReviewStepper({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {hasStamp ? (
-              <CheckCircle2 size={16} strokeWidth={2.2} style={{ color: '#16a34a' }} />
+              <CheckCircle2 size={16} strokeWidth={2.2} style={{ color: 'var(--success)' }} />
             ) : (
               <span
                 style={{
@@ -355,7 +355,7 @@ export default function CaseReviewStepper({
                   height: 18,
                   borderRadius: '50%',
                   background: isReviewed ? 'var(--accent)' : 'var(--border-subtle)',
-                  color: isReviewed ? 'white' : 'var(--text-3)',
+                  color: isReviewed ? 'var(--accent-foreground)' : 'var(--text-3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -468,7 +468,7 @@ export default function CaseReviewStepper({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {isSent ? (
-              <CheckCircle2 size={16} strokeWidth={2.2} style={{ color: '#16a34a' }} />
+              <CheckCircle2 size={16} strokeWidth={2.2} style={{ color: 'var(--success)' }} />
             ) : (
               <span
                 style={{
@@ -476,7 +476,7 @@ export default function CaseReviewStepper({
                   height: 18,
                   borderRadius: '50%',
                   background: hasStamp ? 'var(--accent)' : 'var(--border-subtle)',
-                  color: hasStamp ? 'white' : 'var(--text-3)',
+                  color: hasStamp ? 'var(--accent-foreground)' : 'var(--text-3)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

@@ -68,7 +68,7 @@ export default function AdminHealthPage() {
       </p>
 
       {loadError && (
-        <div className="bubbleError" style={{ marginBottom: 24, padding: '12px 16px', borderRadius: 12, background: 'rgba(239,68,68,0.12)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 14 }}>
+        <div className="bubbleError" style={{ marginBottom: 24, padding: '12px 16px', borderRadius: 12, background: 'rgba(var(--danger-rgb), 0.12)', border: '1px solid var(--danger)', color: 'var(--danger)', fontSize: 14 }}>
           {loadError}
         </div>
       )}
@@ -80,7 +80,7 @@ export default function AdminHealthPage() {
             style={{
               marginBottom: 24,
               borderColor: data.all_ok ? 'var(--secondary)' : 'var(--warning)',
-              background: data.all_ok ? 'var(--secondary-soft)' : 'rgba(251,191,36,0.08)',
+              background: data.all_ok ? 'var(--secondary-soft)' : 'rgba(var(--caution-rgb), 0.08)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -102,7 +102,7 @@ export default function AdminHealthPage() {
                 style={{
                   padding: '14px 18px',
                   borderColor: c.ok ? 'var(--border-subtle)' : 'var(--danger)',
-                  background: c.ok ? 'var(--bg-1)' : 'rgba(239,68,68,0.08)',
+                  background: c.ok ? 'var(--bg-1)' : 'rgba(var(--danger-rgb), 0.08)',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>

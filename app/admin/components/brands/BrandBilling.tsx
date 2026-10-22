@@ -92,7 +92,7 @@ export default function BrandBilling({ brandId }: { brandId: string }) {
       </div>
       <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Includes every approved, unbilled letter up to the end of that month.</div>
 
-      {notice && <div style={{ color: '#16a34a' }}>{notice}</div>}
+      {notice && <div style={{ color: 'var(--success)' }}>{notice}</div>}
       {error && <div role="alert" style={{ color: 'var(--danger)' }}>{error}</div>}
 
       {summary.invoices.length > 0 && (

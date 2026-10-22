@@ -215,6 +215,10 @@
   border-left: 1px solid var(--border-subtle);
 }
 
+.topbarTheme {
+  margin-left: auto;
+}
+
 
 .menuButton {
   all: unset;

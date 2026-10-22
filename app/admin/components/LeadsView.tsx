@@ -27,16 +27,16 @@ interface LeadRow {
 
 const VERDICT_LABEL = { strong: 'Strong', good: 'Good', possible: 'Possible', difficult: 'Difficult', review: 'Needs review' } as const
 const VERDICT_STYLE: Record<LeadRow['verdict'], { bg: string; fg: string }> = {
-  strong: { bg: 'rgba(22, 128, 61, 0.10)', fg: '#16803d' },
-  good: { bg: 'rgba(22, 128, 61, 0.07)', fg: '#16803d' },
-  possible: { bg: 'rgba(184, 134, 11, 0.12)', fg: '#8a6508' },
+  strong: { bg: 'rgba(var(--success-rgb),  0.10)', fg: 'var(--success)' },
+  good: { bg: 'rgba(var(--success-rgb),  0.07)', fg: 'var(--success)' },
+  possible: { bg: 'rgba(var(--accent-rgb),  0.12)', fg: 'var(--accent-deep)' },
   difficult: { bg: 'var(--bg-1)', fg: 'var(--text-2)' },
-  review: { bg: 'rgba(42, 120, 214, 0.10)', fg: '#1d5fae' },
+  review: { bg: 'rgba(var(--blue-rgb),  0.10)', fg: 'var(--blue)' },
 }
 const STATUS_STYLE: Record<LeadStatus, { bg: string; fg: string }> = {
-  new: { bg: 'rgba(179, 64, 46, 0.10)', fg: 'var(--danger)' },
-  contacted: { bg: 'rgba(42, 120, 214, 0.10)', fg: '#1d5fae' },
-  converted: { bg: 'rgba(22, 128, 61, 0.10)', fg: '#16803d' },
+  new: { bg: 'rgba(var(--danger-rgb),  0.10)', fg: 'var(--danger)' },
+  contacted: { bg: 'rgba(var(--blue-rgb),  0.10)', fg: 'var(--blue)' },
+  converted: { bg: 'rgba(var(--success-rgb),  0.10)', fg: 'var(--success)' },
   not_a_fit: { bg: 'var(--bg-1)', fg: 'var(--text-3)' },
 }
 
@@ -225,7 +225,7 @@ function LeadCard({
           <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{formatNairaPlain(lead.amount_naira)}</span>
           <Pill {...VERDICT_STYLE[lead.verdict]}>{VERDICT_LABEL[lead.verdict]}</Pill>
           <Pill {...STATUS_STYLE[lead.status]}>{LEAD_STATUS_LABEL[lead.status]}</Pill>
-          {marketing === 'granted' && <Pill bg="rgba(22, 128, 61, 0.07)" fg="#16803d">Marketing: yes</Pill>}
+          {marketing === 'granted' && <Pill bg="rgba(var(--success-rgb),  0.07)" fg="var(--success)">Marketing: yes</Pill>}
           {marketing === 'withdrawn' && <Pill bg="var(--bg-1)" fg="var(--text-3)">Marketing: opted out</Pill>}
           {marketing === 'none' && <Pill bg="var(--bg-1)" fg="var(--text-3)">No marketing</Pill>}
         </div>

@@ -8,6 +8,7 @@ import { AGENTS } from '@/lib/agents'
 import type { AgentId } from '@/lib/agents'
 import { renderFormattedText } from '@/lib/renderFormattedText'
 import { Phone, AlertTriangle } from 'lucide-react'
+import ThemeToggle from '@/components/ThemeToggle'
 
 interface CaseRow {
   id: string
@@ -169,6 +170,7 @@ export default function DashboardPage() {
             Pandas <span className="accent">LP</span>
           </Link>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <ThemeToggle />
             <Link href="/" className="btn" style={{ fontSize: 13, padding: '10px 18px' }}>← Home</Link>
             <button type="button" className="btn btn-ghost" style={{ fontSize: 13, padding: '10px 18px' }} onClick={signOut}>
               Sign out

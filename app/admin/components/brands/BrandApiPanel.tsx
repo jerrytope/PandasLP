@@ -69,7 +69,7 @@ const when = (iso: string | null) =>
 
 const DELIVERY_STATUS: Record<DeliveryRow['status'], { label: string; color: string }> = {
   pending: { label: 'Retrying', color: 'var(--warning)' },
-  delivered: { label: 'Delivered', color: '#16a34a' },
+  delivered: { label: 'Delivered', color: 'var(--success)' },
   failed: { label: 'Failed', color: 'var(--danger)' },
   skipped: { label: 'Not sent (no address)', color: 'var(--text-3)' },
 }
@@ -162,7 +162,7 @@ export default function BrandApiPanel({ brandId }: { brandId: string }) {
 
   return (
     <div style={{ display: 'grid', gap: 14, fontSize: 13 }}>
-      {notice && <div role="status" style={{ color: '#16a34a' }}>{notice}</div>}
+      {notice && <div role="status" style={{ color: 'var(--success)' }}>{notice}</div>}
       {error && <div role="alert" style={{ color: 'var(--danger)' }}>{error}</div>}
 
       <ChannelRow channel={state.channel} onSave={(channel) => run({ action: 'set_channel', brandId, channel }, 'Channel saved.')} />
@@ -235,7 +235,7 @@ function TestChecks({ progress }: { progress: TestProgress }) {
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
         {checks.map(([done, label]) => (
           <li key={label} style={{ display: 'flex', gap: 6, alignItems: 'center', color: done ? 'var(--text-1)' : 'var(--text-2)' }}>
-            {done ? <CheckCircle2 size={14} style={{ color: '#16a34a' }} aria-label="Done" /> : <Circle size={14} aria-label="Not yet" />}
+            {done ? <CheckCircle2 size={14} style={{ color: 'var(--success)' }} aria-label="Done" /> : <Circle size={14} aria-label="Not yet" />}
             {label}
           </li>
         ))}
@@ -313,7 +313,7 @@ function Keys({ brandId, keys, passed, run }: { brandId: string; keys: KeyRow[];
                         <button
                           type="button"
                           className="btn btn-sm"
-                          style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }}
+                          style={{ background: 'var(--danger)', color: 'var(--danger-foreground)', borderColor: 'var(--danger)' }}
                           onClick={async () => {
                             await run({ action: 'revoke_key', keyId: k.id }, `Key ${k.key_prefix}… revoked.`)
                             setRevoking(null)

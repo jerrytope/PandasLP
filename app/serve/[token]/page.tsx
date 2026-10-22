@@ -22,10 +22,10 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
 
   if (recordErr || !record) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAF8', color: '#1A1A1A', padding: 24 }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-1)', padding: 24 }}>
         <div style={{ textAlign: 'center', maxWidth: 420 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Link not found</h1>
-          <p style={{ color: '#6B6B6B', fontSize: 14 }}>This link is invalid or has expired. Contact pandaslegalpractitioners@gmail.com if you believe this is an error.</p>
+          <p style={{ color: 'var(--text-2)', fontSize: 14 }}>This link is invalid or has expired. Contact pandaslegalpractitioners@gmail.com if you believe this is an error.</p>
         </div>
       </div>
     )
@@ -61,16 +61,16 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
   const bodyText = negotiationReply?.summary ?? caseData?.document_body
   if (!bodyText) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAFAF8', color: '#1A1A1A', padding: 24 }}>
-        <p style={{ color: '#6B6B6B', fontSize: 14 }}>This document is not yet available. Contact pandaslegalpractitioners@gmail.com.</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-1)', padding: 24 }}>
+        <p style={{ color: 'var(--text-2)', fontSize: 14 }}>This document is not yet available. Contact pandaslegalpractitioners@gmail.com.</p>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FAFAF8', color: '#1A1A1A', padding: '64px 20px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-1)', padding: '64px 20px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
-        <div style={{ fontSize: 12, letterSpacing: '0.15em', color: '#B8860B', textTransform: 'uppercase', marginBottom: 16 }}>
+        <div style={{ fontSize: 12, letterSpacing: '0.15em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 16 }}>
           {negotiationReply ? 'Pandas LP — Reply on Your Matter' : 'Pandas LP — Notice of Service'}
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 28, lineHeight: 1.3 }}>
@@ -79,7 +79,7 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
         <div style={{ background: '#FFFFFF', border: '1px solid #E8E4DF', borderRadius: 8, padding: '32px 28px', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
           {renderFormattedText(bodyText)}
         </div>
-        <p style={{ marginTop: 28, fontSize: 12, color: '#6B6B6B' }}>
+        <p style={{ marginTop: 28, fontSize: 12, color: 'var(--text-2)' }}>
           Pandas LP — Licensed Legal Practitioners, Lagos, Nigeria — CAC BN 9646741<br />
           pandaslegalpractitioners@gmail.com · +234 811 808 0189
         </p>

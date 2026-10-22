@@ -3,6 +3,7 @@ import { Playfair_Display, Source_Sans_3, IBM_Plex_Mono } from 'next/font/google
 import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
+import { THEME_COLOR, THEME_INIT_SCRIPT } from '@/lib/theme'
 import './globals.css'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
@@ -85,9 +86,13 @@ export const metadata = {
 
 // Split out of `metadata` per Next's viewport/themeColor API (moved out of the metadata
 // object in Next 14+) — this is what colors the Android status bar / task switcher when the
-// app is installed, matching the manifest's own theme_color.
+// app is installed, matching the manifest's own theme_color. One per theme; the theme script
+// (lib/theme.ts) rewrites both when the visitor picks a theme that differs from the device.
 export const viewport = {
-  themeColor: '#FAFAF8',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: THEME_COLOR.light },
+    { media: '(prefers-color-scheme: dark)', color: THEME_COLOR.dark },
+  ],
 }
 
 const legalServiceJsonLd = {
@@ -115,7 +120,12 @@ const legalServiceJsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads,
+    // so the server's <html> legitimately differs from the browser's on that one attribute.
+    <html lang="en" className={`${display.variable} ${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>
         <script
           type="application/ld+json"

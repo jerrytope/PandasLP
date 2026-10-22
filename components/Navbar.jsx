@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { PandasLogoMark } from './PandasLogo'
+import ThemeToggle from './ThemeToggle'
 
 /* Every prop is optional. The homepage passes real handlers; other pages get
    navigation defaults so nothing in the bar is dead. */
@@ -90,16 +91,20 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            className={`hamburger${menuOpen ? ' open' : ''}`}
-            onClick={() => setMenuOpen(v => !v)}
-            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-            aria-expanded={menuOpen}
-          >
-            <span /><span /><span />
-          </button>
+          <div className="nav-end">
+            <ThemeToggle />
+
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              className={`hamburger${menuOpen ? ' open' : ''}`}
+              onClick={() => setMenuOpen(v => !v)}
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+            >
+              <span /><span /><span />
+            </button>
+          </div>
         </div>
       </header>
 

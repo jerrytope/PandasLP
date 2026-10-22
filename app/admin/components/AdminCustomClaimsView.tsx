@@ -113,7 +113,7 @@ export default function AdminCustomClaimsView({
                       <AlertTriangle size={12} /> Needs Response
                     </span>
                   )}
-                  <span className="badge" style={{ fontSize: 12, fontWeight: 700, color: '#16a34a' }}>
+                  <span className="badge" style={{ fontSize: 12, fontWeight: 700, color: 'var(--success)' }}>
                     Paid {formatNaira(claim.amount_paid)}
                   </span>
                 </div>
