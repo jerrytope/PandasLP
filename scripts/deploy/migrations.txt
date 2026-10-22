@@ -22,3 +22,4 @@ add-law-library.sql
 docs/pandaslp-law-library-seed.sql
 add-property-lawyer-queue.sql
 add-agent-instructions.sql
+add-site-content.sql

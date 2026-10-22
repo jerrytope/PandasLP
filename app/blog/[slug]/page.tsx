@@ -4,6 +4,8 @@ import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
 import { safeJsonLd } from '@/lib/jsonLd'
 import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -93,14 +95,7 @@ export default async function BlogPostPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }}
         />
       )}
-      <header className="navbar" role="banner">
-        <div className="container navbar-inner">
-          <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-            Pandas <span className="accent">LP</span>
-          </Link>
-          <Link href="/blog" className="btn btn-ghost" style={{ fontSize: 14 }}>← Resources</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container" style={{ paddingTop: 64, paddingBottom: 96 }}>
         <article style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -167,6 +162,7 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </article>
       </main>
+      <Footer />
       <WhatsAppFab />
     </div>
   )

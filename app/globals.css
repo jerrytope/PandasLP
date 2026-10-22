@@ -1,76 +1,72 @@
 /* ─────────────────────────────────────────
-   PANDAS LP — SERIF EDITORIAL DESIGN SYSTEM
-   Third palette this cycle — warm ivory + rich black + a
-   single burnished-gold accent, replacing the obsidian/navy/
-   gold system before it. Timeless, editorial, restrained: the
-   serif headline typeface carries the personality, not color.
-   If you see hardcoded #05070C/#D4AF37/#0E172A anywhere, that's
-   leftover prior-palette drift, not intentional.
+   PANDAS LP — "INK & BRASS" DESIGN SYSTEM (docs/frontend-revamp-plan.md)
+   Dark first (lib/theme.ts starts every visitor on dark until they pick light). Warm near-black,
+   cream ink, ONE brass accent used sparingly: the primary button, the active state, one
+   highlight per screen. Hairline borders instead of shadows, square corners, pills only for
+   buttons and tags. Documents (letter previews, PDFs, emails) always stay on paper white.
+   Every text colour below is checked for WCAG AA (4.5:1) on all three surfaces of its theme.
    ───────────────────────────────────────── */
 
+/* Light theme ("parchment"): :root holds it so the light values are the fallback without JS;
+   the head script sets data-theme="dark" before the first paint for everyone else. */
 :root {
   /* Surfaces */
-  --bg-0: #FAFAF8;   /* ivory canvas */
-  --bg-1: #F5F3F0;   /* muted surface, slightly warmer than canvas */
-  --bg-2: #FFFFFF;   /* card surface — pure white for lift off the ivory */
-  --border-subtle: #E8E4DF;
-  --border-focus: #D8D2C8;
+  --bg-0: #F4F1EA;   /* parchment canvas */
+  --bg-1: #ECE8DF;   /* muted band */
+  --bg-2: #FBFAF7;   /* cards, inputs */
+  --border-subtle: rgba(18, 17, 15, 0.12);
+  --border-focus: rgba(18, 17, 15, 0.24);
 
-  /* Accent — burnished gold, used sparingly (this palette is monochrome + one accent).
-     --accent-rgb is for tints: rgba(var(--accent-rgb), 0.12). */
-  --accent: #B8860B;
-  --accent-rgb: 184, 134, 11;
-  --accent-glow: rgba(184, 134, 11, 0.22);
-  --accent-glow-soft: rgba(184, 134, 11, 0.06);
-  --accent-hover: #D4A84B;
-  --accent-deep: #8B6508;
-  --accent-foreground: #FFFFFF;
+  /* Accent — brass. --accent-rgb is for tints: rgba(var(--accent-rgb), 0.12). */
+  --accent: #8A5E0F;
+  --accent-rgb: 138, 94, 15;
+  --accent-glow: rgba(138, 94, 15, 0.18);
+  --accent-glow-soft: rgba(138, 94, 15, 0.06);
+  --accent-hover: #6F4B0B;
+  --accent-deep: #5E3F09;
+  --accent-foreground: #FBFAF7;
 
-  /* Secondary — this system is deliberately monochrome, so "secondary" reuses the
-     foreground/muted scale rather than introducing a second hue. */
-  --secondary: #1A1A1A;
-  --secondary-soft: rgba(26, 26, 26, 0.06);
+  /* Secondary reuses the ink scale: one hue only. */
+  --secondary: #12110F;
+  --secondary-soft: rgba(18, 17, 15, 0.06);
 
-  /* Semantic — kept functional but warmed to sit inside the palette */
-  --danger: #B3402E;
-  --warning: #B8860B;
-  --info: #6B6B6B;
+  /* Semantic */
+  --danger: #A23A28;
+  --warning: #8A5E0F;
+  --info: #5C574E;
 
-  /* Status colours (admin pills, paid amounts, alerts). Each has an -rgb twin for
-     tinted backgrounds: background rgba(var(--success-rgb), 0.1); color var(--success).
-     Never hard-code var(--success) and friends: they vanish on the dark theme. */
-  --success: var(--success);
-  --success-rgb: 22, 128, 61;
-  --danger-rgb: 239, 68, 68;
+  /* Status colours (admin pills, paid amounts, alerts), each with an -rgb twin for tints. */
+  --success: #1A6E3E;
+  --success-rgb: 26, 110, 62;
+  --danger-rgb: 162, 58, 40;
   --danger-foreground: #FFFFFF;
-  --caution: #B45309;
-  --caution-rgb: 217, 119, 6;
-  --blue: var(--blue);
-  --blue-rgb: 42, 120, 214;
-  --violet: var(--violet);
+  --caution: #9A4A08;
+  --caution-rgb: 154, 74, 8;
+  --blue: #23629F;
+  --blue-rgb: 35, 98, 159;
+  --violet: #5B3FA8;
 
-  /* Chart series (admin finance), checked for colour-blind separation on the card surface */
-  --chart-fees: #2A78D6;
-  --chart-invoices: #B8860B;
+  /* Chart series (admin finance) */
+  --chart-fees: #23629F;
+  --chart-invoices: #8A5E0F;
 
   /* Text */
-  --text-1: #1A1A1A;
-  --text-body: var(--text-body); /* long-form ledes, between text-1 and text-2 */
-  --text-2: #6B6B6B;
-  --text-3: #7D7A72; /* ~4.7:1 against --bg-0/--bg-2 — keep at or above this darkness for WCAG AA normal-text contrast */
-  --text-accent: #B8860B;
+  --text-1: #12110F;
+  --text-body: #2E2B26;
+  --text-2: #5C574E;
+  --text-3: #6E685E;
+  --text-accent: #8A5E0F;
 
-  /* Shadows: rgba(var(--shadow-rgb), 0.06). Pure black on the dark theme. */
-  --shadow-rgb: 26, 26, 26;
-  /* Dimmed backdrop behind modals and drawers */
-  --overlay: rgba(6, 6, 5, 0.78);
-  /* The sticky navbar once scrolled (frosted canvas) */
-  --navbar-glass: rgba(250, 250, 248, 0.88);
-  /* Always-dark bands (homepage film, closing band, recovered counter, photo hero).
-     They stay dark on both themes, so their ink is fixed: use --on-band, never --bg-0. */
-  --band-bg: #141414;
-  --on-band: #FAFAF8;
-  --paper-texture-opacity: 0.3;
+  --shadow-rgb: 18, 17, 15;
+  --overlay: rgba(11, 10, 9, 0.72);
+  --navbar-glass: rgba(244, 241, 234, 0.86);
+  /* Always-dark bands (photo bands, closing CTA). Their ink is fixed: use --on-band. */
+  --band-bg: #0B0A09;
+  --on-band: #EDE6D9;
+  /* Documents are paper in both themes */
+  --paper: #FFFFFF;
+  --paper-ink: #1A1A1A;
+  --paper-texture-opacity: 0;
 
   /* ── Legacy aliases (keep old components working) ── */
   --bg: var(--bg-0);
@@ -82,15 +78,23 @@
   --border: var(--border-subtle);
   --border-strong: var(--border-focus);
 
-  /* Radius — deliberately restrained: not too round, not too sharp */
-  --radius-sm: 6px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  /* Radius — square, like a printed page. Pills only for buttons and tags. */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
   --radius-pill: 999px;
   --radius: var(--radius-lg);
 
   /* Layout */
-  --max-width: 1200px;
+  --max-width: 1280px;
+  --gutter: 24px;
+  --section-y: 120px;
+
+  /* Type scale */
+  --fs-display: clamp(44px, 7vw, 96px);
+  --fs-h2: clamp(32px, 4.5vw, 56px);
+  --fs-h3: clamp(22px, 2.2vw, 28px);
+  --fs-lede: clamp(18px, 1.6vw, 21px);
 
   /* Animation — refined, never bouncy */
   --anim-fast: 150ms ease-out;
@@ -101,60 +105,59 @@
   color-scheme: light;
 }
 
-/* ── Dark theme ──
-   Set by the script in app/layout.jsx before the first paint: data-theme="dark" on <html>
-   when the visitor chose dark, or chose nothing and their device is dark (components/ThemeToggle).
-   Warm near-black, not pure black. Depth comes from lightness, not shadows: canvas (bg-0) is
-   darkest, cards (bg-2) lightest. Text and status colours are lifted to keep AA contrast on bg-2.
-   Documents (PDFs, letter previews, emails, share images) stay light on purpose: they are paper. */
+/* ── Dark theme ("ink"), the default ──
+   Depth comes from lightness, not shadows: canvas (bg-0) darkest, cards (bg-2) lightest. */
 :root[data-theme="dark"] {
-  --bg-0: #121110;
-  --bg-1: #1A1917;
-  --bg-2: #22201D;
-  --border-subtle: #34312C;
-  --border-focus: #4A463F;
+  --bg-0: #0B0A09;
+  --bg-1: #141311;
+  --bg-2: #1C1A17;
+  --border-subtle: rgba(237, 230, 217, 0.10);
+  --border-focus: rgba(237, 230, 217, 0.22);
 
-  --accent: #D4A23A;
-  --accent-rgb: 212, 162, 58;
-  --accent-glow: rgba(212, 162, 58, 0.22);
-  --accent-glow-soft: rgba(212, 162, 58, 0.06);
-  --accent-hover: #E2B65A;
-  --accent-deep: #E8C277; /* used as text on gold tints, so it gets lighter here, not darker */
+  --accent: #E2B04A;
+  --accent-rgb: 226, 176, 74;
+  --accent-glow: rgba(226, 176, 74, 0.18);
+  --accent-glow-soft: rgba(226, 176, 74, 0.06);
+  --accent-hover: #EDC36B;
+  --accent-deep: #F0CD85; /* text on brass tints, so lighter here, not darker */
   --accent-foreground: #17140F;
 
-  --secondary: #EDEAE4;
-  --secondary-soft: rgba(237, 234, 228, 0.08);
+  --secondary: #EDE6D9;
+  --secondary-soft: rgba(237, 230, 217, 0.08);
 
   --danger: #F08A76;
-  --danger-rgb: 248, 113, 113;
+  --danger-rgb: 240, 138, 118;
   --danger-foreground: #1A0F0C;
-  --warning: #D4A23A;
-  --info: #ABA79F;
+  --warning: #E2B04A;
+  --info: #A8A196;
 
   --success: #5CC98A;
-  --success-rgb: 74, 196, 125;
+  --success-rgb: 92, 201, 138;
   --caution: #F0A54A;
   --caution-rgb: 240, 165, 74;
   --blue: #86B6F2;
-  --blue-rgb: 96, 160, 240;
+  --blue-rgb: 134, 182, 242;
   --violet: #B79CFF;
 
   --chart-fees: #5B9BE8;
-  --chart-invoices: #D4A23A;
+  --chart-invoices: #E2B04A;
 
-  --text-1: #EDEAE4;
-  --text-body: #CFCBC3;
-  --text-2: #ABA79F;
-  --text-3: #959189;
-  --text-accent: #D4A23A;
+  --text-1: #EDE6D9;
+  --text-body: #CFC8BB;
+  --text-2: #A8A196;
+  --text-3: #8F897E;
+  --text-accent: #E2B04A;
 
   --shadow-rgb: 0, 0, 0;
   --overlay: rgba(0, 0, 0, 0.72);
-  --navbar-glass: rgba(18, 17, 16, 0.86);
-  --band-bg: #1D1B18; /* lifted off the canvas so the bands still read as bands */
-  --paper-texture-opacity: 0.06;
+  --navbar-glass: rgba(11, 10, 9, 0.82);
+  --band-bg: #141311; /* lifted off the canvas so bands still read as bands */
 
   color-scheme: dark;
+}
+
+@media (max-width: 768px) {
+  :root { --section-y: 72px; --gutter: 16px; }
 }
 
 /* Elements that only make sense on one theme (e.g. the black-ink and white-ink logo) */
@@ -170,37 +173,12 @@ body {
   position: relative;
   background: var(--bg-0);
   color: var(--text-1);
-  font-family: var(--font-sans), "Source Sans 3", system-ui, -apple-system, sans-serif;
-  font-size: 16px;
-  line-height: 1.65;
-  letter-spacing: 0.01em;
+  font-family: var(--font-sans), "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Paper-texture overlay + ambient gold glow — fixed, full-viewport, non-interactive.
-   Gives the flat ivory canvas a faint tactile/print quality instead of reading as sterile. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: var(--paper-texture-opacity);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-body::after {
-  content: '';
-  position: fixed;
-  top: -10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 900px;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-glow-soft) 0%, transparent 70%);
+  text-rendering: optimizeLegibility;
 }
 
 #__next, body > div, main, .container, .hero, section { position: relative; z-index: 1; }
@@ -211,12 +189,14 @@ button { font-family: inherit; cursor: pointer; }
 input, textarea, select { font-family: inherit; }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display), "Playfair Display", Georgia, serif;
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+  font-family: var(--font-display), "Manrope", system-ui, sans-serif;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
   color: var(--text-1);
+  text-wrap: balance;
 }
+p { text-wrap: pretty; }
 
 /* ── Layout ── */
 .container {
@@ -231,7 +211,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ── Typography ── */
 .label-mono {
-  font-family: var(--font-mono), "IBM Plex Mono", monospace;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.15em;
@@ -243,30 +223,33 @@ h1, h2, h3, h4, h5, h6 {
 .text-muted  { color: var(--text-2); }
 .text-dim    { color: var(--text-3); }
 
-/* ── Section label — rule-line + small caps, the signature editorial marker at the top
-   of every section (see components/SectionLabel.jsx). ── */
-.section-label {
-  display: flex;
+/* ── Eyebrow — the small mono label above every H2: a brass dot and a few upper-case words
+   (components/ui/Eyebrow.tsx; components/SectionLabel.jsx renders the same thing). ── */
+.section-label,
+.eyebrow {
+  display: inline-flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.section-label-rule {
-  height: 1px;
-  flex: 1;
-  background: var(--border-subtle);
-}
-.section-label-text {
-  font-family: var(--font-mono), "IBM Plex Mono", monospace;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent);
-  white-space: nowrap;
+  color: var(--text-2);
 }
+.section-label::before,
+.eyebrow::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.section-label-rule { display: none; }
+.section-label-text { white-space: nowrap; }
 .section-header.center .section-label { justify-content: center; }
-.section-header.center .section-label-rule { max-width: 80px; }
 
 /* ── Buttons ── */
 .btn {
@@ -278,11 +261,11 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-sans), sans-serif;
   font-weight: 500;
   font-size: 15px;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   line-height: 1;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  padding: 14px 24px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-focus);
+  padding: 14px 22px;
   cursor: pointer;
   background: transparent;
   color: var(--text-1);
@@ -301,15 +284,11 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--accent);
   color: var(--accent-foreground);
   font-weight: 600;
-  box-shadow: 0 1px 2px rgba(var(--shadow-rgb),  0.04);
 }
 .btn-primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
-  box-shadow: 0 4px 14px var(--accent-glow);
-  transform: translateY(-2px);
 }
-.btn-primary:active { transform: translateY(0); }
 
 /* Typewriter headline */
 .typewriter-cursor {
@@ -357,18 +336,17 @@ h1, h2, h3, h4, h5, h6 {
 .btn-ghost:hover { color: var(--text-1); background-size: 100% 1px; }
 
 .btn-outline {
-  border-color: var(--text-1);
+  border-color: var(--border-focus);
   color: var(--text-1);
   background: transparent;
 }
 .btn-outline:hover {
-  background: var(--bg-1);
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--text-1);
+  background: var(--secondary-soft);
 }
 
-.btn-sm { font-size: 13px; padding: 10px 16px; }
-.btn-lg { font-size: 17px; padding: 16px 32px; border-radius: 12px; }
+.btn-sm { font-size: 13px; padding: 10px 16px; min-height: 38px; }
+.btn-lg { font-size: 16px; padding: 17px 28px; }
 
 .btn:disabled {
   opacity: 0.45;
@@ -386,13 +364,11 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 28px;
-  box-shadow: 0 1px 2px rgba(var(--shadow-rgb),  0.04);
-  transition: border-color var(--anim-med), box-shadow var(--anim-med), background var(--anim-med);
+  transition: border-color var(--anim-med), background var(--anim-med);
 }
 
 .card-interactive:hover {
   border-color: var(--border-focus);
-  box-shadow: 0 4px 12px rgba(var(--shadow-rgb),  0.06);
   background: color-mix(in srgb, var(--bg-1) 30%, var(--bg-2));
   cursor: pointer;
 }
@@ -401,7 +377,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Alias for an already-elevated card (used on the roster/capabilities/trust surfaces) —
    no blur/transparency in this system, just a slightly deeper shadow than the base card. */
 .glass-panel {
-  box-shadow: 0 4px 12px rgba(var(--shadow-rgb),  0.06);
+  border-color: var(--border-focus);
 }
 
 /* ── Inputs ── */
@@ -2453,3 +2429,67 @@ h1, h2, h3, h4, h5, h6 {
 @media (prefers-reduced-motion: reduce) {
   .lp-check, .lp-check:hover { transition: none; transform: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INK & BRASS: the older pages (practice pages, limits, location pages, debt check, legal
+   pages) still use the .lp- / .ap- classes. These overrides move them onto the new system
+   (docs/frontend-revamp-plan.md) without rewriting each page. New pages use components/ui.
+   ═══════════════════════════════════════════════════════════════════════ */
+.lp-container { max-width: var(--max-width); padding-left: var(--gutter); padding-right: var(--gutter); }
+.lp-section { padding: var(--section-y) 0; border-top: 1px solid var(--border-subtle); }
+.lp-section.lp-container { padding-left: var(--gutter); padding-right: var(--gutter); }
+.lp-muted { background: var(--bg-1); }
+.lp-hero { padding: clamp(48px, 8vw, 104px) var(--gutter) clamp(40px, 6vw, 72px); }
+.lp-eyebrow { font-size: 11.5px; letter-spacing: 0.12em; color: var(--text-2); }
+.lp-h1 { font-size: var(--fs-display); line-height: 0.98; letter-spacing: -0.04em; font-weight: 600; }
+.lp-h2 { font-size: var(--fs-h2); line-height: 1.05; letter-spacing: -0.035em; font-weight: 600; max-width: 20ch; }
+.lp-section-head { margin-bottom: 40px; }
+.lp-lede { font-size: var(--fs-lede); max-width: 52ch; }
+.lp-em { font-style: normal; color: var(--text-2); }
+.lp-dark .lp-lede { color: rgba(237, 230, 217, 0.66); }
+
+.lp-cta { border-radius: var(--radius-pill); padding: 15px 24px; font-size: 15px; transition: background var(--anim-fast), border-color var(--anim-fast); }
+.lp-cta:hover { transform: none; }
+.lp-cta-gold, .lp-cta-dark { background: var(--accent); color: var(--accent-foreground); border-color: var(--accent); }
+.lp-cta-gold:hover, .lp-cta-dark:hover { background: var(--accent-hover); }
+.lp-cta-invert { background: var(--on-band); color: #0B0A09; }
+.lp-cta-ghost { color: var(--on-band); border-color: rgba(237, 230, 217, 0.35); }
+
+.lp-agents { gap: 16px; }
+.lp-agent { border-radius: var(--radius-md); overflow: hidden; }
+.lp-agent-img { height: 180px; background: var(--bg-1); }
+.lp-agent-head h3, .ap-card h2 { font-family: var(--font-display), sans-serif; font-weight: 600; font-size: 24px; letter-spacing: -0.025em; }
+.lp-chip { border-radius: var(--radius-pill); padding: 5px 11px; font-size: 10.5px; color: var(--text-2); }
+.ap-card-go { color: var(--accent); }
+
+.lp-row { border-top: 1px solid var(--border-subtle); padding: 18px 0; font-size: 16px; }
+.lp-row-first { border-top: 1px solid var(--border-focus); }
+.lp-faq-item summary { font-family: var(--font-display), sans-serif; font-size: 18px; letter-spacing: -0.015em; padding: 20px 36px 20px 0; }
+.lp-faq-item[open] summary::after { color: var(--accent); }
+
+.ap-crumb { max-width: var(--max-width); padding-left: var(--gutter); padding-right: var(--gutter); letter-spacing: 0.12em; }
+.ap-rule-head, .ap-close-line, .ap-ladder-v { font-family: var(--font-display), sans-serif; font-weight: 600; letter-spacing: -0.025em; }
+.ap-ladder { border-radius: var(--radius-md); overflow: hidden; border-color: var(--border-subtle); }
+.ap-ladder-cell.is-on { background: var(--accent); }
+.ap-ladder-cell.is-on .lp-eyebrow { color: var(--accent-foreground); opacity: 0.75; }
+.ap-ladder-cell.is-on .ap-ladder-v { color: var(--accent-foreground); }
+.ap-limit.is-first { border-top: 1px solid var(--border-focus); }
+.lp-recovered-figure, .lp-fee-amount { font-family: var(--font-display), sans-serif; font-weight: 600; letter-spacing: -0.045em; }
+
+/* Prose pages (blog posts, location pages, legal pages) */
+.container h1 { letter-spacing: -0.035em; }
+.label-mono { letter-spacing: 0.12em; }
+
+/* Bands are dark in both themes: inside one, use the dark theme's tokens. */
+.lp-dark, .lp-recovered {
+  --accent: #E2B04A; --accent-rgb: 226, 176, 74; --accent-hover: #EDC36B; --accent-foreground: #17140F;
+  --text-1: #EDE6D9; --text-body: #CFC8BB; --text-2: #A8A196; --text-3: #8F897E;
+  --bg-1: #141311; --bg-2: #1C1A17;
+  --border-subtle: rgba(237, 230, 217, 0.10); --border-focus: rgba(237, 230, 217, 0.22);
+  background: #0B0A09;
+}
+
+/* A label and its field (sign-in, payment, custom claim, brand forms). It was used without ever
+   being defined, so fields sat flush against whatever came next. */
+.form-group { display: grid; gap: 8px; margin-bottom: 16px; }
+.form-group > label { font-size: 14px; font-weight: 500; color: var(--text-1); }

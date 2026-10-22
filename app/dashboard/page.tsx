@@ -188,7 +188,7 @@ export default function DashboardPage() {
             fontSize: 'clamp(28px,4vw,44px)',
             fontWeight: 700, letterSpacing: '-0.02em',
           }}>
-            Case History
+            My matters
           </h1>
           {userEmail && <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: 14 }}>{userEmail}</p>}
         </div>

@@ -5,6 +5,8 @@ import { LAGOS_DISTRICTS, getLagosDistrictBySlug } from '@/lib/lagosDistricts'
 import { safeJsonLd } from '@/lib/jsonLd'
 import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 interface Props {
   params: Promise<{ district: string }>
@@ -82,14 +84,7 @@ export default async function RecoverDebtLagosDistrictPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbJsonLd) }} />
 
-      <header className="navbar" role="banner">
-        <div className="container navbar-inner">
-          <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-            Pandas <span className="accent">LP</span>
-          </Link>
-          <Link href="/blog" className="btn btn-ghost" style={{ fontSize: 14 }}>← Resources</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container" style={{ paddingTop: 64, paddingBottom: 96 }}>
         <article style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -174,6 +169,7 @@ export default async function RecoverDebtLagosDistrictPage({ params }: Props) {
           </div>
         </article>
       </main>
+      <Footer />
       <WhatsAppFab />
     </div>
   )

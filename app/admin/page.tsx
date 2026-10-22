@@ -19,6 +19,7 @@ import CaseDetailDrawer from './components/CaseDetailDrawer'
 import FinanceView from './components/finance/FinanceView'
 import LeadsView from './components/LeadsView'
 import BrandsView from './components/brands/BrandsView'
+import SiteContentView from './components/site/SiteContentView'
 import type {
   AdminCaseRow,
   CustomClaimRow,
@@ -104,8 +105,8 @@ function AdminPageInner() {
     overrideTest?: 'live' | 'test' | 'all',
     overrideAgent?: string,
   ) {
-    // Finance, Leads and Brands load their own data inside their views.
-    if (which === 'finance' || which === 'leads' || which === 'brands') return
+    // Finance, Leads, Brands and Site content load their own data inside their views.
+    if (which === 'finance' || which === 'leads' || which === 'brands' || which === 'site') return
     setLoading(true)
     setLoadError('')
     try {
@@ -494,6 +495,8 @@ function AdminPageInner() {
         )}
 
         {tab === 'brands' && <BrandsView />}
+
+        {tab === 'site' && <SiteContentView />}
 
         {tab === 'leads' && <LeadsView onStartIntake={(seed) => setLawyerIntakeSeed(seed)} />}
 

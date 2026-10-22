@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 const TITLE = 'Privacy Policy'
 const DESCRIPTION = 'How Pandas LP collects, uses, and protects your personal data under the Nigeria Data Protection Act 2023.'
@@ -15,14 +17,7 @@ export const metadata: Metadata = {
 export default function PrivacyPolicyPage() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      <header className="navbar" role="banner">
-        <div className="container navbar-inner">
-          <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-            Pandas <span className="accent">LP</span>
-          </Link>
-          <Link href="/" className="btn btn-ghost" style={{ fontSize: 14 }}>← Home</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container" style={{ paddingTop: 64, paddingBottom: 96 }}>
         <article style={{ maxWidth: 680, margin: '0 auto' }}>
@@ -109,6 +104,7 @@ export default function PrivacyPolicyPage() {
           </div>
         </article>
       </main>
+      <Footer />
       <WhatsAppFab />
     </div>
   )

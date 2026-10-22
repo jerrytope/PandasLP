@@ -128,6 +128,7 @@ function AgentPageInner() {
         onLogoClick={() => router.push('/')}
         user={user}
         onAuthClick={() => setAuthOpen(true)}
+        spacer={false}
       />
 
       {approvedLawyer ? (

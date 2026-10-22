@@ -4,10 +4,10 @@ import type { Tab } from '../types'
 // sidebar's links, bookmarks and the back button all work. This file is the single list of
 // sections the sidebar, top bar and app/admin/page.tsx agree on.
 
-export type AdminSection = 'overview' | 'queue' | 'leads' | 'matters' | 'brands' | 'claims' | 'finance' | 'waitlist'
+export type AdminSection = 'overview' | 'queue' | 'leads' | 'matters' | 'brands' | 'claims' | 'finance' | 'waitlist' | 'site'
 export type FinanceSub = 'overview' | 'invoices' | 'settings'
 
-export const ADMIN_SECTIONS: AdminSection[] = ['overview', 'queue', 'leads', 'matters', 'brands', 'claims', 'finance', 'waitlist']
+export const ADMIN_SECTIONS: AdminSection[] = ['overview', 'queue', 'leads', 'matters', 'brands', 'claims', 'finance', 'waitlist', 'site']
 export const FINANCE_SUBS: FinanceSub[] = ['overview', 'invoices', 'settings']
 
 export const SECTION_LABELS: Record<AdminSection, string> = {
@@ -19,6 +19,7 @@ export const SECTION_LABELS: Record<AdminSection, string> = {
   claims: 'Custom Claims',
   finance: 'Finance',
   waitlist: 'Waitlist Signups',
+  site: 'Site content',
 }
 
 export const FINANCE_SUB_LABELS: Record<FinanceSub, string> = {

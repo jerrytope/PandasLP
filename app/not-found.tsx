@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import WhatsAppFab from '@/components/WhatsAppFab'
 import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 
 export const metadata: Metadata = {
   title: 'Page Not Found',
@@ -11,14 +13,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)' }}>
-      <header className="navbar" role="banner">
-        <div className="container navbar-inner">
-          <Link href="/" className="logo" style={{ textDecoration: 'none' }}>
-            Pandas <span className="accent">LP</span>
-          </Link>
-          <Link href="/" className="btn btn-ghost" style={{ fontSize: 14 }}>← Home</Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main
         className="container"
@@ -93,6 +88,7 @@ export default function NotFound() {
           </a>
         </nav>
       </main>
+      <Footer />
       <WhatsAppFab />
     </div>
   )

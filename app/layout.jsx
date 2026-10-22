@@ -1,5 +1,5 @@
 import Script from 'next/script'
-import { Playfair_Display, Source_Sans_3, IBM_Plex_Mono } from 'next/font/google'
+import { Manrope, Inter, JetBrains_Mono } from 'next/font/google'
 import { MotionConfig } from 'framer-motion'
 import { safeJsonLd } from '@/lib/jsonLd'
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister'
@@ -8,19 +8,20 @@ import './globals.css'
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
-const display = Playfair_Display({
+// "Ink & Brass" (docs/frontend-revamp-plan.md): Manrope for headings, Inter for reading,
+// JetBrains Mono for the small labels, matter IDs, run-logs, prices and dates.
+const display = Manrope({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700', '800'],
+  weight: ['500', '600', '700'],
 })
 
-const sans = Source_Sans_3({
+const sans = Inter({
   subsets: ['latin'],
   variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
 })
 
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500'],
@@ -88,11 +89,10 @@ export const metadata = {
 // object in Next 14+) — this is what colors the Android status bar / task switcher when the
 // app is installed, matching the manifest's own theme_color. One per theme; the theme script
 // (lib/theme.ts) rewrites both when the visitor picks a theme that differs from the device.
+// The site starts dark for everyone (lib/theme.ts), so the bar starts dark too; the theme
+// script rewrites it when a visitor picks light.
 export const viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: THEME_COLOR.light },
-    { media: '(prefers-color-scheme: dark)', color: THEME_COLOR.dark },
-  ],
+  themeColor: THEME_COLOR.dark,
 }
 
 const legalServiceJsonLd = {

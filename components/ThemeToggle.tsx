@@ -13,7 +13,7 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   useEffect(() => {
     const sync = () => setThemeState(currentTheme())
     sync()
-    // The head script flips the theme when the device changes; keep the label honest.
+    // Keep the label honest if the theme changes elsewhere (another toggle on the page).
     const observer = new MutationObserver(sync)
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     return () => observer.disconnect()
