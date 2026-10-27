@@ -84,12 +84,12 @@
     top: var(--site-header-h, 64px);
   }
 }
-.railLabel { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.railLabel { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); }
 .railRef { font-family: var(--font-mono), monospace; font-size: 15px; color: var(--text-1); letter-spacing: 0.04em; }
 .railAgent { font-size: 14px; color: var(--text-2); margin-bottom: 20px; }
 .railSteps { list-style: none; margin: 0 0 20px; padding: 0; border-top: 1px solid var(--border-subtle); }
 .railSteps li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; padding: 11px 0; border-bottom: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-3); }
-.railSteps li span { font-family: var(--font-mono), monospace; }
+.railSteps li span { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
 .railDone { color: var(--text-2) !important; }
 .railDone span { color: var(--success); }
 .railCurrent { color: var(--text-1) !important; font-weight: 600; }
@@ -156,11 +156,10 @@
 }
 
 .headerSub {
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .headerActions {

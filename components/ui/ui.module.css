@@ -58,10 +58,9 @@
   position: absolute;
   left: 14px;
   bottom: 12px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-3);
 }
 
@@ -123,7 +122,7 @@
 .statValue { font-family: var(--font-display), sans-serif; font-weight: 600; font-size: clamp(36px, 4.5vw, 56px); letter-spacing: -0.03em; line-height: 1; color: var(--text-1); }
 .statLabel { margin-top: 10px; font-size: 15px; color: var(--text-1); }
 .statDefinition { margin-top: 4px; font-size: 13px; color: var(--text-3); line-height: 1.45; }
-.statsAsOf { margin-top: 14px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.statsAsOf { margin-top: 14px; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); }
 
 /* ── Quote card ── */
 .quote { border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: clamp(24px, 4vw, 48px); display: grid; gap: 28px; background: var(--bg-2); }
@@ -137,10 +136,10 @@
 /* ── Pipeline: how a matter moves ── */
 .pipeline { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); border-top: 1px solid var(--border-subtle); counter-reset: step; }
 .pipelineStep { padding: 24px 24px 28px 0; border-bottom: 1px solid var(--border-subtle); display: grid; gap: 10px; align-content: start; counter-increment: step; }
-.pipelineStep::before { content: counter(step, decimal-leading-zero); font-family: var(--font-mono), monospace; font-size: 12px; color: var(--accent); letter-spacing: 0.1em; }
+.pipelineStep::before { content: counter(step, decimal-leading-zero); font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); }
 .pipelineStep h3 { font-size: 20px; }
 .pipelineRole { font-size: 14px; color: var(--text-body); line-height: 1.5; }
-.pipelineRole b { display: block; font-family: var(--font-mono), monospace; font-weight: 500; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); margin-bottom: 2px; }
+.pipelineRole b { display: block; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 500; font-size: 13px; color: var(--text-3); margin-bottom: 2px; }
 @media (min-width: 900px) {
   .pipelineStep { padding-right: 28px; border-right: 1px solid var(--border-subtle); padding-left: 0; }
   .pipelineStep + .pipelineStep { padding-left: 24px; }
@@ -150,7 +149,7 @@
 /* ── Carousel with a counter ── */
 .carouselHead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
 .carouselControls { display: flex; align-items: center; gap: 12px; }
-.carouselCounter { font-family: var(--font-mono), monospace; font-size: 13px; color: var(--text-2); letter-spacing: 0.08em; min-width: 64px; text-align: right; }
+.carouselCounter { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-2); min-width: 64px; text-align: right; }
 .carouselButton { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border-focus); background: transparent; color: var(--text-1); display: grid; place-items: center; }
 .carouselButton:hover:not(:disabled) { border-color: var(--text-1); }
 .carouselButton:disabled { opacity: 0.35; cursor: default; }
@@ -173,9 +172,64 @@
 /* ── Announcement bar ── */
 .announce { border-bottom: 1px solid var(--border-subtle); background: var(--bg-0); font-size: 13px; }
 .announceInner { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 9px var(--gutter); color: var(--text-2); text-align: center; flex-wrap: wrap; }
-.announceTag { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.4); border-radius: var(--radius-pill); padding: 2px 8px; }
+.announceTag { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--accent); border: 1px solid rgba(var(--accent-rgb), 0.4); border-radius: var(--radius-pill); padding: 2px 8px; }
 .announce a { color: var(--text-1); text-decoration: underline; text-decoration-color: var(--border-focus); text-underline-offset: 3px; }
 .announce a:hover { text-decoration-color: var(--accent); }
 
 /* ── Tag ── */
-.tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); border: 1px solid var(--border-focus); border-radius: var(--radius-pill); padding: 4px 10px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-2); border: 1px solid var(--border-focus); border-radius: var(--radius-pill); padding: 4px 10px; }
+
+/* ── Signed letter: the homepage hero picture ── */
+.letterWrap { position: relative; margin: 0; padding: 0 0 28px 0; }
+.letter {
+  position: relative;
+  background: var(--paper);
+  color: var(--paper-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 30px 60px -30px rgba(0, 0, 0, 0.45);
+  padding: 30px 32px 34px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  transform: rotate(-1.2deg);
+}
+.letter p { margin: 0 0 10px; color: #2b2b2b; }
+.letter b { color: #111; }
+.letterHead { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 2px solid #111; margin-bottom: 14px; }
+.letterHead img { height: 34px; width: auto; display: block; }
+.letterHead strong { display: block; font-family: var(--font-display), sans-serif; font-size: 16px; letter-spacing: -0.01em; color: #111; }
+.letterHead span { display: block; font-size: 11.5px; color: #666; }
+.letterRef { display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-mono), monospace; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: #777; margin-bottom: 10px; }
+.letterTo { font-weight: 500; color: #111 !important; }
+.letterTitle { font-family: var(--font-display), sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; text-align: center; text-decoration: underline; text-underline-offset: 4px; margin: 6px 0 12px; color: #111; }
+.letterSign { margin-top: 18px; display: grid; gap: 2px; max-width: 220px; }
+.letterSignature { width: 150px; height: 44px; }
+.letterSignature path { fill: none; stroke: #1d3a8a; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.letterSign span { border-top: 1px solid #999; padding-top: 6px; font-size: 11.5px; color: #555; }
+.letterStamp {
+  position: absolute; right: 28px; bottom: 30px;
+  width: 104px; height: 104px; border-radius: 50%;
+  border: 2.5px solid rgba(166, 112, 18, 0.85); box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 5.5px rgba(166, 112, 18, 0.6);
+  color: rgba(166, 112, 18, 0.95);
+  display: grid; place-content: center; text-align: center; gap: 1px;
+  transform: rotate(-14deg);
+  font-family: var(--font-display), sans-serif; text-transform: uppercase;
+}
+.letterStamp span { font-size: 9.5px; font-weight: 600; letter-spacing: 0.14em; }
+.letterStamp strong { font-size: 19px; font-weight: 800; letter-spacing: 0.04em; }
+.letterNote {
+  position: absolute; display: flex; align-items: center; gap: 8px;
+  background: var(--bg-2); color: var(--text-1);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-pill);
+  box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.5);
+  padding: 9px 16px; font-size: 13.5px; font-weight: 500; white-space: nowrap;
+  right: 24px; top: -18px;
+}
+.letterNote span { color: var(--success); font-weight: 700; }
+.letterNoteAlt { top: auto; right: -12px; bottom: 0; }
+@media (max-width: 640px) {
+  .letter { transform: none; padding: 22px 20px 26px; font-size: 13px; }
+  .letterStamp { width: 84px; height: 84px; right: 16px; bottom: 20px; }
+  .letterStamp strong { font-size: 15px; }
+  .letterNote { position: static; margin-top: 10px; white-space: normal; width: fit-content; }
+  .letterWrap { padding-bottom: 0; }
+}

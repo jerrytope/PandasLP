@@ -113,12 +113,12 @@ export default function Navbar({
               Talk to a lawyer
             </button>
             {user ? (
-              <Link href="/dashboard" className={`btn btn-outline btn-sm ${styles.hideMobile}`} onClick={close}>My matters</Link>
+              <Link href="/dashboard" className={`btn btn-outline btn-sm ${styles.hideMobile}`} onClick={close}>My cases</Link>
             ) : (
               <button type="button" className={`${styles.textAction} ${styles.hideMobile}`} onClick={() => { onAuthClick?.(); close() }}>Sign in</button>
             )}
             <button type="button" className={`btn btn-primary btn-sm ${styles.hideMobile}`} onClick={() => { onNavServices?.(); close() }}>
-              Start a matter
+              Start a case
             </button>
             <button
               type="button"
@@ -182,10 +182,10 @@ export default function Navbar({
           <Link href="/how-we-work" onClick={close}>How we work</Link>
           <Link href="/blog" onClick={close}>Notes</Link>
           <div className={styles.drawerActions}>
-            <button type="button" className="btn btn-primary btn-lg" onClick={() => { onNavServices?.(); close() }}>Start a matter</button>
+            <button type="button" className="btn btn-primary btn-lg" onClick={() => { onNavServices?.(); close() }}>Start a case</button>
             <button type="button" className="btn btn-outline btn-lg" onClick={() => { onStartLawyerConsult?.(); close() }}>Talk to a lawyer</button>
             {user ? (
-              <Link href="/dashboard" className="btn btn-ghost" onClick={close}>My matters</Link>
+              <Link href="/dashboard" className="btn btn-ghost" onClick={close}>My cases</Link>
             ) : (
               <button type="button" className="btn btn-ghost" onClick={() => { onAuthClick?.(); close() }}>Sign in</button>
             )}

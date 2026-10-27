@@ -1,12 +1,13 @@
 // Light / dark theme. The palette lives in app/globals.css (:root is light, :root[data-theme="dark"]
 // is dark); this file only decides which one <html> gets.
 //
-// Dark first (docs/frontend-revamp-plan.md): every visitor starts on dark, whatever their device
-// uses, until they pick light with the switch. What is stored: nothing (dark), or 'light'.
+// Light first (docs/frontend-revamp-plan.md, changed 27 Oct 2026: dark read as a tech product, not
+// a law firm): every visitor starts on the light parchment, whatever their device uses, until
+// they pick dark with the switch. What is stored: nothing (light), or 'dark'.
 
 export type Theme = 'light' | 'dark'
 
-export const DEFAULT_THEME: Theme = 'dark'
+export const DEFAULT_THEME: Theme = 'light'
 
 export const THEME_STORAGE_KEY = 'pandaslp-theme'
 

@@ -6,6 +6,7 @@
 // takes its default (placeholder photos, no numbers, no quotes).
 
 import { supabaseAdmin } from './supabaseAdmin'
+import { FRONTEND_ONLY } from './frontendOnly'
 import {
   normaliseGroup,
   normaliseSiteContent,
@@ -26,6 +27,8 @@ export function clearSiteContentCache(): void {
 
 export async function getSiteContent(): Promise<SiteContent> {
   if (cache && Date.now() - cache.at < CACHE_MS) return cache.content
+  // npm run dev:frontend: there is no database to ask, so go straight to the defaults.
+  if (FRONTEND_ONLY) return normaliseSiteContent({})
   try {
     const { data, error } = await supabaseAdmin.from('site_content').select('key, value')
     if (error) throw new Error(error.message)
