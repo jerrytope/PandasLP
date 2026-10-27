@@ -1059,7 +1059,7 @@ function MatterRail({ agentName, caseId, started, drafted, paid, invoicedByFirm 
         ))}
       </ol>
       <p className={styles.railNote}>Nothing is sent to anyone until a licensed practitioner has reviewed and signed it.</p>
-      <a className={styles.railLink} href="/dashboard">My matters</a>
+      <a className={styles.railLink} href="/dashboard">My cases</a>
     </aside>
   )
 }

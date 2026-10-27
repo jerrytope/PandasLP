@@ -111,7 +111,7 @@ export default function Footer() {
             <ul>
               <li><Link href="/how-we-work">How we work</Link></li>
               <li><Link href="/about">About</Link></li>
-              <li><Link href="/dashboard">My matters</Link></li>
+              <li><Link href="/dashboard">My cases</Link></li>
               <li><a href={FIRM.phoneHref}>{FIRM.phone}</a></li>
               <li><a href={`mailto:${FIRM.email}`} style={{ wordBreak: 'break-all' }}>{FIRM.email}</a></li>
               <li className={styles.footerMuted}>{FIRM.address[0]}<br />{FIRM.address[1]}</li>

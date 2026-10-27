@@ -3,7 +3,7 @@
 **Goal:** a site that looks designed, not assembled. It is dark first like Cencori, shows the product working like CipherSense, makes dated claims like Smile ID, and copies Mobirevo's "what happens next" and confidentiality blocks. The full plan (references, structure, homepage order) was agreed on 22 Oct 2026.
 
 ## Decisions
-- **Dark first;** light mode through the existing toggle (`lib/theme.ts`).
+- **Light first** (changed 27 Oct 2026, was dark first); dark mode through the existing toggle (`lib/theme.ts`).
 - **All four phases:** design system → public site → client app → staff screens.
 - **Placeholders until the real assets exist, editable in Admin → Site content:**
   - Photos show a designed placeholder panel (a hairline grid and a brass seal), never stock photos or fake people.
@@ -56,6 +56,17 @@ Checked on 22 Oct 2026: type check clean, 584 tests pass, production build passe
 - [x] Admin sidebar moved from the old navy to ink and brass (`AdminShell.module.css`).
 - [x] Admin → Site content: placeholders contained in their frames, fields aligned.
 - [x] `/manageai` and `/developers/api` checked; they needed no changes.
+
+## 27 Oct 2026 review: "too technical"
+The owner felt the site read as a tech product. Changed:
+- [x] Light is the default theme.
+- [x] Mono font only for code, document reference lines and case references; every label, eyebrow, fee and date is sans, sentence case (label rules across the public CSS and the chat rail).
+- [x] Hero: the terminal-style run-log replaced by `SignedLetter` (a sample letter of demand on letterhead, signed and stamped, with two pinned notes); shorter headline so the buttons sit above the fold.
+- [x] Homepage copy in plain words ("case", "lawyer", "deliver"); the API code sample replaced by four plain steps for lenders, with a link to the API docs.
+- [x] The empty photo placeholder band shows only its line until a real photo is uploaded.
+- [x] Navigation: "Start a case", "My cases".
+- [x] The install prompt waits for a second visit (it covered the hero buttons).
+- [ ] A named lawyer (photo, name, enrolment number) near the hero: needs the owner's details.
 
 ## Open for the owner
 - Review it in both themes, on a phone and a desktop.

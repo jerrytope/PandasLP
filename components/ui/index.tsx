@@ -117,18 +117,61 @@ export function QuoteCard({ quote, name, role, metrics = [] }: { quote: string; 
   )
 }
 
-/** How a matter moves: numbered steps, each with what the AI does and what the lawyer checks. */
+/** How a case moves: numbered steps, each with what the AI does and what the lawyer checks. */
 export function Pipeline({ steps }: { steps: { title: string; ai: string; lawyer: string }[] }) {
   return (
     <ol className={styles.pipeline}>
       {steps.map((s) => (
         <li key={s.title} className={styles.pipelineStep}>
           <h3>{s.title}</h3>
-          <p className={styles.pipelineRole}><b>The agent</b>{s.ai}</p>
-          <p className={styles.pipelineRole}><b>The lawyer</b>{s.lawyer}</p>
+          <p className={styles.pipelineRole}><b>Our AI</b>{s.ai}</p>
+          <p className={styles.pipelineRole}><b>Your lawyer</b>{s.lawyer}</p>
         </li>
       ))}
     </ol>
+  )
+}
+
+/**
+ * The homepage's hero picture: a sample letter of demand on the firm's letterhead, signed and
+ * stamped, with two notes pinned to it. Shows what the client ends up holding, not how the
+ * system works. Always paper, so it reads the same in both themes.
+ */
+export function SignedLetter({ reference, recipient, amount, notes = [] }: { reference: string; recipient: string; amount: string; notes?: string[] }) {
+  return (
+    <figure className={styles.letterWrap} aria-label="A sample letter of demand, signed by a lawyer">
+      <div className={styles.letter}>
+        <header className={styles.letterHead}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- a small static logo on paper */}
+          <img src="/logo-mark.png" alt="" aria-hidden="true" />
+          <div>
+            <strong>Pandas LP</strong>
+            <span>Legal practitioners · Victoria Island, Lagos</span>
+          </div>
+        </header>
+        <div className={styles.letterRef}><span>{reference}</span><span>Sample</span></div>
+        <p className={styles.letterTo}>To: {recipient}</p>
+        <div className={styles.letterTitle}>Letter of demand</div>
+        <p>Our client instructs us that you owe the sum of <b>{amount}</b>, being the balance due on the invoice attached to this letter.</p>
+        <p>Take notice that unless the said sum is paid within fourteen (14) days, we have firm instructions to commence proceedings against you without further notice.</p>
+        <div className={styles.letterSign}>
+          <svg viewBox="0 0 160 48" aria-hidden="true" className={styles.letterSignature}>
+            <path d="M6 34c10-18 18-26 22-22s-8 24-2 24 14-26 20-24-4 20 2 20 10-12 16-14 4 10 10 10 14-14 22-14 6 8 14 6 18-8 30-12" />
+          </svg>
+          <span>For: Pandas LP, Legal Practitioners</span>
+        </div>
+        <div className={styles.letterStamp} aria-hidden="true">
+          <span>Reviewed</span>
+          <strong>Signed</strong>
+          <span>Pandas LP</span>
+        </div>
+      </div>
+      {notes.map((n, i) => (
+        <figcaption key={n} className={`${styles.letterNote} ${i % 2 ? styles.letterNoteAlt : ''}`.trim()}>
+          <span aria-hidden="true">✓</span>{n}
+        </figcaption>
+      ))}
+    </figure>
   )
 }
 
