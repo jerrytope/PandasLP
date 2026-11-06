@@ -9,8 +9,9 @@ import AuthModal from '@/components/AuthModal'
 import { LawyerConsultBooking } from '@/components/LawyerConsult'
 import { AGENTS } from '@/lib/agents'
 import { getAgentPayment } from '@/lib/agentServiceMap'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase, authedFetch } from '@/lib/supabaseClient'
 import { captureAttribution } from '@/lib/attribution'
+import { extractClientPhone, extractClientEmail, extractRecipientPhone, extractDocument } from '@/lib/agentChatParsing'
 
 const AUTO_FILE_COURT_MESSAGE =
   "The debtor did not respond within the 14-day deadline. I'd like to proceed to file this claim at the Small Claims Court now. Please prepare the necessary court filing documents using the details we already established, and let me know what else you need from me."
@@ -84,23 +85,69 @@ function AgentPageInner() {
     setResumeLoading(true)
 
     async function loadResume() {
+      if (!agent) {
+        setResumeLoading(false)
+        return
+      }
       const [{ data: caseData }, { data: msgs }] = await Promise.all([
         supabase.from('cases').select('*').eq('id', resumeId).single(),
-        supabase.from('messages').select('role, content').eq('case_id', resumeId).order('created_at'),
+        supabase.from('messages').select('id, role, content').eq('case_id', resumeId).order('created_at').order('id'),
       ])
       if (!caseData) {
         setResumeLoading(false)
         return
       }
 
-      const draftDoc =
+      const caseDraftDoc =
         caseData.document_title && caseData.document_body
           ? { title: caseData.document_title, body: caseData.document_body, price: caseData.expected_amount ?? null }
           : null
+      let transcriptDraftDoc = null
+      const resumedMessages = (msgs ?? []).map((message) => {
+        if (message.role !== 'assistant') return message
+        let content = message.content
+        content = extractClientPhone(content).visible
+        content = extractRecipientPhone(content).visible
+        content = extractClientEmail(content).visible
+        const extracted = extractDocument(content)
+        content = extracted.visible
+        if (extracted.doc) transcriptDraftDoc = extracted.doc
+        return { ...message, content }
+      })
+      if (resumedMessages[0]?.content !== agent.starterMessage) {
+        resumedMessages.unshift({
+          role: 'assistant',
+          content: agent.starterMessage,
+        })
+      }
+
+      let draftDoc = transcriptDraftDoc ?? caseDraftDoc
+      if (
+        transcriptDraftDoc &&
+        ['draft', 'document_ready'].includes(caseData.status) &&
+        transcriptDraftDoc.body !== caseData.document_body
+      ) {
+        const response = await authedFetch('/api/save-document', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            caseId: resumeId,
+            title: transcriptDraftDoc.title,
+            body: transcriptDraftDoc.body,
+            price: transcriptDraftDoc.price,
+          }),
+        })
+        const saved = await response.json().catch(() => ({}))
+        if (response.ok && typeof saved.expectedAmount === 'number') {
+          draftDoc = { ...transcriptDraftDoc, price: saved.expectedAmount }
+        } else {
+          console.error('Could not restore the pending document:', saved.error ?? response.status)
+        }
+      }
 
       const alreadyPaid = ['paid', 'letter_served', 'filed', 'judgment_obtained', 'closed'].includes(caseData.status)
 
-      setResumeData({ caseId: resumeId, messages: msgs ?? [], draftDoc, clientPhone: caseData.client_phone ?? null, initialPaid: alreadyPaid })
+      setResumeData({ caseId: resumeId, messages: resumedMessages, draftDoc, clientPhone: caseData.client_phone ?? null, initialPaid: alreadyPaid })
       if (auto) setAutoMessage(auto)
       else if (fileCourt) setAutoMessage(AUTO_FILE_COURT_MESSAGE)
       setResumeLoading(false)
@@ -110,7 +157,7 @@ function AgentPageInner() {
       console.error('Failed to load resumed case:', err)
       setResumeLoading(false)
     })
-  }, [searchParams])
+  }, [searchParams, agent])
 
   function handleApproved() {
     if (payment?.kind === 'lawyer') {

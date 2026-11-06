@@ -18,7 +18,7 @@ const LIVE = [
   {
     href: '/agents/debt-recovery',
     name: 'Debt Recovery',
-    price: 'From ₦10,000',
+    price: 'From ₦20,000',
     line: 'Demand letter, Day 7 and Day 14 follow-ups, then filing at the Small Claims Court.',
     img: '/img/img-debt.jpg',
     alt: 'A sealed letter on firm stationery, ready to be served',

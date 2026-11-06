@@ -28,7 +28,7 @@ const RUN_LOG = [
   { status: 'done', text: 'Amount owed confirmed', detail: '₦2,400,000' },
   { status: 'done', text: 'Evidence and limitation period checked' },
   { status: 'done', text: 'Letter of demand drafted' },
-  { status: 'done', text: 'You read the draft and paid', detail: '₦10,000' },
+  { status: 'done', text: 'You read the draft and paid', detail: '₦20,000' },
   { status: 'next', text: 'Awaiting review and signature by a lawyer' },
 ]
 
@@ -57,13 +57,13 @@ const SAFEGUARDS = [
 ]
 
 const FEE_LEAD = {
-  value: '₦10,000',
+  value: '₦20,000',
   label: 'Letter of demand, yours to serve',
   note: 'Drafted from the firm’s template, reviewed and signed by a licensed practitioner before it goes anywhere. You read the draft before you pay.',
 }
 
 const FEES = [
-  { label: 'The same letter, served by us', value: '₦25,000', best: 'Best if you would rather the firm delivers it.' },
+  { label: 'The same letter, served by us', value: '₦40,000', best: 'Best if you would rather the firm delivers it.' },
   { label: 'Day 7 and Day 14 follow-ups', value: 'Included', accent: true, best: 'Sent for you once the letter is served.' },
   { label: 'Each tenancy or lease document', value: '₦25,000', best: 'Notices to quit, tenancy and lease agreements.' },
   { label: 'Deeds transferring title, invoiced by the firm', value: '2.5% of the consideration', best: 'No drafting fee on top.' },
@@ -73,7 +73,7 @@ const FEES = [
 /* Every answer restates a fact already on this page. No outcome or speed promises. */
 const FAQS = [
   { q: 'What does Pandas LP do?', a: 'Pandas LP is a licensed Nigerian law firm (CAC BN 9646741) handling debt recovery and property law: letters of demand, follow-ups, filing at the Small Claims Court, notices to quit, tenancy and lease documents, deeds of assignment and property searches.' },
-  { q: 'How much does a letter of demand cost?', a: 'A letter of demand is ₦10,000 if you serve it yourself, or ₦25,000 if we serve it for you. The Day 7 and Day 14 follow-ups are included. Court filing fees, if the matter goes further, are set by the court.' },
+  { q: 'How much does a letter of demand cost?', a: 'A letter of demand is ₦20,000 if you serve it yourself, or ₦40,000 if we serve it for you. The Day 7 and Day 14 follow-ups are included. Court filing fees, if the matter goes further, are set by the court.' },
   { q: 'Who prepares and signs the documents?', a: 'Each document is drafted from the firm’s template, then reviewed and signed by a licensed legal practitioner before it goes anywhere. You read the draft before you pay.' },
   { q: 'What happens if the debtor still does not pay?', a: 'After the letter is served, a follow-up goes out on Day 7 and the response window closes on Day 14. If the debt is still unpaid, the matter can move to filing at the Small Claims Court.' },
   { q: 'How much do property documents cost?', a: 'Each tenancy or lease document is ₦25,000. Deeds transferring title are invoiced by the firm at 2.5% of the consideration.' },
@@ -107,7 +107,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
                 Tell us what happened. <em>We take it from there.</em>
               </h1>
               <p className={styles.heroLede}>
-                Recover money you are owed with a letter of demand from ₦10,000, reviewed and signed by a licensed practitioner.
+                Recover money you are owed with a letter of demand from ₦20,000, reviewed and signed by a licensed practitioner.
                 Day 7 and Day 14 follow-ups are included.
               </p>
               <div className={styles.heroActions}>

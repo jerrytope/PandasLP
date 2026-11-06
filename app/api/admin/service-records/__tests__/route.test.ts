@@ -9,10 +9,21 @@ const state: {
   records: Record<string, unknown>[]
   insertSpy: (payload: Record<string, unknown>) => void
   updateSpy: (payload: Record<string, unknown>) => void
-} = { caseRow: null, records: [], insertSpy: vi.fn(), updateSpy: vi.fn() }
+  copySpy: (source: string, destination: string) => void
+  copyError: { message: string } | null
+} = { caseRow: null, records: [], insertSpy: vi.fn(), updateSpy: vi.fn(), copySpy: vi.fn(), copyError: null }
 
 vi.mock('@/lib/supabaseAdmin', () => ({
   supabaseAdmin: {
+    storage: {
+      from: () => ({
+        copy: (source: string, destination: string) => {
+          state.copySpy(source, destination)
+          return Promise.resolve({ error: state.copyError })
+        },
+        remove: async () => ({ error: null }),
+      }),
+    },
     from: (table: string) => {
       if (table === 'cases') {
         return {
@@ -63,6 +74,8 @@ describe('POST /api/admin/service-records', () => {
     state.records = []
     state.insertSpy = vi.fn()
     state.updateSpy = vi.fn()
+    state.copySpy = vi.fn()
+    state.copyError = null
     process.env.NEXT_PUBLIC_SITE_URL = 'https://pandaslp.com.ng'
   })
 
@@ -82,16 +95,32 @@ describe('POST /api/admin/service-records', () => {
     expect(res.status).toBe(400)
   })
 
+  it('requires a reviewed document before serving', async () => {
+    state.caseRow = { id: 'case-1', case_number: 1, created_at: '2026-01-01T00:00:00Z', document_title: 'Letter of Demand', reviewed_at: null }
+    const res = await POST(req('POST', { caseId: 'case-1', phone: '08012345678' }))
+    expect(res.status).toBe(409)
+    expect(state.copySpy).not.toHaveBeenCalled()
+  })
+
   it('dispatches, records the attempt, and returns a wa.me link', async () => {
-    state.caseRow = { id: 'case-1', case_number: 42, created_at: '2026-01-15T00:00:00Z', document_title: 'Letter of Demand' }
+    state.caseRow = { id: 'case-1', case_number: 42, created_at: '2026-01-15T00:00:00Z', document_title: 'Letter of Demand', reviewed_at: '2026-01-16T00:00:00Z' }
     const res = await POST(req('POST', { caseId: 'case-1', phone: '08012345678' }))
     const data = await res.json()
     expect(res.status).toBe(200)
     expect(data.whatsappLink).toContain('https://wa.me/2348012345678')
     expect(data.serveUrl).toContain('https://pandaslp.com.ng/serve/')
     expect(state.insertSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ case_id: 'case-1', channel: 'whatsapp', status: 'dispatched' }),
+      expect.objectContaining({ case_id: 'case-1', channel: 'whatsapp', status: 'dispatched', document_path: expect.stringMatching(/^served\/.+\.pdf$/) }),
     )
+    expect(state.copySpy).toHaveBeenCalledWith('reviewed/case-1.pdf', expect.stringMatching(/^served\/.+\.pdf$/))
+  })
+
+  it('does not record a dispatch when copying the stamped PDF fails', async () => {
+    state.caseRow = { id: 'case-1', case_number: 42, created_at: '2026-01-15T00:00:00Z', document_title: 'Letter of Demand', reviewed_at: '2026-01-16T00:00:00Z' }
+    state.copyError = { message: 'Object not found' }
+    const res = await POST(req('POST', { caseId: 'case-1', phone: '08012345678' }))
+    expect(res.status).toBe(500)
+    expect(state.insertSpy).not.toHaveBeenCalled()
   })
 })
 

@@ -12,8 +12,8 @@ import type { AgentId } from './agents'
 import { getAgentPayment } from './agentServiceMap'
 import { propertyOnlineFees } from './propertyPricing'
 
-export const SMALL_CLAIMS_SELF_SERVE = 10_000
-export const SMALL_CLAIMS_PANDAS_SERVES = 25_000
+export const SMALL_CLAIMS_SELF_SERVE = 20_000
+export const SMALL_CLAIMS_PANDAS_SERVES = 40_000
 export const JUDGMENT_ENFORCEMENT_BASE_FEE = 10_000
 export const JUDGMENT_ENFORCEMENT_RATE = 0.05
 

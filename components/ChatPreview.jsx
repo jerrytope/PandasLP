@@ -21,7 +21,7 @@ const PREVIEWS = {
     label: 'Someone owes me money',
     agentId: 'small-claims',
     name: 'Small Claims Court Agent',
-    sub: 'From ₦10,000',
+    sub: 'From ₦20,000',
     cta: 'Start a recovery matter',
     turns: [
       ['a', 'Who owes you money, and what was it for?'],

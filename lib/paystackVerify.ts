@@ -6,11 +6,12 @@
 //   1. Never trust the browser's word that a payment happened or how much it was for. The
 //      checkout's success callback proves nothing — anyone can call the API with a made-up
 //      reference. verifyPayment() asks Paystack itself.
-//   2. A payment pays for ONE thing. Without claimPaymentReference(), one real ₦25,000
-//      payment's reference could be replayed to mark any number of ₦25,000 cases paid.
+//   2. A payment pays for ONE thing. Without claimPaymentReference(), one real payment
+//      reference could be replayed to mark multiple cases paid.
 
 import { isProduction } from './appEnv'
 import { supabaseAdmin } from './supabaseAdmin'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 
 const AMOUNT_TOLERANCE_NAIRA = 1 // guard against float/kobo rounding, not a real discount
 
@@ -19,6 +20,46 @@ export type PaymentPurpose = 'case' | 'custom_claim'
 export type VerifiedPayment =
   | { ok: true; amount: number; reference: string }
   | { ok: false; status: number; error: string }
+
+export function paystackSecret(): string | null {
+  const key = process.env.PAYSTACK_SECRET_KEY
+  return key && !key.includes('placeholder') ? key : null
+}
+
+export function isValidPaystackSignature(rawBody: string, signature: string | null, secret: string): boolean {
+  if (!signature) return false
+  const expected = createHmac('sha512', secret).update(rawBody).digest('hex')
+  const expectedBytes = Buffer.from(expected, 'utf8')
+  const suppliedBytes = Buffer.from(signature, 'utf8')
+  return expectedBytes.length === suppliedBytes.length && timingSafeEqual(expectedBytes, suppliedBytes)
+}
+
+export type VerifiedPaystackTransaction =
+  | { ok: true; amount: number; reference: string; caseId: string | null; customerEmail: string | null }
+  | { ok: false; status: number; error: string }
+
+export async function verifyPaystackTransaction(reference: string, secret: string): Promise<VerifiedPaystackTransaction> {
+  let response: Response
+  try {
+    response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+      headers: { Authorization: `Bearer ${secret}` },
+    })
+  } catch {
+    return { ok: false, status: 502, error: 'Could not reach Paystack to verify the payment.' }
+  }
+  const body = await response.json().catch(() => null)
+  if (!response.ok || !body?.status || !body.data) return { ok: false, status: 502, error: 'Could not verify payment with Paystack.' }
+  if (body.data.status !== 'success') return { ok: false, status: 402, error: 'Payment was not successful.' }
+  if (body.data.currency && body.data.currency !== 'NGN') return { ok: false, status: 400, error: 'Payment was not made in naira.' }
+  const metadata = body.data.metadata && typeof body.data.metadata === 'object' ? body.data.metadata : {}
+  return {
+    ok: true,
+    amount: body.data.amount / 100,
+    reference: body.data.reference,
+    caseId: typeof metadata.case_id === 'string' ? metadata.case_id : null,
+    customerEmail: typeof body.data.customer?.email === 'string' ? body.data.customer.email : null,
+  }
+}
 
 export function isPaystackConfigured(): boolean {
   const key = process.env.PAYSTACK_SECRET_KEY
@@ -66,6 +107,8 @@ export async function verifyPayment(opts: {
     amount = opts.clientAmount
     reference = opts.reference
   } else {
+    const secret = paystackSecret()
+    if (!secret) return { ok: false, status: 503, error: 'Payment gateway is not configured.' }
     const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(opts.reference)}`, {
       headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
     }).catch(() => null)

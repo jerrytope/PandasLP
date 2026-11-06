@@ -44,6 +44,15 @@ export interface NegotiationReplyEmailData {
   siteUrl: string
 }
 
+export interface NewEvidenceAlertEmailData {
+  caseNumber: number | null
+  caseTitle: string | null
+  clientEmail: string | null
+  files: { filename: string; facts?: string | null }[]
+  via: 'chat' | 'upload link'
+  reviewUrl: string
+}
+
 export interface NewOrderAlertEmailData {
   caseTitle: string
   clientEmail: string
@@ -101,6 +110,65 @@ export function baseWrapper(content: string) {
 </table>
 </body>
 </html>`
+}
+
+export function getCourtPackEmailHtml(text: string, whatsappUrl: string, uploadUrl?: string): string {
+  const safe = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  const link = (s: string) => s.replace(/https?:\/\/[^\s)]+/g, (url) => `<a href="${url}" style="color:#D6BB80;">${url}</a>`)
+  const paragraphStyle = 'margin:0 0 14px;font-size:15px;color:#ABB1A2;line-height:1.6;'
+  const blocks = text.trim().split(/\n\s*\n/).map((block) => {
+    const lines = block.split('\n')
+    const heading = lines[0].trim()
+    const isHeading = heading.length > 3 && heading === heading.toUpperCase() && /[A-Z]/.test(heading)
+    const rest = isHeading ? lines.slice(1) : lines
+    const output: string[] = []
+    if (isHeading) output.push(`<h3 style="margin:22px 0 10px;font-size:13px;font-weight:700;color:#D6BB80;letter-spacing:0.06em;">${safe(heading)}</h3>`)
+    const numbered = rest.length > 0 && rest.every((line) => /^\d+\.\s/.test(line.trim()))
+    const bullets = rest.length > 0 && rest.every((line) => /^-\s/.test(line.trim()))
+    if (numbered || bullets) {
+      const tag = numbered ? 'ol' : 'ul'
+      output.push(`<${tag} style="margin:0 0 14px;padding-left:20px;font-size:15px;color:#ABB1A2;line-height:1.6;">${rest.map((line) => `<li style="margin:0 0 8px;">${link(safe(line.trim().replace(/^(\d+\.|-)\s/, '')))}</li>`).join('')}</${tag}>`)
+    } else if (rest.length) {
+      const listStart = rest.findIndex((line) => /^-\s/.test(line.trim()))
+      if (listStart > 0) {
+        output.push(`<p style="${paragraphStyle}">${link(safe(rest.slice(0, listStart).join(' ')))}</p>`)
+        output.push(`<ul style="margin:0 0 14px;padding-left:20px;font-size:15px;color:#ABB1A2;line-height:1.6;">${rest.slice(listStart).map((line) => `<li>${safe(line.trim().replace(/^-\s/, ''))}</li>`).join('')}</ul>`)
+      } else {
+        output.push(`<p style="${paragraphStyle}">${rest.map((line) => link(safe(line))).join('<br/>')}</p>`)
+      }
+    }
+    return output.join('')
+  })
+  return baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;letter-spacing:-0.01em;">Your court papers</h2>
+      ${blocks.join('\n')}
+      <p style="margin:20px 0 0;">
+        ${uploadUrl ? `<a href="${safe(uploadUrl)}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-weight:700;font-size:14px;text-decoration:none;padding:12px 20px;border-radius:999px;margin:0 8px 8px 0;">Upload your signed forms</a>` : ''}
+        <a href="${safe(whatsappUrl)}" style="display:inline-block;background:${uploadUrl ? 'transparent' : '#D6BB80'};color:${uploadUrl ? '#D6BB80' : '#182A3A'};border:1px solid #D6BB80;font-weight:700;font-size:14px;text-decoration:none;padding:11px 20px;border-radius:999px;margin:0 0 8px;">Ask us on WhatsApp</a>
+      </p>
+    `)
+}
+
+export function getNewEvidenceAlertEmail(d: NewEvidenceAlertEmailData): { subject: string; html: string; text: string } {
+  const safe = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  const caseLabel = d.caseNumber != null ? `case #${d.caseNumber}` : 'a case'
+  const what = d.via === 'upload link' ? 'signed forms' : 'evidence'
+  const subject = `New ${what} on ${caseLabel}${d.files.length > 1 ? ` (${d.files.length} files)` : ''} | Pandas LP`
+  const lead = `A client sent ${what} on ${caseLabel}${d.caseTitle ? ` (${d.caseTitle})` : ''}${d.clientEmail ? `, from ${d.clientEmail}` : ''}, through the ${d.via}.`
+  const filesText = d.files.map((file) => `- ${file.filename}${file.facts ? `\n  ${file.facts.replace(/\s+/g, ' ').slice(0, 300)}` : ''}`).join('\n')
+
+  return {
+    subject,
+    text: `${lead}\n\n${filesText}\n\nOpen the case: ${d.reviewUrl}\n\nPandas LP`,
+    html: baseWrapper(`
+      <h2 style="margin:0 0 16px;font-size:22px;font-weight:700;color:#F3EFE3;">New ${what}</h2>
+      <p style="margin:0 0 16px;font-size:15px;color:#ABB1A2;line-height:1.6;">${safe(lead)}</p>
+      <ul style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#ABB1A2;line-height:1.6;">
+        ${d.files.map((file) => `<li style="margin:0 0 8px;"><strong>${safe(file.filename)}</strong>${file.facts ? `<br/>${safe(file.facts.replace(/\s+/g, ' ').slice(0, 300))}` : ''}</li>`).join('')}
+      </ul>
+      <a href="${safe(d.reviewUrl)}" style="display:inline-block;background:#D6BB80;color:#182A3A;font-size:14px;font-weight:700;text-decoration:none;padding:13px 24px;border-radius:12px;">Open the case</a>
+    `),
+  }
 }
 
 export function getPaymentConfirmedEmail(data: PaymentConfirmedEmailData): { subject: string; html: string; text: string } {

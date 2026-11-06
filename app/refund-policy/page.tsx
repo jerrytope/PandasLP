@@ -46,7 +46,7 @@ export default function RefundPolicyPage() {
             <ul>
               <li>You were charged twice for the same case (duplicate payment)</li>
               <li>Payment was taken but no document was ever generated, due to a technical failure on our side</li>
-              <li>You paid for Pandas LP to serve your letter (the ₦25,000 tier), and we failed to serve it within a reasonable time through our own fault</li>
+              <li>You paid for Pandas LP to serve your letter (the ₦40,000 tier), and we failed to serve it within a reasonable time through our own fault</li>
             </ul>
             <p>We will assess partial refunds on a case-by-case basis for the pandas-serves tier if service was attempted but not completed, at our discretion, based on the work actually performed.</p>
 

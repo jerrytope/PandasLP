@@ -159,6 +159,36 @@ export default function CaseActionMenu({
               </button>
             )}
 
+            {c.agent_id === 'small-claims' && !c.brand_id && ['letter_served', 'filed'].includes(c.status) && (
+              <>
+                <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ justifyContent: 'flex-start', padding: '8px 12px', fontSize: 13 }}
+                  onClick={() => {
+                    setShowMenu(false)
+                    if (window.confirm('Record this debt as recovered and close the matter?')) onAction(c.id, 'markRecovered')
+                  }}
+                >
+                  <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
+                  <span>Close — debt recovered</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  style={{ justifyContent: 'flex-start', padding: '8px 12px', fontSize: 13 }}
+                  onClick={() => {
+                    setShowMenu(false)
+                    if (window.confirm('Record this matter as settled and close it?')) onAction(c.id, 'markSettled')
+                  }}
+                >
+                  <CheckCircle2 size={14} style={{ color: 'var(--success)' }} />
+                  <span>Close — settled</span>
+                </button>
+              </>
+            )}
+
             <div style={{ height: 1, background: 'var(--border-subtle)', margin: '4px 0' }} />
 
             {/* Delete Case Option */}

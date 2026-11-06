@@ -1,21 +1,36 @@
 import { describe, it, expect } from 'vitest'
-import { resolveCasePrice, judgmentEnforcementFee } from '../casePricing'
+import {
+  resolveCasePrice,
+  judgmentEnforcementFee,
+  SMALL_CLAIMS_SELF_SERVE,
+  SMALL_CLAIMS_PANDAS_SERVES,
+} from '../casePricing'
 import { getFee, PROPERTY_DOCUMENTS, PROPERTY_PRICING, propertyOnlineFees } from '../propertyPricing'
 
 describe('resolveCasePrice', () => {
   describe('small-claims', () => {
     it('accepts the two tiers and derives the delivery option', () => {
-      expect(resolveCasePrice('small-claims', 10000, null)).toEqual({ ok: true, amount: 10000, deliveryOption: 'self-serve' })
-      expect(resolveCasePrice('small-claims', 25000, null)).toEqual({ ok: true, amount: 25000, deliveryOption: 'pandas-serves' })
+      expect(resolveCasePrice('small-claims', SMALL_CLAIMS_SELF_SERVE, null)).toEqual({
+        ok: true,
+        amount: SMALL_CLAIMS_SELF_SERVE,
+        deliveryOption: 'self-serve',
+      })
+      expect(resolveCasePrice('small-claims', SMALL_CLAIMS_PANDAS_SERVES, null)).toEqual({
+        ok: true,
+        amount: SMALL_CLAIMS_PANDAS_SERVES,
+        deliveryOption: 'pandas-serves',
+      })
     })
 
     it('falls back to self-serve when the AI emitted no PRICE', () => {
-      expect(resolveCasePrice('small-claims', undefined, null)).toEqual({ ok: true, amount: 10000, deliveryOption: 'self-serve' })
+      expect(resolveCasePrice('small-claims', undefined, null)).toEqual({ ok: true, amount: 20_000, deliveryOption: 'self-serve' })
     })
 
     it('rejects any other amount, including a cheaper one', () => {
       expect(resolveCasePrice('small-claims', 100, null).ok).toBe(false)
       expect(resolveCasePrice('small-claims', 24999, null).ok).toBe(false)
+      expect(resolveCasePrice('small-claims', 10_000, null).ok).toBe(false)
+      expect(resolveCasePrice('small-claims', 25_000, null).ok).toBe(false)
       expect(resolveCasePrice('small-claims', 0, null).ok).toBe(false)
     })
   })
@@ -59,7 +74,7 @@ describe('resolveCasePrice', () => {
   })
 
   it('rejects negative and fractional prices for every agent', () => {
-    expect(resolveCasePrice('small-claims', -10000, null).ok).toBe(false)
+    expect(resolveCasePrice('small-claims', -SMALL_CLAIMS_SELF_SERVE, null).ok).toBe(false)
     expect(resolveCasePrice('contracts', 5000.5, null).ok).toBe(false)
   })
 })

@@ -66,7 +66,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
-    ...['/how-we-work', '/about', '/businesses'].map((path) => ({
+    ...['/how-we-work', '/about', '/businesses', '/debt-recovery-for-businesses', '/debt-recovery-for-lenders'].map((path) => ({
       url: `${SITE_URL}${path}`,
       changeFrequency: 'monthly' as const,
       priority: 0.7,

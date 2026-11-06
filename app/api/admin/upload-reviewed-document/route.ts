@@ -3,21 +3,11 @@ export const runtime = 'nodejs'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
+import { CASE_DOCUMENT_BUCKET, reviewedDocumentPath } from '@/lib/reviewedDocuments'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 10 * 60 * 1000
 const MAX_FILE_BYTES = 10 * 1024 * 1024
-const BUCKET = 'case-documents'
-
-// Deterministic per-case path — deliberately not a new `cases` column. See the schema-drift
-// incident (5 columns silently missing from production for who knows how long): storing this
-// as "does an object exist at this path" instead of a DB column means there's nothing new to
-// forget to migrate. `upsert: true` on write makes re-uploading a corrected stamp just replace
-// the existing file at the same path, no separate "delete old, add new" step needed.
-function storagePath(caseId: string) {
-  return `reviewed/${caseId}.pdf`
-}
-
 // The staff-uploaded, reviewed-and-stamped PDF for a specific case — when present, this is
 // what sendCaseEmail's `reviewed_document` type attaches instead of the auto-generated PDF
 // built from document_body (see lib/sendCaseEmail.ts). Lets a lawyer's actual signature/stamp
@@ -73,8 +63,8 @@ export async function POST(req: Request) {
   }
 
   const { error: uploadErr } = await supabaseAdmin.storage
-    .from(BUCKET)
-    .upload(storagePath(caseId), buffer, { contentType: 'application/pdf', upsert: true })
+    .from(CASE_DOCUMENT_BUCKET)
+    .upload(reviewedDocumentPath(caseId), buffer, { contentType: 'application/pdf', upsert: true })
   if (uploadErr) {
     console.error('Failed to upload reviewed document:', uploadErr)
     // Admin-only route, so the storage message is safe to show — it is the only way to see

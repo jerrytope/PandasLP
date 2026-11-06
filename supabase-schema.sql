@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.cases (
   document_title   TEXT,
   document_body    TEXT,
   delivery_option  TEXT,
-  -- callback number for the pandas-serves (₦25,000) tier — collected during intake so a
+  -- callback number for the pandas-serves (₦40,000) tier — collected during intake so a
   -- lawyer can reach the client once payment is confirmed; see lib/agents.ts CLIENT_PHONE block
   client_phone     TEXT,
   -- the real client's email, for a case with no client Supabase account at all — the Custom
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- tenant — NOT the client's own number (that's client_phone above, a different person
   -- entirely). "Serve via WhatsApp" (app/admin/page.tsx) sends to this number: an e-service
   -- notice sent to the client's own phone instead of the debtor's would defeat the entire
-  -- point of service. Collected only when the client picks the ₦25,000 "Pandas LP serves it"
+  -- point of service. Collected only when the client picks the ₦40,000 "Pandas LP serves it"
   -- tier — see lib/agents.ts's RECIPIENT_PHONE block and lib/agentChatParsing.ts's
   -- extractRecipientPhone. Editable directly from the Cases tab too, since most existing
   -- cases predate this column and never had it captured by the agent at all.
@@ -65,6 +65,10 @@ CREATE TABLE IF NOT EXISTS public.cases (
   -- deliberate act, not automatic on review, so staff can download and stamp the PDF first if
   -- they want to. See the sendReviewedDocument action.
   reviewed_document_sent_at TIMESTAMPTZ,
+  -- How an unpaid Small Claims matter was concluded before judgment.
+  resolution_type  TEXT CHECK (resolution_type IS NULL OR resolution_type IN ('recovered', 'settled')),
+  resolved_at      TIMESTAMPTZ,
+  resolved_by      TEXT,
   -- attribution — captured client-side from ?ref=/utm_* params at first visit (see
   -- lib/attribution.ts), written in when the case is created. source is the coarse channel
   -- ('space', 'blog', 'ads', 'referral', 'direct'); source_detail is the raw ref/utm string.
@@ -101,6 +105,23 @@ CREATE TABLE IF NOT EXISTS public.messages (
   content    TEXT        NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+ALTER TABLE public.messages
+  ADD COLUMN IF NOT EXISTS reply_to_message_id UUID
+  REFERENCES public.messages(id) ON DELETE CASCADE;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_one_reply_per_user
+  ON public.messages(reply_to_message_id)
+  WHERE reply_to_message_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS public.matter_register_syncs (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  record_type     TEXT        NOT NULL CHECK (record_type IN ('case', 'recovery')),
+  record_id       UUID        NOT NULL,
+  status          TEXT        NOT NULL CHECK (status IN ('synced', 'failed')),
+  error           TEXT,
+  last_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (record_type, record_id)
+);
+ALTER TABLE public.matter_register_syncs ENABLE ROW LEVEL SECURITY;
 
 -- Evidence a client uploads during the chat (screenshots, PDFs — invoices, contracts, WhatsApp
 -- threads, proof of payment). app/api/extract/route.ts used to read one of these into an AI
@@ -133,8 +154,53 @@ CREATE INDEX IF NOT EXISTS idx_case_evidence_case_id ON public.case_evidence(cas
 -- down: only ever read/written via supabaseAdmin, never directly from the browser, so no Storage
 -- policies are needed either.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('case-evidence', 'case-evidence', false, 10485760, array['application/pdf','image/jpeg','image/png','image/webp','image/gif'])
+values ('case-evidence', 'case-evidence', false, 52428800, array['application/pdf','image/jpeg','image/png','image/webp','image/gif','video/mp4','video/quicktime','video/webm','video/3gpp'])
 on conflict (id) do nothing;
+
+CREATE TABLE IF NOT EXISTS public.court_filings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id UUID NOT NULL UNIQUE REFERENCES public.cases(id) ON DELETE CASCADE,
+  state TEXT NOT NULL DEFAULT 'lagos',
+  registry TEXT,
+  facts JSONB NOT NULL DEFAULT '{}'::jsonb,
+  demand_served_at DATE,
+  demand_service_proof TEXT,
+  filed_at DATE,
+  claim_number TEXT,
+  filing_fee INTEGER,
+  summons_issued_at DATE,
+  first_hearing_at DATE,
+  service_outcome TEXT CHECK (service_outcome IS NULL OR service_outcome IN ('served', 'not_served', 'substituted_ordered', 'served_substituted')),
+  served_at DATE,
+  defence_type TEXT CHECK (defence_type IS NULL OR defence_type IN ('none', 'admission', 'defence', 'counterclaim')),
+  defence_received_at DATE,
+  defence_summary TEXT,
+  settled_at DATE,
+  hearing_notes TEXT,
+  judgment_at DATE,
+  judgment_outcome TEXT CHECK (judgment_outcome IS NULL OR judgment_outcome IN ('won', 'part', 'lost', 'struck_out', 'consent')),
+  judgment_sum INTEGER,
+  enforcement_started_at DATE,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by TEXT
+);
+ALTER TABLE public.court_filings ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE IF NOT EXISTS public.court_filing_documents (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  filing_id UUID NOT NULL REFERENCES public.court_filings(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  ai_generated BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_court_filing_documents_filing
+  ON public.court_filing_documents(filing_id, kind, created_at DESC);
+ALTER TABLE public.court_filing_documents ENABLE ROW LEVEL SECURITY;
 
 -- Custom claims — the "describe your own claim" intake, submitted by users who may not
 -- be signed in. No owner to scope RLS to, so it's written and read only via the
@@ -195,6 +261,8 @@ CREATE TABLE IF NOT EXISTS public.service_records (
   -- Unguessable per-record token — the public /serve/<token> page looks up by this, never by
   -- case_id, so a recipient's link can't be walked/enumerated to reach any other case.
   access_token      TEXT        NOT NULL UNIQUE,
+  -- Immutable copy of the exact reviewed PDF dispatched in this service attempt.
+  document_path     TEXT,
   status            TEXT        NOT NULL DEFAULT 'dispatched',
   dispatched_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   link_opened_at    TIMESTAMPTZ,
@@ -227,17 +295,24 @@ ALTER TABLE public.service_records     ENABLE ROW LEVEL SECURITY;
 -- Drop existing policies if re-running
 DROP POLICY IF EXISTS "owner_cases"    ON public.cases;
 DROP POLICY IF EXISTS "owner_messages" ON public.messages;
+DROP POLICY IF EXISTS "owner_messages_read" ON public.messages;
+DROP POLICY IF EXISTS "owner_messages_add_own_words" ON public.messages;
 
 -- Users can only access their own cases
 CREATE POLICY "owner_cases" ON public.cases
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
--- Users can access messages that belong to their cases
-CREATE POLICY "owner_messages" ON public.messages
-  FOR ALL USING (
+-- Clients can read their own conversation and add only their own words. Agent replies are
+-- written with the service-role client by app/api/chat/route.ts.
+CREATE POLICY "owner_messages_read" ON public.messages
+  FOR SELECT USING (
     EXISTS (SELECT 1 FROM public.cases WHERE id = case_id AND user_id = auth.uid())
-  ) WITH CHECK (
-    EXISTS (SELECT 1 FROM public.cases WHERE id = case_id AND user_id = auth.uid())
+  );
+CREATE POLICY "owner_messages_add_own_words" ON public.messages
+  FOR INSERT WITH CHECK (
+    role = 'user'
+    AND reply_to_message_id IS NULL
+    AND EXISTS (SELECT 1 FROM public.cases WHERE id = case_id AND user_id = auth.uid())
   );
 
 -- Auto-update updated_at on cases
@@ -269,7 +344,7 @@ CREATE TRIGGER cases_touch
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS case_number BIGSERIAL UNIQUE;
 --   ^ Powers the "Our Ref: PLP/<year>/<case_number>" line on generated letters (see lib/agents.ts).
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_phone TEXT;
---   ^ Callback number for the pandas-serves (₦25,000) tier — see lib/agents.ts CLIENT_PHONE block.
+--   ^ Callback number for the pandas-serves (₦40,000) tier — see lib/agents.ts CLIENT_PHONE block.
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_email TEXT;
 --   ^ The real client's email for a lawyer-intake case with no client Supabase account at
 --     all — see lib/agents.ts CLIENT_EMAIL block and app/admin/page.tsx's Custom Claims tab.
@@ -309,6 +384,11 @@ CREATE TRIGGER cases_touch
 --     No client gets the clean/final document until this is set.
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_document_sent_at TIMESTAMPTZ;
 --   ^ Set only when staff explicitly send the reviewed copy — sendReviewedDocument action.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS resolution_type TEXT
+--   CHECK (resolution_type IS NULL OR resolution_type IN ('recovered', 'settled'));
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMPTZ;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS resolved_by TEXT;
+--   ^ Records admin-only early recovery/settlement closure; see add-case-resolution.sql.
 --
 -- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE;
 --   ^ "Mark as Test" flag — see app/api/admin/cases/route.ts (PATCH) and app/admin/page.tsx.

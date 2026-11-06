@@ -23,6 +23,9 @@ export interface AdminCaseRow {
   reviewed_at: string | null
   reviewed_by: string | null
   reviewed_document_sent_at: string | null
+  resolution_type: 'recovered' | 'settled' | null
+  resolved_at: string | null
+  resolved_by: string | null
   source: string | null
   /** For a brand borrower's matter: its Case ID, e.g. MONIE-0001. */
   source_detail: string | null
@@ -89,7 +92,27 @@ export type CaseAction =
   | 'markFiled'
   | 'markJudgment'
   | 'markClosed'
+  | 'markRecovered'
+  | 'markSettled'
   | 'markPaidOffline'
+
+export type CaseFolder = 'saved' | 'review' | 'served' | 'court' | 'completed'
+
+export const CASE_FOLDERS: { key: CaseFolder; label: string; hint: string }[] = [
+  { key: 'saved', label: 'Saved, not paid', hint: 'Drafts and letters awaiting payment.' },
+  { key: 'review', label: 'Paid, to review and serve', hint: 'Paid matters and brand letters awaiting review or service.' },
+  { key: 'served', label: 'Demand served', hint: 'Letters served; the debtor response period is running or has passed.' },
+  { key: 'court', label: 'In court', hint: 'Matters filed in court or with judgment.' },
+  { key: 'completed', label: 'Completed', hint: 'Recovered, settled, or otherwise closed matters.' },
+]
+
+export function folderOfCase(c: Pick<AdminCaseRow, 'status' | 'brand_id'>): CaseFolder {
+  if (c.status === 'paid' || (Boolean(c.brand_id) && c.status === 'document_ready')) return 'review'
+  if (c.status === 'letter_served') return 'served'
+  if (c.status === 'filed' || c.status === 'judgment_obtained') return 'court'
+  if (c.status === 'closed') return 'completed'
+  return 'saved'
+}
 
 export const STAGE_LABEL: Record<string, string> = {
   draft: 'Interview',

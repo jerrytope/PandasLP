@@ -9,10 +9,14 @@ import AudioReader from '@/components/AudioReader'
 import TranslationPane from '@/components/TranslationPane'
 import RecoveryPanel from '@/components/RecoveryPanel'
 import NegotiationPanel from '@/components/NegotiationPanel'
+import DebtorRemindersPanel from './DebtorRemindersPanel'
+import SendToRegisterButton from './SendToRegisterButton'
 import InvoicesView from './finance/InvoicesView'
 import { useBillingSettings } from './finance/shared'
 import CaseReviewStepper from './CaseReviewStepper'
 import CaseActionMenu from './CaseActionMenu'
+import CourtFilingPanel from './CourtFilingPanel'
+import EvidenceTab from './EvidenceTab'
 import BrandCaseTimeline from './brands/BrandCaseTimeline'
 import {
   formatDate,
@@ -64,7 +68,7 @@ interface CaseDetailDrawerProps {
   onReloadCase?: () => void
 }
 
-type DrawerTab = 'document' | 'interview' | 'evidence' | 'service' | 'negotiation' | 'billing'
+type DrawerTab = 'document' | 'interview' | 'evidence' | 'service' | 'negotiation' | 'court' | 'billing'
 
 export default function CaseDetailDrawer({
   c,
@@ -304,6 +308,13 @@ export default function CaseDetailDrawer({
                 </span>
               )}
 
+              {c.resolution_type && (
+                <span className="badge badge-green" title={c.resolved_by ? `Recorded by ${c.resolved_by}` : undefined}>
+                  {c.resolution_type === 'recovered' ? 'Debt recovered' : 'Settled'}
+                  {c.resolved_at ? ` · ${formatDate(c.resolved_at)}` : ''}
+                </span>
+              )}
+
               {c.negotiationStatus === 'awaiting_our_reply' && (
                 <span
                   className="badge badge-danger"
@@ -410,6 +421,17 @@ export default function CaseDetailDrawer({
                 <Send size={14} /> Service Log
               </button>
 
+              {c.agent_id === 'small-claims' && (
+                <button
+                  type="button"
+                  className={`btn btn-sm ${activeTab === 'court' ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ padding: '6px 14px', fontSize: 13, gap: 6 }}
+                  onClick={() => setActiveTab('court')}
+                >
+                  <Scale size={14} /> Court Filing
+                </button>
+              )}
+
               {isMoneyAgent && (
                 <button
                   type="button"
@@ -436,6 +458,9 @@ export default function CaseDetailDrawer({
               {/* TAB 1: Document */}
               {activeTab === 'document' && (
                 <div>
+                  {c.amount_paid > 0 && isMoneyAgent && !c.is_test && !c.brand_id && (
+                    <SendToRegisterButton caseId={c.id} />
+                  )}
                   {c.document_body ? (
                     <div
                       style={{
@@ -569,70 +594,13 @@ export default function CaseDetailDrawer({
 
               {/* TAB 3: Evidence */}
               {activeTab === 'evidence' && (
-                <div>
-                  {evidenceLoading && <p style={{ color: 'var(--text-3)' }}>Loading uploaded evidence…</p>}
-                  {evidenceError && <p style={{ color: 'var(--danger)' }}>{evidenceError}</p>}
-                  {!evidenceLoading && !evidenceError && evidence?.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-3)' }}>
-                      <Paperclip size={32} style={{ margin: '0 auto 10px' }} />
-                      <div style={{ fontSize: 14 }}>No evidence files uploaded for this case.</div>
-                    </div>
-                  )}
-                  {!evidenceLoading && evidence && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {evidence.map((ev) => {
-                        const kb = ev.sizeBytes ? ev.sizeBytes / 1024 : null
-                        const sizeLabel = kb == null ? null : kb < 1024 ? `${kb.toFixed(0)} KB` : `${(kb / 1024).toFixed(1)} MB`
-                        return (
-                          <div
-                            key={ev.id}
-                            className="card"
-                            style={{ padding: '14px 18px', background: 'var(--bg-2)' }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                {ev.url ? (
-                                  <a href={ev.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: 'var(--accent)', fontSize: 14 }}>
-                                    {ev.filename} ↗
-                                  </a>
-                                ) : (
-                                  <span style={{ fontWeight: 600, fontSize: 14 }}>{ev.filename}</span>
-                                )}
-                                <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>
-                                  {ev.mediaType} {sizeLabel ? `· ${sizeLabel}` : ''} · {formatDate(ev.createdAt)}
-                                </div>
-                              </div>
-                            </div>
-                            {ev.extractedFacts && (
-                              <div
-                                style={{
-                                  marginTop: 10,
-                                  padding: 10,
-                                  borderRadius: 4,
-                                  background: 'var(--bg-1)',
-                                  fontSize: 12.5,
-                                  lineHeight: 1.5,
-                                  color: 'var(--text-2)',
-                                  whiteSpace: 'pre-wrap',
-                                }}
-                              >
-                                <strong style={{ color: 'var(--text-1)', display: 'block', marginBottom: 4 }}>
-                                  AI Extracted Facts:
-                                </strong>
-                                {renderFormattedText(ev.extractedFacts)}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
+                <EvidenceTab caseId={c.id} evidence={evidence} loading={evidenceLoading} error={evidenceError} onChange={loadEvidence} />
               )}
 
               {/* TAB 4: Service Log */}
               {activeTab === 'service' && (
                 <div>
+                  <DebtorRemindersPanel caseId={c.id} />
                   {serviceRecordsLoading && <p style={{ color: 'var(--text-3)' }}>Loading service history…</p>}
                   {serviceRecordsError && <p style={{ color: 'var(--danger)' }}>{serviceRecordsError}</p>}
                   {!serviceRecordsLoading && !serviceRecordsError && serviceRecords?.length === 0 && (
@@ -644,6 +612,7 @@ export default function CaseDetailDrawer({
                       </p>
                     </div>
                   )}
+
                   {!serviceRecordsLoading && serviceRecords && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {serviceRecords.map((r) => (
@@ -695,6 +664,10 @@ export default function CaseDetailDrawer({
                     </div>
                   )}
                 </div>
+              )}
+
+              {activeTab === 'court' && c.agent_id === 'small-claims' && (
+                <CourtFilingPanel c={c} onAction={onAction} />
               )}
 
               {/* TAB 5: Recoveries & Negotiation */}

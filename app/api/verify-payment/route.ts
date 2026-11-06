@@ -6,6 +6,9 @@ import { isMailerConfigured, sendMail, GMAIL_USER } from '@/lib/mailer'
 import { getNewOrderAlertEmail } from '@/lib/emailTemplates'
 import { buildDemandLetterDocxBuffer } from '@/lib/docxGenerator.js'
 import { verifyPayment, claimPaymentReference, releasePaymentReference } from '@/lib/paystackVerify'
+import { sendPaymentProblemAlert } from '@/lib/paymentAlerts'
+import { syncPaidCaseToRegister } from '@/lib/matterRegisterSync'
+import { after } from 'next/server'
 
 const RATE_LIMIT = 15
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -87,13 +90,13 @@ export async function POST(req: Request) {
   // saveTurn writes it from the chosen tier at document-finalization time, before payment) —
   // trust that first. The amount-derivation fallback only exists for cases that predate this
   // field; deriving fresh from verifiedAmount here would misclassify a discounted pandas-serves
-  // purchase (verifiedAmount < 25000) as self-serve even though that's the tier the client paid for.
+  // purchase (verifiedAmount < 40000) as self-serve even though that's the tier the client paid for.
   const deliveryOption =
     caseData.agent_id === 'small-claims'
-      ? (caseData.delivery_option ?? (verifiedAmount >= 25000 ? 'pandas-serves' : 'self-serve'))
+      ? (caseData.delivery_option ?? (verifiedAmount >= 40_000 ? 'pandas-serves' : 'self-serve'))
       : null
 
-  const { error: updateErr } = await supabaseAdmin
+  const { data: updated, error: updateErr } = await supabaseAdmin
     .from('cases')
     .update({
       status: 'paid',
@@ -102,12 +105,26 @@ export async function POST(req: Request) {
       ...(deliveryOption ? { delivery_option: deliveryOption } : {}),
     })
     .eq('id', caseId)
+    .eq('status', caseData.status)
+    .select('id')
 
   if (updateErr) {
     // Free the reference so the client's retry with the same payment isn't refused as reused.
     await releasePaymentReference(verifiedReference)
     return Response.json({ error: 'Payment verified but failed to update the case.' }, { status: 500 })
   }
+  if (!updated?.length) {
+    await sendPaymentProblemAlert({
+      caseId,
+      reference: verifiedReference,
+      amount: verifiedAmount,
+      reason: 'The case changed while this payment was being applied; staff must verify whether the payment should be refunded or matched.',
+      clientEmail: callerData.user.email ?? null,
+    })
+    return Response.json({ error: 'Payment was verified, but this case changed before it could be updated. Please contact support.' }, { status: 409 })
+  }
+
+  after(() => syncPaidCaseToRegister(caseId).then(() => undefined))
 
   // Fire-and-forget, staff-facing — the "click here to review" alert that starts the
   // mandatory-review flow (see app/api/update-case-status/route.ts's markReviewed action). A

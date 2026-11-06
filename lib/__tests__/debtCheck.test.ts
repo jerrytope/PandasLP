@@ -17,7 +17,7 @@ describe('assessDebt', () => {
     expect(r.verdict).toBe('strong')
     expect(r.nextStep).toBe('demand_letter')
     expect(r.court).toBe('small_claims')
-    expect(r.nextStepText).toContain('₦10,000')
+    expect(r.nextStepText).toContain('₦20,000')
   })
 
   it('drops to good when the debtor disputes it', () => {
@@ -59,7 +59,7 @@ describe('assessDebt', () => {
     const r = assessDebt({ ...base, debtor: 'tenant' })
     expect(r.nextStep).toBe('property')
     expect(r.nextStepText).toContain('₦25,000')
-    expect(r.nextStepText).toContain('₦10,000')
+    expect(r.nextStepText).toContain('₦20,000')
   })
 
   it('routes over ₦5 million to the High Court and outside Lagos to "depends"', () => {

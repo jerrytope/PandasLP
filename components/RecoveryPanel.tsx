@@ -29,6 +29,7 @@ type RecoveryRow = {
   confirmed_at: string
   client_notified_at: string | null
   proofUrl: string | null
+  registerSync: { status: 'synced' | 'failed'; error: string | null; last_attempt_at: string } | null
 }
 
 
@@ -47,6 +48,8 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [registerSyncId, setRegisterSyncId] = useState<string | null>(null)
+  const [registerSyncError, setRegisterSyncError] = useState('')
   // Default on: the recovery landing is the moment a client most wants to hear from us.
   const [notifyClient, setNotifyClient] = useState(true)
 
@@ -55,11 +58,42 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
     try {
       const res = await authedFetch(`/api/admin/recoveries?caseId=${encodeURIComponent(caseId)}`)
       const data = await res.json()
-      if (res.ok && !data.error) setRows(data.recoveries || [])
+      if (res.ok && !data.error) {
+        setRows(data.recoveries || [])
+        if (data.registerSyncStatusError) setRegisterSyncError(data.registerSyncStatusError)
+      }
     } catch {
       /* the list is supplementary; the form still works without it */
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function retryRegisterSync(recoveryId: string) {
+    setRegisterSyncId(recoveryId)
+    setRegisterSyncError('')
+    try {
+      const response = await authedFetch('/api/admin/matter-register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ recoveryId }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || result.error) {
+        setRegisterSyncError(result.error || 'Could not reach the register.')
+        setRows((current) => current?.map((row) => row.id === recoveryId
+          ? { ...row, registerSync: { status: 'failed', error: result.error || 'Could not reach the register.', last_attempt_at: new Date().toISOString() } }
+          : row) ?? null)
+      } else {
+        setNotice('Recovery synced to the matter register.')
+        setRows((current) => current?.map((row) => row.id === recoveryId
+          ? { ...row, registerSync: { status: 'synced', error: null, last_attempt_at: new Date().toISOString() } }
+          : row) ?? null)
+      }
+    } catch {
+      setRegisterSyncError('Network error. Please try again.')
+    } finally {
+      setRegisterSyncId(null)
     }
   }
 
@@ -202,10 +236,25 @@ export default function RecoveryPanel({ caseId, expectedAmount }: { caseId: stri
                       ? `client emailed ${new Date(r.client_notified_at).toLocaleDateString('en-NG')}`
                       : 'client not emailed'}
                   </div>
+                  {r.registerSync && (
+                    <div style={{ color: r.registerSync.status === 'failed' ? 'var(--danger)' : 'var(--success)', marginTop: 3, fontSize: 12 }}>
+                      Register: {r.registerSync.status === 'synced' ? 'synced' : `sync failed — ${r.registerSync.error ?? 'please retry'}`}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="btn btn-sm"
+                    style={{ marginTop: 6 }}
+                    disabled={registerSyncId === r.id}
+                    onClick={() => retryRegisterSync(r.id)}
+                  >
+                    {registerSyncId === r.id ? 'Syncing…' : 'Sync payment to register'}
+                  </button>
                 </div>
               ))}
             </div>
           )}
+          {registerSyncError && <p role="alert" style={{ color: 'var(--danger)', margin: '8px 0' }}>{registerSyncError}</p>}
 
           <form onSubmit={submit} style={{ display: 'grid', gap: 10 }}>
             <label style={{ display: 'grid', gap: 4 }}>
