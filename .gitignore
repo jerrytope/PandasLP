@@ -37,6 +37,11 @@ next-env.d.ts
 campaign/*-film/frames-*/
 plans/
 supabase
+!supabase/
+supabase/*
+!supabase/migrations/
+supabase/migrations/*
+!supabase/migrations/*.sql
 plans/
 # Local test databases (scripts/property-agent-chat.ts)
 .local/

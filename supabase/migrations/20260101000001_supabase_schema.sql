@@ -1,0 +1,521 @@
+-- ============================================================
+-- Run this in Supabase → SQL Editor → New query
+-- Safe to run multiple times (uses IF NOT EXISTS / OR REPLACE)
+-- ============================================================
+
+-- Cases table
+CREATE TABLE IF NOT EXISTS public.cases (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_number      BIGSERIAL   NOT NULL UNIQUE,
+  user_id          UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  agent_id         TEXT        NOT NULL,
+  service_id       TEXT,
+  status           TEXT        NOT NULL DEFAULT 'draft',
+  document_title   TEXT,
+  document_body    TEXT,
+  delivery_option  TEXT,
+  -- callback number for the pandas-serves (₦25,000) tier — collected during intake so a
+  -- lawyer can reach the client once payment is confirmed; see lib/agents.ts CLIENT_PHONE block
+  client_phone     TEXT,
+  -- the real client's email, for a case with no client Supabase account at all — the Custom
+  -- Claims "lawyer intake" flow (app/admin/page.tsx) lets STAFF run the agent on behalf of a
+  -- client acquired offline, so user_id on that case is the staff member's own account, not
+  -- the client's. sendCaseEmail.ts prefers this column over the auth-resolved email whenever
+  -- it's set. See lib/agents.ts's SMALL_CLAIMS_LAWYER_INTAKE_PROMPT CLIENT_EMAIL block and
+  -- lib/agentChatParsing.ts's extractClientEmail. NULL for every ordinary case, where the
+  -- signed-in client's own auth email is already correct.
+  client_email     TEXT,
+  -- The phone number of whoever the drafted document is actually served ON — a debtor, a
+  -- tenant — NOT the client's own number (that's client_phone above, a different person
+  -- entirely). "Serve via WhatsApp" (app/admin/page.tsx) sends to this number: an e-service
+  -- notice sent to the client's own phone instead of the debtor's would defeat the entire
+  -- point of service. Collected only when the client picks the ₦25,000 "Pandas LP serves it"
+  -- tier — see lib/agents.ts's RECIPIENT_PHONE block and lib/agentChatParsing.ts's
+  -- extractRecipientPhone. Editable directly from the Cases tab too, since most existing
+  -- cases predate this column and never had it captured by the agent at all.
+  recipient_phone  TEXT,
+  -- the price quoted for THIS case's drafted document (varies by agent/delivery choice) —
+  -- set when the document is finalized, checked against the real Paystack amount at
+  -- /api/verify-payment so a client can't just declare an arbitrary amount "paid"
+  expected_amount  INTEGER,
+  amount_paid      INTEGER     NOT NULL DEFAULT 0,
+  -- set once, in /api/verify-payment/route.ts, the moment a payment first verifies — NOT the
+  -- same as created_at (a case can sit unpaid for days) or updated_at (touched by every
+  -- unrelated status change via the touch_updated_at trigger below). This is what the admin
+  -- ops panel's "days since paid" queue and weekly revenue numbers key off of.
+  paid_at          TIMESTAMPTZ,
+  deadline_at      TIMESTAMPTZ,
+  -- follow-up email tracking — 14-day response period (see lib/agents.ts demand letter
+  -- templates), so the checkpoints are Day 0 (served), Day 7 (reminder), Day 14 (deadline
+  -- passed), not the old Day 0/3/7 cadence these columns are still named after in any
+  -- database that predates the fix.
+  email_day0_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
+  email_day7_sent  BOOLEAN     NOT NULL DEFAULT FALSE,
+  email_day14_sent BOOLEAN     NOT NULL DEFAULT FALSE,
+  -- fires once, when a case first reaches judgment_obtained or closed (see
+  -- app/api/update-case-status/route.ts) — guards against a duplicate send if a case passes
+  -- through both of those stages.
+  resolution_email_sent BOOLEAN NOT NULL DEFAULT FALSE,
+  -- set once a licensed member of the team has reviewed the drafted document — no client ever
+  -- gets the clean/final document before this happens (see app/api/update-case-status/route.ts's
+  -- markReviewed action). reviewed_at gates sending the client their emailed copy.
+  reviewed_at      TIMESTAMPTZ,
+  reviewed_by      TEXT,
+  -- set only once staff explicitly click "Send to Customer" for a reviewed case — sending is a
+  -- deliberate act, not automatic on review, so staff can download and stamp the PDF first if
+  -- they want to. See the sendReviewedDocument action.
+  reviewed_document_sent_at TIMESTAMPTZ,
+  -- attribution — captured client-side from ?ref=/utm_* params at first visit (see
+  -- lib/attribution.ts), written in when the case is created. source is the coarse channel
+  -- ('space', 'blog', 'ads', 'referral', 'direct'); source_detail is the raw ref/utm string.
+  source           TEXT,
+  source_detail    TEXT,
+  -- escalation linkage (enforcement → original demand case)
+  parent_case_id   UUID        REFERENCES public.cases(id),
+  -- enforcement specifics
+  judgment_amount  INTEGER,
+  -- staff-only flag for a case that's just someone trying out an agent, not a real
+  -- client matter — set/unset via the "Mark as Test" button in app/admin/page.tsx (PATCH
+  -- app/api/admin/cases/route.ts). Excluded from the admin Queue and from the Cases tab's
+  -- default "Live" view so test conversations don't get counted alongside paying clients;
+  -- switch the Cases tab filter to "Test" or "All" to see them.
+  is_test          BOOLEAN     NOT NULL DEFAULT FALSE,
+  -- per-document-type substantive review, not just the reviewed_at click — records which
+  -- checklist items (see lib/reviewChecklists.ts) a reviewer confirmed before markReviewed
+  -- was allowed to proceed. Shape: { [itemId: string]: true }. NULL until first reviewed.
+  review_checklist JSONB,
+  -- recommended (not currently enforced) independent second reviewer for the highest-risk
+  -- conveyancing document types (Deed of Assignment/Gift/Mortgage, POA, Sale of Land) — see
+  -- lib/reviewChecklists.ts's isHighRiskDocument() and app/admin/page.tsx.
+  second_reviewer_email TEXT,
+  second_reviewed_at    TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Messages table
+CREATE TABLE IF NOT EXISTS public.messages (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id    UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  role       TEXT        NOT NULL CHECK (role IN ('user', 'assistant')),
+  content    TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Evidence a client uploads during the chat (screenshots, PDFs — invoices, contracts, WhatsApp
+-- threads, proof of payment). app/api/extract/route.ts used to read one of these into an AI
+-- fact-summary and then discard the original file entirely — nothing survived past that one
+-- request, so nobody could ever go back and actually look at what a client sent. This table plus
+-- the case-evidence Storage bucket below keep the real file; app/admin/page.tsx's "View Evidence"
+-- panel reads both. Only ever written by app/api/extract/route.ts and read by
+-- app/api/admin/case-evidence/route.ts, both via supabaseAdmin (service-role key bypasses RLS),
+-- so RLS is enabled with no browser-facing policies — same posture as case_status_history/
+-- service_records below.
+CREATE TABLE IF NOT EXISTS public.case_evidence (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id         UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  filename        TEXT        NOT NULL,
+  -- Path inside the case-evidence bucket, not the file itself — same "don't store what you'd
+  -- have to keep in sync" reasoning as the reviewed/{caseId}.pdf path used for stamped
+  -- documents (see the case-documents bucket note further down).
+  storage_path    TEXT        NOT NULL,
+  media_type      TEXT        NOT NULL,
+  size_bytes      INTEGER,
+  -- The same summary already shown to the client in ExtractionConfirmModal, kept alongside the
+  -- file so staff can see what the AI made of it without having to re-open the file itself.
+  extracted_facts TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE public.case_evidence ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_case_evidence_case_id ON public.case_evidence(case_id);
+
+-- Private bucket the evidence files themselves live in — same pattern as case-documents further
+-- down: only ever read/written via supabaseAdmin, never directly from the browser, so no Storage
+-- policies are needed either.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('case-evidence', 'case-evidence', false, 10485760, array['application/pdf','image/jpeg','image/png','image/webp','image/gif'])
+on conflict (id) do nothing;
+
+-- Custom claims — the "describe your own claim" intake, submitted by users who may not
+-- be signed in. No owner to scope RLS to, so it's written and read only via the
+-- service-role API route (app/api/custom-claim/route.ts), never directly from the browser.
+CREATE TABLE IF NOT EXISTS public.custom_claims (
+  id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT        NOT NULL,
+  email        TEXT        NOT NULL,
+  phone        TEXT,
+  description  TEXT        NOT NULL,
+  amount_paid  INTEGER     NOT NULL DEFAULT 0,
+  status       TEXT        NOT NULL DEFAULT 'new',
+  -- true only once the staff notification email actually sent successfully — false (not just
+  -- "unread") means nobody was ever notified, so the admin view can surface it as needing
+  -- attention instead of relying entirely on one inbox. See app/api/custom-claim/route.ts.
+  notified     BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Waitlist signups — the "notify me when this agent launches" capture on the homepage.
+-- Same access pattern as custom_claims: no owner, service-role-only via app/api/waitlist
+-- and app/api/admin/waitlist.
+CREATE TABLE IF NOT EXISTS public.waitlist_signups (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  service    TEXT        NOT NULL,
+  email      TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Audit trail for status changes on cases — who changed what, when. Written non-blocking
+-- from app/api/update-case-status/route.ts; a failed insert here must never fail or roll
+-- back the status change itself.
+CREATE TABLE IF NOT EXISTS public.case_status_history (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id     UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  from_status TEXT        NOT NULL,
+  to_status   TEXT        NOT NULL,
+  changed_by  TEXT        NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Records a WhatsApp (or future channel) service attempt — see app/api/admin/service-records
+-- and lib/whatsappService.ts. This is evidence a lawyer can attach to a REAL, personally-sworn
+-- affidavit of service — it is deliberately not itself styled as an affidavit (see the
+-- Feature 2 commit message for why auto-generating something that looks like a sworn legal
+-- instrument is a professional-liability risk this app does not take).
+-- status values: 'dispatched' (staff initiated the WhatsApp send — we cannot detect WhatsApp's
+-- own delivery/read receipts without a Business API account), 'link_opened' (the recipient
+-- actually opened the served-document link — set automatically, a real signal, not a guess),
+-- 'acknowledged' (staff manually recorded that the recipient responded/engaged).
+CREATE TABLE IF NOT EXISTS public.service_records (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id           UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  channel           TEXT        NOT NULL DEFAULT 'whatsapp',
+  recipient_phone   TEXT        NOT NULL,
+  message_text      TEXT        NOT NULL,
+  message_hash      TEXT        NOT NULL,
+  -- Unguessable per-record token — the public /serve/<token> page looks up by this, never by
+  -- case_id, so a recipient's link can't be walked/enumerated to reach any other case.
+  access_token      TEXT        NOT NULL UNIQUE,
+  status            TEXT        NOT NULL DEFAULT 'dispatched',
+  dispatched_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  link_opened_at    TIMESTAMPTZ,
+  acknowledged_at   TIMESTAMPTZ,
+  acknowledged_by   TEXT,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Indexes — every one of these columns is filtered/ordered on in app/api/admin/cases and
+-- app/api/cron/follow-ups; without them those queries are full sequential scans of `cases`.
+CREATE INDEX IF NOT EXISTS idx_cases_status     ON public.cases(status);
+CREATE INDEX IF NOT EXISTS idx_cases_agent_id   ON public.cases(agent_id);
+CREATE INDEX IF NOT EXISTS idx_cases_created_at ON public.cases(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cases_follow_up  ON public.cases(status, email_day7_sent, email_day14_sent)
+  WHERE status = 'letter_served';
+CREATE INDEX IF NOT EXISTS idx_service_records_case_id      ON public.service_records(case_id);
+CREATE INDEX IF NOT EXISTS idx_service_records_access_token ON public.service_records(access_token);
+
+-- Row Level Security
+ALTER TABLE public.cases               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages            ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.custom_claims       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waitlist_signups    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.case_status_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.service_records     ENABLE ROW LEVEL SECURITY;
+-- No policies on custom_claims, waitlist_signups, case_status_history, or service_records: RLS with zero
+-- policies blocks anon/authenticated roles entirely, while the service-role client (used
+-- only server-side) always bypasses RLS.
+
+-- Drop existing policies if re-running
+DROP POLICY IF EXISTS "owner_cases"    ON public.cases;
+DROP POLICY IF EXISTS "owner_messages" ON public.messages;
+
+-- Users can only access their own cases
+CREATE POLICY "owner_cases" ON public.cases
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Users can access messages that belong to their cases
+CREATE POLICY "owner_messages" ON public.messages
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.cases WHERE id = case_id AND user_id = auth.uid())
+  ) WITH CHECK (
+    EXISTS (SELECT 1 FROM public.cases WHERE id = case_id AND user_id = auth.uid())
+  );
+
+-- Auto-update updated_at on cases
+CREATE OR REPLACE FUNCTION public.touch_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS cases_touch ON public.cases;
+CREATE TRIGGER cases_touch
+  BEFORE UPDATE ON public.cases
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+-- ============================================================
+-- IF YOU ALREADY RAN THE PREVIOUS SCHEMA, run only these ALTERs
+-- to add the new columns without recreating the tables:
+-- ============================================================
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day0_sent  BOOLEAN NOT NULL DEFAULT FALSE;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day7_sent  BOOLEAN NOT NULL DEFAULT FALSE;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS email_day14_sent BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ For a database that never had any email_dayN_sent columns at all. If you already have
+--     email_day3_sent/email_day7_sent from before the 14-day fix, use the RENAME migration
+--     further down instead of these ADD COLUMN lines.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS parent_case_id  UUID REFERENCES public.cases(id);
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS judgment_amount INTEGER;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS case_number BIGSERIAL UNIQUE;
+--   ^ Powers the "Our Ref: PLP/<year>/<case_number>" line on generated letters (see lib/agents.ts).
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_phone TEXT;
+--   ^ Callback number for the pandas-serves (₦25,000) tier — see lib/agents.ts CLIENT_PHONE block.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS client_email TEXT;
+--   ^ The real client's email for a lawyer-intake case with no client Supabase account at
+--     all — see lib/agents.ts CLIENT_EMAIL block and app/admin/page.tsx's Custom Claims tab.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS recipient_phone TEXT;
+--   ^ The debtor/tenant's own phone — who "Serve via WhatsApp" actually serves, distinct
+--     from client_phone (the client's own number). See lib/agents.ts RECIPIENT_PHONE block.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS expected_amount INTEGER;
+--   ^ Quoted price for this case, checked against the real Paystack amount at payment time
+--     (see app/api/verify-payment/route.ts).
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS source        TEXT;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS source_detail TEXT;
+--   ^ Attribution — see lib/attribution.ts.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+--   ^ Set once at payment time (see app/api/verify-payment/route.ts) — powers the admin ops
+--     panel's action queue and numbers strip (app/admin/page.tsx).
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS resolution_email_sent BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ Guards the resolution email (judgment_obtained/closed) against firing twice for the
+--     same case. See app/api/update-case-status/route.ts.
+--
+-- CREATE TABLE IF NOT EXISTS public.waitlist_signups (
+--   id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   service    TEXT        NOT NULL,
+--   email      TEXT        NOT NULL,
+--   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE public.waitlist_signups ENABLE ROW LEVEL SECURITY;
+--   ^ Persists "notify me" signups so the admin dashboard has something to list — previously
+--     these only existed as a one-off email that vanished if it failed to send.
+--
+-- ALTER TABLE public.custom_claims ADD COLUMN IF NOT EXISTS notified BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ See app/api/custom-claim/route.ts — true only once the staff notification email actually
+--     sent. Lets the admin custom-claims view flag submissions nobody was ever notified about.
+--
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_by TEXT;
+--   ^ Mandatory-review gate — see app/api/update-case-status/route.ts's markReviewed action.
+--     No client gets the clean/final document until this is set.
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS reviewed_document_sent_at TIMESTAMPTZ;
+--   ^ Set only when staff explicitly send the reviewed copy — sendReviewedDocument action.
+--
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE;
+--   ^ "Mark as Test" flag — see app/api/admin/cases/route.ts (PATCH) and app/admin/page.tsx.
+--     Excluded from the admin Queue and the Cases tab's default view.
+--
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS review_checklist JSONB;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS second_reviewer_email TEXT;
+-- ALTER TABLE public.cases ADD COLUMN IF NOT EXISTS second_reviewed_at TIMESTAMPTZ;
+--   ^ Per-document-type review checklist + recommended second reviewer for high-risk
+--     conveyancing documents — see lib/reviewChecklists.ts, app/api/update-case-status/route.ts
+--     (markReviewed now requires the checklist), and app/admin/page.tsx.
+--
+-- ALTER TABLE public.cases RENAME COLUMN email_day7_sent TO email_day14_sent;
+-- ALTER TABLE public.cases RENAME COLUMN email_day3_sent TO email_day7_sent;
+--   ^ Run these TWO lines IN THIS EXACT ORDER (7->14 first, then 3->7) or the second RENAME
+--     will collide with the still-existing email_day7_sent column — renaming 7->14 first is
+--     what frees up the "email_day7_sent" name for the second rename to use. This is the fix
+--     for the 7-day -> 14-day response period correction — the old column names were left
+--     over from before that fix and no longer match what actually gets sent
+--     (see lib/emailTemplates.ts).
+--
+-- insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+-- values ('case-documents', 'case-documents', false, 10485760, array['application/pdf'])
+-- on conflict (id) do nothing;
+--   ^ REQUIRED for the "Upload Stamped Document" admin action (see
+--     app/api/admin/upload-reviewed-document/route.ts) to work at all — without this bucket,
+--     uploads fail outright. Deliberately NOT a new `cases` column (see the missing-columns
+--     incident this same file's ALTER TABLE section exists to prevent): the uploaded PDF
+--     lives at a deterministic per-case Storage path instead, so there's no new column to
+--     forget to migrate. Private bucket (public: false) — only ever read/written via
+--     supabaseAdmin (the service-role key bypasses Storage RLS same as it does for tables),
+--     never directly from the browser, so no Storage policies are needed either.
+--
+-- CREATE TABLE IF NOT EXISTS public.service_records (
+--   id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   case_id           UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+--   channel           TEXT        NOT NULL DEFAULT 'whatsapp',
+--   recipient_phone   TEXT        NOT NULL,
+--   message_text      TEXT        NOT NULL,
+--   message_hash      TEXT        NOT NULL,
+--   access_token      TEXT        NOT NULL UNIQUE,
+--   status            TEXT        NOT NULL DEFAULT 'dispatched',
+--   dispatched_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--   link_opened_at    TIMESTAMPTZ,
+--   acknowledged_at   TIMESTAMPTZ,
+--   acknowledged_by   TEXT,
+--   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE public.service_records ENABLE ROW LEVEL SECURITY;
+-- CREATE INDEX IF NOT EXISTS idx_service_records_case_id      ON public.service_records(case_id);
+-- CREATE INDEX IF NOT EXISTS idx_service_records_access_token ON public.service_records(access_token);
+--   ^ REQUIRED for "Serve via WhatsApp" (see app/api/admin/service-records/route.ts) — this is
+--     a genuinely NEW table for an existing database, run the CREATE TABLE above (not just an
+--     ALTER TABLE) if you already ran this schema before this feature existed.
+--
+-- ============================================================
+-- ATTRIBUTION READOUT — run ad hoc in the SQL editor, not part of setup.
+-- Cases by source, by week — rough funnel proxy until Build 3's ops panel
+-- has a real dashboard for this.
+-- ============================================================
+-- SELECT
+--   date_trunc('week', created_at) AS week,
+--   COALESCE(source, 'unknown')    AS source,
+--   COUNT(*)                        AS cases,
+--   COUNT(*) FILTER (WHERE status <> 'draft')              AS reached_document,
+--   COUNT(*) FILTER (WHERE status IN ('paid','letter_served','filed','judgment_obtained','closed')) AS paid
+-- FROM public.cases
+-- GROUP BY 1, 2
+-- ORDER BY 1 DESC, 3 DESC;
+--
+-- CREATE TABLE IF NOT EXISTS public.case_status_history (
+--   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+--   case_id     UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+--   from_status TEXT        NOT NULL,
+--   to_status   TEXT        NOT NULL,
+--   changed_by  TEXT        NOT NULL,
+--   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- );
+-- ALTER TABLE public.case_status_history ENABLE ROW LEVEL SECURITY;
+--   ^ Audit trail for case status changes — see app/api/update-case-status/route.ts.
+--
+-- CREATE INDEX IF NOT EXISTS idx_cases_status     ON public.cases(status);
+-- CREATE INDEX IF NOT EXISTS idx_cases_agent_id   ON public.cases(agent_id);
+-- CREATE INDEX IF NOT EXISTS idx_cases_created_at ON public.cases(created_at DESC);
+-- CREATE INDEX IF NOT EXISTS idx_cases_follow_up  ON public.cases(status, email_day7_sent, email_day14_sent)
+--   WHERE status = 'letter_served';
+--   ^ Safe to run on an existing database — CREATE INDEX IF NOT EXISTS is a no-op if already present.
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- RECOVERIES  (added 2026-09-05)
+--
+-- Confirmed money actually recovered for a client. This is the source of the
+-- public "recovered for clients" figure on the homepage, so it is deliberately
+-- strict: every row needs a named confirmer, a proof note, and, when the client
+-- did not get everything they were owed, a written reason why.
+--
+-- A case can have more than one row (a debtor paying in instalments), so the
+-- public total is a SUM over rows, not a per-case field.
+--
+-- If your database already exists, run just this block.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.recoveries (
+  id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id           UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  -- naira, whole units, same convention as cases.amount_paid / cases.expected_amount
+  amount_recovered  INTEGER     NOT NULL CHECK (amount_recovered > 0),
+  -- what the client was actually claiming, captured at confirmation time so "full or
+  -- partial" stays meaningful even if the claim is edited later
+  claim_amount      INTEGER,
+  is_full           BOOLEAN     NOT NULL,
+  -- required whenever is_full is false. The CHECK is the point of this table: you cannot
+  -- record a partial recovery without saying why the rest was not recovered.
+  shortfall_reason  TEXT,
+  -- how the recovery was evidenced: a transfer reference, a bank narration, a court
+  -- payment receipt number. Free text, but never empty.
+  proof_note        TEXT        NOT NULL CHECK (length(trim(proof_note)) > 0),
+  -- optional supporting file in the case-documents bucket, path recovery-proof/<id>.<ext>
+  proof_path        TEXT,
+  confirmed_by      TEXT        NOT NULL,
+  confirmed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- stamped only once the confirmation email has actually left, so "client notified" in the
+  -- admin UI means sent, not intended. Null means no email was sent for this recovery.
+  client_notified_at TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT partial_recovery_needs_a_reason
+    CHECK (is_full OR (shortfall_reason IS NOT NULL AND length(trim(shortfall_reason)) > 0))
+);
+
+CREATE INDEX IF NOT EXISTS idx_recoveries_case_id      ON public.recoveries(case_id);
+CREATE INDEX IF NOT EXISTS idx_recoveries_confirmed_at ON public.recoveries(confirmed_at DESC);
+
+-- RLS on, with no client-facing policy: every read and write goes through the admin API
+-- using the service role. Nothing here is ever queried with the anon key.
+ALTER TABLE public.recoveries ENABLE ROW LEVEL SECURITY;
+
+-- Safe to run whether or not the table already existed without this column.
+ALTER TABLE public.recoveries ADD COLUMN IF NOT EXISTS client_notified_at TIMESTAMPTZ;
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- NEGOTIATIONS  (added 2026-09-18)
+--
+-- A letter of demand often doesn't get a straight payment or straight
+-- silence — the debtor's own lawyer responds instead, disputing the amount,
+-- offering a lesser sum, or proposing terms. Until now there was nowhere to
+-- record that at all: it wasn't a status the case machine understood, and a
+-- reply from opposing counsel would otherwise only ever live in someone's
+-- inbox. This is a running thread per case, not a single field, because a
+-- negotiation is usually several rounds, not one.
+--
+-- Deliberately NOT a new `cases.status` value: negotiation can start while a
+-- case is still 'letter_served' (before the 14-day window closes) and can
+-- keep going after 'filed' — it overlays the existing status machine rather
+-- than replacing a stage in it. app/api/admin/cases/route.ts derives whether
+-- a case currently owes a reply from the latest row per case_id, the same
+-- "compute it, don't duplicate it" approach already used for
+-- hasStampedDocument — see that route's own comment for why.
+--
+-- If your database already exists, run just this block.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.case_negotiations (
+  id               UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  case_id          UUID        NOT NULL REFERENCES public.cases(id) ON DELETE CASCADE,
+  -- Whose round this is. 'debtor_counsel' = a counter/reply we received from the debtor's
+  -- lawyer; 'pandas_lp' = our reply back to them. Alternating rows read as the thread.
+  party            TEXT        NOT NULL CHECK (party IN ('debtor_counsel', 'pandas_lp')),
+  -- Name/firm of the debtor's lawyer — only meaningful (and only asked for in the admin UI)
+  -- when party = 'debtor_counsel'. NULL on our own 'pandas_lp' rows.
+  counsel_name     TEXT,
+  -- Naira, whole units, same convention as cases.amount_paid/expected_amount — the figure
+  -- actually named in this round, if one was. NULL when a round doesn't name a number (e.g.
+  -- a flat denial with no counter-figure, or a reply that only asks for more time).
+  proposed_amount  INTEGER,
+  -- Staff's own account of what was said or offered — always required, even when an
+  -- attachment carries the real letter, so the thread is readable without opening a file.
+  summary          TEXT        NOT NULL CHECK (length(trim(summary)) > 0),
+  -- Optional scanned/photographed copy of the actual letter, in the case-documents bucket at
+  -- negotiations/{id}.pdf — same private-bucket, service-role-only pattern as reviewed/{caseId}.pdf.
+  attachment_path  TEXT,
+  -- True only for a 'pandas_lp' row that started from the AI-drafted reply
+  -- (app/api/admin/negotiations/draft/route.ts) rather than being typed from scratch — an
+  -- honest record of which replies had a machine first pass, even after a human edited it
+  -- before logging. Never true for a 'debtor_counsel' row.
+  ai_drafted       BOOLEAN     NOT NULL DEFAULT FALSE,
+  logged_by        TEXT        NOT NULL,
+  -- When the counter/reply actually happened, not necessarily when staff got around to
+  -- logging it — staff-settable, defaults to now.
+  occurred_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_case_negotiations_case_id ON public.case_negotiations(case_id, occurred_at);
+
+-- RLS on, no client-facing policy — same posture as case_status_history/service_records:
+-- every read and write goes through the admin API using the service role.
+ALTER TABLE public.case_negotiations ENABLE ROW LEVEL SECURITY;
+
+-- Lets a 'pandas_lp' negotiation round be served to the debtor the same way the original
+-- demand letter is — WhatsApp link to a /serve/<token> page — without a second serve-page
+-- system. NULL means "serving the case's original document_body," same as every existing
+-- service_records row; set only when staff serve a specific reply from NegotiationPanel.tsx.
+-- See app/serve/[token]/page.tsx for the branch that reads this.
+ALTER TABLE public.service_records ADD COLUMN IF NOT EXISTS negotiation_id UUID REFERENCES public.case_negotiations(id);
+
+-- Negotiation status + next action tracking (admin queue "Negotiation follow-ups" and the
+-- daily reminder email). Run add-negotiation-next-actions.sql, which adds to
+-- public.case_negotiations: status, next_action, next_action_due, next_action_done_at,
+-- reminder_sent_at, plus a partial index on open actions.

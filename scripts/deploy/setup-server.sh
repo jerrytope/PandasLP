@@ -12,9 +12,9 @@
 #
 # What it does: installs Node 22, nginx and the Postgres client; adds swap on small servers;
 # clones the code to /opt/pandaslp/app; asks for the keys once and keeps them in
-# /etc/pandaslp/pandaslp.env (readable by root and the app only); runs each database file in
-# scripts/deploy/migrations.txt once against the Supabase database; builds the app; runs it as a
-# systemd service behind nginx on port 80; and adds the two scheduled jobs.
+# /etc/pandaslp/pandaslp.env (readable by root and the app only); applies the legacy bootstrap
+# files and then unapplied timestamped files in supabase/migrations against Supabase; builds the
+# app; runs it as a systemd service behind nginx on port 80; and adds the two scheduled jobs.
 # Works on Ubuntu/Debian and Amazon Linux.
 
 set -euo pipefail
@@ -262,6 +262,69 @@ else
       || die "$file failed. Details: $LOG_DIR/db-last-error.log. Nothing from that file was applied; fix it and run the script again."
     psql "$DB_URL" -q -c "insert into deploy.migrations (name) values ('$file')" >/dev/null
   done < "$APP_DIR/scripts/deploy/migrations.txt"
+
+  # Older installs recorded the equivalent pre-Supabase migration filenames in
+  # deploy.migrations. Treat those as applied so switching to the timestamped directory does
+  # not replay the baseline, destructive law-library seed, or other historical SQL.
+  MIGRATION_DIR="$APP_DIR/supabase/migrations"
+  [ -d "$MIGRATION_DIR" ] || die "Missing Supabase migration directory: $MIGRATION_DIR"
+  MIGRATION_COUNT=$(find "$MIGRATION_DIR" -maxdepth 1 -type f -name '*.sql' | wc -l | tr -d '[:space:]')
+  [ "$MIGRATION_COUNT" -gt 0 ] || die "No SQL migrations found in $MIGRATION_DIR"
+
+  legacy_migration_for() {
+    case "$1" in
+      20260101000001_supabase_schema.sql) echo "supabase-schema.sql" ;;
+      20260101000002_add_recoveries_table.sql) echo "add-recoveries-table.sql" ;;
+      20260101000003_add_debt_checks.sql) echo "add-debt-checks.sql" ;;
+      20260101000004_add_billing_and_ai_usage.sql) echo "add-billing-and-ai-usage.sql" ;;
+      20260101000005_add_negotiation_next_actions.sql) echo "add-negotiation-next-actions.sql" ;;
+      20260101000006_fix_missing_columns.sql) echo "fix-missing-columns.sql" ;;
+      20260101000007_fix_review_and_stamp.sql) echo "fix-review-and-stamp.sql" ;;
+      20260101000008_lock_case_columns.sql) echo "lock-case-columns.sql" ;;
+      20260101000009_add_payment_references.sql) echo "add-payment-references.sql" ;;
+      20260101000010_add_brands.sql) echo "add-brands.sql" ;;
+      20260101000011_add_brand_sync.sql) echo "add-brand-sync.sql" ;;
+      20260101000012_add_brand_serving.sql) echo "add-brand-serving.sql" ;;
+      20260101000013_add_brand_billing.sql) echo "add-brand-billing.sql" ;;
+      20260101000014_add_brand_api.sql) echo "add-brand-api.sql" ;;
+      20260101000015_add_brand_webhooks.sql) echo "add-brand-webhooks.sql" ;;
+      20260101000016_add_brand_test_mode.sql) echo "add-brand-test-mode.sql" ;;
+      20260101000017_add_property_matters.sql) echo "add-property-matters.sql" ;;
+      20260101000018_add_law_library.sql) echo "add-law-library.sql" ;;
+      20260101000019_law_library_seed.sql) echo "docs/pandaslp-law-library-seed.sql" ;;
+      20260101000020_add_property_lawyer_queue.sql) echo "add-property-lawyer-queue.sql" ;;
+      20260101000021_add_agent_instructions.sql) echo "add-agent-instructions.sql" ;;
+      20260101000022_add_site_content.sql) echo "add-site-content.sql" ;;
+      *) return 1 ;;
+    esac
+  }
+
+  while IFS= read -r migration; do
+    case "$migration" in ''|\#*) continue ;; esac
+    migration="${migration%$'\r'}"
+    [[ "$migration" =~ ^[0-9]{14}_[A-Za-z0-9_-]+\.sql$ ]] \
+      || die "Invalid Supabase migration filename: $migration"
+    migration_path="$MIGRATION_DIR/$migration"
+    [ -f "$migration_path" ] || die "Missing Supabase migration: $migration_path"
+    done_already=$(psql "$DB_URL" -tAc "select 1 from deploy.migrations where name = 'supabase/migrations/$migration'")
+    [ "$done_already" = 1 ] && continue
+
+    legacy_file="$(legacy_migration_for "$migration" || true)"
+    if [ -n "$legacy_file" ]; then
+      legacy_done=$(psql "$DB_URL" -tAc "select 1 from deploy.migrations where name = '$legacy_file'")
+      if [ "$legacy_done" = 1 ]; then
+        info "Recording $migration as already applied via $legacy_file."
+        psql "$DB_URL" -q -c "insert into deploy.migrations (name) values ('supabase/migrations/$migration')" >/dev/null
+        continue
+      fi
+    fi
+
+    info "Running supabase/migrations/$migration …"
+    psql "$DB_URL" -q -X -1 -v ON_ERROR_STOP=1 -f "$migration_path" >/dev/null 2>"$LOG_DIR/db-last-error.log" \
+      || die "supabase/migrations/$migration failed. Details: $LOG_DIR/db-last-error.log. Nothing from that file was applied; fix it and run the script again."
+    psql "$DB_URL" -q -c "insert into deploy.migrations (name) values ('supabase/migrations/$migration')" >/dev/null
+  done < <(find "$APP_DIR/supabase/migrations" -maxdepth 1 -type f -name '*.sql' -printf '%f\n' | LC_ALL=C sort)
+
   info "Database up to date ($(psql "$DB_URL" -tAc 'select count(*) from deploy.migrations') files applied)."
 fi
 

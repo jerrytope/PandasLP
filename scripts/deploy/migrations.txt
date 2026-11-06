@@ -1,6 +1,7 @@
-# The database files, in the order they must run on a NEW database.
-# scripts/deploy/setup-server.sh runs each one once (recorded in deploy.migrations).
-# A new SQL file goes at the END of this list (and into supabase/migrations/ for the local database).
+# Legacy bootstrap files, kept so a brand-new server can still be initialized in the order
+# expected by the existing deployment. setup-server.sh runs these first, then runs the
+# timestamped supabase/migrations/*.sql files in filename order.
+# Add all new database changes as timestamped Supabase migrations; do not add them here.
 supabase-schema.sql
 add-recoveries-table.sql
 add-debt-checks.sql
