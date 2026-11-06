@@ -71,16 +71,16 @@ describe('extractOptions', () => {
     const content = [
       'How would you like this delivered?',
       '<<<OPTIONS>>>',
-      "₦10,000 — I'll deliver the letter myself",
-      '₦25,000 — Pandas LP serves it on my behalf',
+      "₦20,000 — I'll deliver the letter myself",
+      '₦40,000 — Pandas LP serves it on my behalf',
       '<<<END_OPTIONS>>>',
     ].join('\n')
 
     const { visible, options } = extractOptions(content)
     expect(visible).toBe('How would you like this delivered?')
     expect(options).toEqual([
-      "₦10,000 — I'll deliver the letter myself",
-      '₦25,000 — Pandas LP serves it on my behalf',
+      "₦20,000 — I'll deliver the letter myself",
+      '₦40,000 — Pandas LP serves it on my behalf',
     ])
   })
 

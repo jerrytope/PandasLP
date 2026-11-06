@@ -253,7 +253,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>Pandas LP drafts your Letter of Demand on our official firm letterhead at a fraction of what a traditional law firm would charge.</p>
 
 <h2>How Much Does It Cost?</h2>
-<p>A Letter of Demand from Pandas LP starts from <strong>₦10,000</strong> for a self-serve PDF. If you want Pandas LP to serve it on the debtor on your behalf, the fee is <strong>₦25,000</strong>.</p>
+<p>A Letter of Demand from Pandas LP starts from <strong>₦20,000</strong> for a self-serve PDF. If you want Pandas LP to serve it on the debtor on your behalf, the fee is <strong>₦40,000</strong>.</p>
     `,
   },
   {
@@ -364,7 +364,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>This is substantially faster than a regular court case, which can take years.</p>
 
 <h2>Start Your Claim with Pandas LP</h2>
-<p>Our Small Claims Agent interviews you, drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and, if needed, files the claim and represents you in court. Starting from ₦10,000.</p>
+<p>Our Small Claims Agent interviews you, drafts your Letter of Demand, prepares Forms SCA 1 and SCA 2, and, if needed, files the claim and represents you in court. Starting from ₦20,000.</p>
     `,
   },
   {
@@ -398,7 +398,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>None of this requires you to be aggressive, or to already have a lawyer on retainer. It requires getting the debt in writing, acting before too much time passes, and escalating in the order the law actually respects: demand first, court second, enforcement third.</p>
 
 <h2>Start Your Claim with Pandas LP</h2>
-<p>Our Small Claims Agent interviews you, drafts a proper Letter of Demand on firm letterhead, and, if it's ignored, prepares your court filing. Starting from ₦10,000. See our full <a href="/recover-debt/lagos">guide to recovering a debt in Lagos</a> for claim limits and court locations in your state.</p>
+<p>Our Small Claims Agent interviews you, drafts a proper Letter of Demand on firm letterhead, and, if it's ignored, prepares your court filing. Starting from ₦20,000. See our full <a href="/recover-debt/lagos">guide to recovering a debt in Lagos</a> for claim limits and court locations in your state.</p>
 <p><em>P.S.: We're covering all of this live on X Spaces, Thursday 30 July at 7PM WAT, with a lawyer taking questions. Find us at @PandasLP on X.</em></p>
     `,
   },
@@ -663,7 +663,7 @@ export const BLOG_POSTS: BlogPost[] = [
 </ol>
 
 <h2>How Pandas LP does it</h2>
-<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> interviews you in plain language, drafts the Letter of Demand, and a licensed practitioner reviews and signs it before it's served — from ₦10,000 to draft and serve it yourself, or ₦25,000 for Pandas LP to serve it on your behalf. What it won't do is published on its own page: see <a href="/agents/debt-recovery/limits">where the AI stops and a lawyer starts</a>.</p>
+<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> interviews you in plain language, drafts the Letter of Demand, and a licensed practitioner reviews and signs it before it's served — from ₦20,000 to draft and serve it yourself, or ₦40,000 for Pandas LP to serve it on your behalf. What it won't do is published on its own page: see <a href="/agents/debt-recovery/limits">where the AI stops and a lawyer starts</a>.</p>
 
 <p><em>This article is general information about Nigerian debt recovery practice and is not legal advice on your specific claim.</em></p>
     `,
@@ -725,7 +725,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>Before a Small Claims filing, sending a Letter of Demand and giving the debtor a chance to pay is a mandatory first step, not optional — the court will expect proof one was sent. It's good practice ahead of an ordinary Magistrate Court claim too, since it establishes that the debtor was given a real opportunity to pay before litigation started.</p>
 
 <h2>How Pandas LP helps either way</h2>
-<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> works out whether your claim fits the Small Claims track, drafts and serves your Letter of Demand, and files at the Small Claims Court on your behalf if the debtor doesn't pay — from ₦10,000. Where a matter turns out to be genuinely contested or above the limit, it says so rather than drafting around the problem.</p>
+<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> works out whether your claim fits the Small Claims track, drafts and serves your Letter of Demand, and files at the Small Claims Court on your behalf if the debtor doesn't pay — from ₦20,000. Where a matter turns out to be genuinely contested or above the limit, it says so rather than drafting around the problem.</p>
 
 <p><em>This article is general information about Nigerian civil procedure and is not legal advice on your specific claim. Court structure, claim limits, and procedure vary between states.</em></p>
     `,
@@ -777,7 +777,7 @@ export const BLOG_POSTS: BlogPost[] = [
 </ul>
 
 <h2>How Pandas LP helps</h2>
-<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> drafts and serves your Letter of Demand whether the debtor is an individual or a company, and files at the Small Claims Court if it's ignored — from ₦10,000.</p>
+<p>Our <a href="/agents/debt-recovery">Debt Recovery Agent</a> drafts and serves your Letter of Demand whether the debtor is an individual or a company, and files at the Small Claims Court if it's ignored — from ₦20,000.</p>
 
 <p><em>This article is general information about Nigerian debt recovery practice and is not legal advice on your specific claim.</em></p>
     `,

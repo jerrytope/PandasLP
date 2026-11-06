@@ -92,6 +92,15 @@ export default function BusinessesPage() {
           </ul>
         </div>
       </Section>
+
+      <Section label="Other business debt recovery services">
+        <Eyebrow>More ways to work with us</Eyebrow>
+        <H2>One account or a larger portfolio.</H2>
+        <div className={styles.actions}>
+          <Link className="btn btn-outline" href="/debt-recovery-for-businesses">Debt recovery for businesses</Link>
+          <Link className="btn btn-outline" href="/debt-recovery-for-lenders">Lender portfolio pilots</Link>
+        </div>
+      </Section>
     </PublicPage>
   )
 }

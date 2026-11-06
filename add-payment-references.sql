@@ -2,9 +2,9 @@
 -- One payment pays for one thing.
 --
 -- /api/verify-payment and /api/custom-claim check a Paystack reference with Paystack, but
--- never recorded which references they had already accepted. So one real ₦25,000 payment's
--- reference could be replayed to mark any number of ₦25,000 cases paid (and one ₦10,000
--- payment could file unlimited "paid" custom claims). Every accepted reference is now
+-- never recorded which references they had already accepted. A real payment's reference
+-- could be replayed to mark multiple cases paid or file unlimited "paid" custom claims.
+-- Every accepted reference is now
 -- inserted here first; the primary key makes a second use fail, in any flow.
 --
 -- Written only by the server (lib/paystackVerify.ts, service-role key). RLS on with no

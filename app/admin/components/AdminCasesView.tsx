@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { AGENTS, type AgentId } from '@/lib/agents'
 import { formatNaira } from '@/lib/formatNaira'
 import CaseCard from './CaseCard'
@@ -8,6 +8,9 @@ import {
   formatDate,
   STAGE_LABEL,
   STAGE_BADGE_STYLE,
+  CASE_FOLDERS,
+  folderOfCase,
+  type CaseFolder,
   type AdminCaseRow,
   type CaseAction,
 } from './types'
@@ -72,10 +75,29 @@ export default function AdminCasesView({
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOption, setSortOption] = useState<SortOption>('newest')
   const [viewMode, setViewMode] = useState<ViewMode>('cards')
+  const [folder, setFolder] = useState<CaseFolder>('saved')
+
+  useEffect(() => {
+    if (!deepLinkCaseId) return
+    const linkedCase = cases.find((c) => c.id === deepLinkCaseId)
+    if (linkedCase) setFolder(folderOfCase(linkedCase))
+  }, [cases, deepLinkCaseId])
+
+  const folderCounts = useMemo(
+    () =>
+      CASE_FOLDERS.reduce(
+        (counts, item) => {
+          counts[item.key] = cases.filter((c) => folderOfCase(c) === item.key).length
+          return counts
+        },
+        {} as Record<CaseFolder, number>,
+      ),
+    [cases],
+  )
 
   // Multi-field Client-Side Search and Sorting
   const filteredAndSortedCases = useMemo(() => {
-    let result = [...cases]
+    let result = searchQuery.trim() ? [...cases] : cases.filter((c) => folderOfCase(c) === folder)
 
     // Universal text search
     if (searchQuery.trim()) {
@@ -122,7 +144,7 @@ export default function AdminCasesView({
     })
 
     return result
-  }, [cases, searchQuery, sortOption])
+  }, [cases, searchQuery, sortOption, folder])
 
   // CSV Export
   function handleExportCsv() {
@@ -292,6 +314,37 @@ export default function AdminCasesView({
           </button>
         </div>
       </div>
+
+      <div role="tablist" aria-label="Case folders" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(155px, 1fr))', gap: 10 }}>
+        {CASE_FOLDERS.map((item) => {
+          const selected = folder === item.key && !searchQuery.trim()
+          return (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              className="card"
+              onClick={() => setFolder(item.key)}
+              style={{
+                padding: '12px 14px',
+                textAlign: 'left',
+                cursor: 'pointer',
+                borderColor: selected ? 'var(--accent)' : 'var(--border-subtle)',
+                background: selected ? 'var(--bg-1)' : 'var(--bg-2)',
+              }}
+            >
+              <div style={{ fontSize: 22, fontWeight: 700, color: selected ? 'var(--accent)' : 'var(--text-1)', lineHeight: 1.1 }}>
+                {folderCounts[item.key]}
+              </div>
+              <div style={{ marginTop: 4, fontSize: 12, fontWeight: 600, color: 'var(--text-1)' }}>{item.label}</div>
+            </button>
+          )
+        })}
+      </div>
+      <p style={{ margin: '-6px 0 0', fontSize: 12.5, color: 'var(--text-2)' }}>
+        {searchQuery.trim() ? 'Search results include all folders.' : CASE_FOLDERS.find((item) => item.key === folder)?.hint}
+      </p>
 
       {/* Filter Section: Agent, Test/Live, and Status Pills */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', background: 'var(--bg-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>

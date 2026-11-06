@@ -19,6 +19,8 @@ type Action =
   | 'markFiled'
   | 'markJudgment'
   | 'markClosed'
+  | 'markRecovered'
+  | 'markSettled'
   | 'markPaidOffline'
 
 // Each action's required prior status — without this, the dashboard's status-changing
@@ -27,7 +29,7 @@ type Action =
 // eligible to move to that stage. RLS only verifies row ownership, not transition validity.
 // markPaidOffline isn't here — it accepts either 'draft' or 'document_ready', which this
 // single-string map can't express, so it gets its own check below instead.
-const REQUIRED_PRIOR_STATUS: Record<Exclude<Action, 'markPaidOffline'>, string> = {
+const REQUIRED_PRIOR_STATUS: Record<Exclude<Action, 'markPaidOffline' | 'markRecovered' | 'markSettled'>, string> = {
   markReviewed: 'paid',
   sendReviewedDocument: 'paid',
   markServed: 'paid',
@@ -46,6 +48,8 @@ const NEXT_STATUS: Record<Action, string> = {
   markFiled: 'filed',
   markJudgment: 'judgment_obtained',
   markClosed: 'closed',
+  markRecovered: 'closed',
+  markSettled: 'closed',
   // A case built through the Custom Claims "lawyer intake" flow (app/admin/page.tsx) has no
   // Paystack transaction behind it at all — the client paid the firm directly, offline. This
   // is the ONLY other way a case reaches 'paid', so everything downstream (markReviewed,
@@ -107,7 +111,7 @@ export async function POST(req: Request) {
   // any of the three would defeat the point of each gate, so all three are admin-only
   // regardless of ownership, unlike every other action above.
   if (
-    (action === 'markReviewed' || action === 'sendReviewedDocument' || action === 'markPaidOffline') &&
+    (action === 'markReviewed' || action === 'sendReviewedDocument' || action === 'markPaidOffline' || action === 'markRecovered' || action === 'markSettled') &&
     !isAdminEmail(callerData.user.email)
   ) {
     return Response.json({ error: 'Only a member of staff can do this.' }, { status: 403 })
@@ -122,6 +126,10 @@ export async function POST(req: Request) {
         { error: `This case is already "${caseData.status}" — there's nothing to mark paid.` },
         { status: 409 },
       )
+    }
+  } else if (action === 'markRecovered' || action === 'markSettled') {
+    if (caseData.brand_id || caseData.agent_id !== 'small-claims' || !['letter_served', 'filed'].includes(caseData.status)) {
+      return Response.json({ error: 'Only an active Small Claims matter can be closed as recovered or settled before judgment.' }, { status: 409 })
     }
   } else {
     // A brand borrower's matter is never paid per letter (the brand is invoiced monthly), so
@@ -186,6 +194,11 @@ export async function POST(req: Request) {
     update.amount_paid = typeof amountPaid === 'number' && amountPaid >= 0 ? amountPaid : (caseData.expected_amount ?? 0)
     update.paid_at = new Date().toISOString()
   }
+  if (action === 'markRecovered' || action === 'markSettled') {
+    update.resolution_type = action === 'markRecovered' ? 'recovered' : 'settled'
+    update.resolved_at = new Date().toISOString()
+    update.resolved_by = callerData.user.email
+  }
   // sendReviewedDocument does NOT set reviewed_document_sent_at here — that only happens
   // further down, after sendCaseEmail actually confirms success. Setting it here would
   // record a successful send even if the email fails.
@@ -197,7 +210,12 @@ export async function POST(req: Request) {
     update.deadline_at = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
   }
 
-  const { error: updateErr } = await supabaseAdmin.from('cases').update(update).eq('id', caseId)
+  const { data: updated, error: updateErr } = await supabaseAdmin
+    .from('cases')
+    .update(update)
+    .eq('id', caseId)
+    .eq('status', caseData.status)
+    .select('id')
   if (updateErr) {
     console.error('Failed to update case status:', updateErr)
     // Staff get the database's own message: a generic error here hid a missing
@@ -205,6 +223,9 @@ export async function POST(req: Request) {
     // admin page why "Mark Reviewed" kept failing. Clients still get the generic message.
     const detail = isAdminEmail(callerData.user.email) ? ` (${updateErr.message})` : ''
     return Response.json({ error: `Failed to update case status.${detail}` }, { status: 500 })
+  }
+  if (!updated?.length) {
+    return Response.json({ error: 'This matter changed before the action could be applied. Refresh and try again.' }, { status: 409 })
   }
 
   // Audit trail — fire-and-forget, same reasoning as the emails below: a failed log write

@@ -11,7 +11,7 @@
 // This is general information, never advice; the page says so.
 
 export const SMALL_CLAIMS_LIMIT_NAIRA = 5_000_000
-export const DEMAND_LETTER_FEE_NAIRA = 10_000
+export const DEMAND_LETTER_FEE_NAIRA = 20_000
 export const PROPERTY_FEE_NAIRA = 25_000
 
 export const DEBTOR_TYPES = ['individual', 'business', 'tenant', 'government'] as const

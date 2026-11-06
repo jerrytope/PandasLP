@@ -1,5 +1,7 @@
 import { getAgent, SMALL_CLAIMS_LAWYER_INTAKE_PROMPT } from '@/lib/agents'
-import { capHistory, type ChatMessage } from '@/lib/chatHistory'
+import { capHistory } from '@/lib/chatHistory'
+import { resolveStoredTurn } from '@/lib/chatPersistence'
+import { LAWYER_INTAKE_STARTER_MESSAGE } from '@/lib/agentChatParsing'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { buildCurrentDateContext } from '@/lib/currentDateContext'
@@ -13,6 +15,7 @@ import { configuredWebSearcher } from '@/lib/property/webSearch'
 import { emailLawyerAlert } from '@/lib/property/lawyerAlerts'
 import { allLiveInstructions, instructionsFor } from '@/lib/agentInstructions'
 import { withDraftingInstructions } from '@/lib/agentInstructionTargets'
+import { conversationKey, parseHandoverBlock, saveLawyerHandover } from '@/lib/lawyerHandover'
 
 // Stable for every conversation with a given agent, so it sits inside the cached system block.
 const DOCUMENT_CONTEXT_RULE = `DOCUMENT CONTEXT RULE: If any user message begins with "DOCUMENT CONTEXT —", it contains facts automatically extracted from a file the user uploaded. Treat all facts in that block as confirmed by the user. Do NOT re-ask questions that are already answered by those facts. Acknowledge what you found briefly, then ask only for information that is still missing.`
@@ -34,14 +37,14 @@ export async function POST(req: Request) {
     )
   }
 
-  let body: { messages?: ChatMessage[]; agentId?: string; lawyerIntake?: boolean; caseId?: string }
+  let body: { agentId?: string; lawyerIntake?: boolean; caseId?: string; userMessageId?: string }
   try {
     body = await req.json()
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
 
-  const { messages, agentId, lawyerIntake, caseId } = body
+  const { agentId, lawyerIntake, caseId, userMessageId } = body
 
   if (!agentId || typeof agentId !== 'string') {
     return Response.json({ error: 'Missing agentId.' }, { status: 400 })
@@ -76,20 +79,57 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Only a member of staff can use lawyer intake mode.' }, { status: 403 })
   }
 
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return Response.json({ error: 'Missing messages.' }, { status: 400 })
+  if (!caseId || typeof caseId !== 'string' || !userMessageId || typeof userMessageId !== 'string') {
+    return Response.json({ error: 'Missing case or message reference.' }, { status: 400 })
   }
-  // Generous cap — real messages are never anywhere near this; only rejects
-  // pathological/abuse payloads, not legitimate use.
-  const MAX_MESSAGE_LENGTH = 8000
-  const hasInvalidMessage = messages.some(
-    (m) =>
-      typeof m.content !== 'string' ||
-      m.content.length > MAX_MESSAGE_LENGTH ||
-      (m.role !== 'user' && m.role !== 'assistant'),
+
+  const { data: caseData, error: caseError } = await supabaseAdmin
+    .from('cases')
+    .select('id, user_id, agent_id')
+    .eq('id', caseId)
+    .maybeSingle()
+  if (caseError) {
+    console.error('Could not load chat case:', caseError)
+    return Response.json({ error: 'Could not load this conversation.' }, { status: 500 })
+  }
+  if (!caseData) return Response.json({ error: 'Case not found.' }, { status: 404 })
+  if (caseData.user_id !== callerData.user.id && !isAdminEmail(callerData.user.email)) {
+    return Response.json({ error: 'You do not have access to this conversation.' }, { status: 403 })
+  }
+  if (caseData.agent_id !== agent.id) {
+    return Response.json({ error: 'This case belongs to a different agent.' }, { status: 409 })
+  }
+
+  const { data: storedMessages, error: messagesError } = await supabaseAdmin
+    .from('messages')
+    .select('id, role, content, reply_to_message_id')
+    .eq('case_id', caseId)
+    .order('created_at', { ascending: true })
+    .order('id', { ascending: true })
+  if (messagesError) {
+    console.error('Could not load saved chat history:', messagesError)
+    return Response.json({ error: 'Could not load this conversation.' }, { status: 500 })
+  }
+  const savedMessages = storedMessages ?? []
+
+  const turn = resolveStoredTurn(
+    savedMessages,
+    userMessageId,
+    lawyerIntake ? LAWYER_INTAKE_STARTER_MESSAGE : agent.starterMessage,
   )
-  if (hasInvalidMessage) {
-    return Response.json({ error: 'Invalid message in conversation.' }, { status: 400 })
+  if (turn.kind === 'not_found') {
+    return Response.json({ error: 'The saved user message was not found.' }, { status: 404 })
+  }
+  if (turn.kind === 'replay') {
+    return Response.json({ response: turn.response, messageId: turn.messageId, replayed: true })
+  }
+  if (turn.kind === 'conflict') {
+    return Response.json({ error: 'A later turn already exists in this conversation.' }, { status: 409 })
+  }
+
+  const messages = turn.messages
+  if (messages.some((message) => message.content.length > 8000)) {
+    return Response.json({ error: 'A message in this conversation is too long.' }, { status: 400 })
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -101,11 +141,7 @@ export async function POST(req: Request) {
   }
 
   // Attribute this turn's AI cost to the matter, but only a matter the caller owns (or staff).
-  let usageCaseId: string | null = null
-  if (typeof caseId === 'string' && caseId) {
-    const { data: owned } = await supabaseAdmin.from('cases').select('id, user_id').eq('id', caseId).maybeSingle()
-    if (owned && (owned.user_id === callerData.user.id || isAdminEmail(callerData.user.email))) usageCaseId = owned.id
-  }
+  const usageCaseId = caseData.id
 
   // The rebuilt Property Law Agent (docs/property_agent_plans/): a router and sub-agents with
   // tools and a saved matter record, which is keyed by the case, so the case must be given
@@ -117,7 +153,20 @@ export async function POST(req: Request) {
     try {
       const result = await runPropertyOrchestrator({ caseId: usageCaseId, messages: capHistory(messages), now: new Date(), repo: matterStore, library: supabaseLawLibrary, webSearch: configuredWebSearcher(), notify: emailLawyerAlert, draftingInstructions: await allLiveInstructions() })
       if (result.ok === false) return Response.json({ error: result.error }, { status: result.status })
-      return Response.json({ response: result.response })
+      const { data: savedReply, error: saveReplyError } = await supabaseAdmin
+        .from('messages')
+        .insert({ case_id: usageCaseId, role: 'assistant', content: result.response, reply_to_message_id: userMessageId })
+        .select('id')
+        .single()
+      if (saveReplyError) {
+        if (saveReplyError.code === '23505') {
+          const { data: existing } = await supabaseAdmin.from('messages').select('id, content').eq('reply_to_message_id', userMessageId).maybeSingle()
+          if (existing) return Response.json({ response: existing.content, messageId: existing.id, replayed: true })
+        }
+        console.error('Could not save property-agent reply:', saveReplyError)
+        return Response.json({ error: 'Could not save the agent response. Please retry.' }, { status: 500 })
+      }
+      return Response.json({ response: result.response, messageId: savedReply.id })
     } catch (err) {
       console.error('Property agent error:', err)
       return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })
@@ -139,7 +188,14 @@ export async function POST(req: Request) {
       system: [
         { text: withDraftingInstructions(`${lawyerIntake ? SMALL_CLAIMS_LAWYER_INTAKE_PROMPT : agent.systemPrompt}
 
-${DOCUMENT_CONTEXT_RULE}`, instructions), cache: '1h' },
+${DOCUMENT_CONTEXT_RULE}
+${agent.id === 'small-claims' && !lawyerIntake ? `
+LAWYER HANDOVER: When the client explicitly asks to speak with a person/lawyer, asks a legal question outside this agent's debt-recovery scope, or the matter requires a lawyer to review before drafting, append exactly one hidden block at the very end of your response:
+<<<HANDOVER>>>
+{"kind":"client_request"|"legal_question"|"lawyer_review","summary":"A concise factual summary for the legal team","contactPreference":"email, phone, WhatsApp, or omitted","contactDetail":"client-provided contact detail or omitted"}
+<<<END_HANDOVER>>>
+Choose one literal kind value, not the alternatives notation. Do not invent a contact detail. Continue to respond to the client naturally before the block. Do not emit this block for ordinary in-scope intake.
+` : ''}`, instructions), cache: '1h' },
         { text: currentDateContext },
       ],
       messages: capHistory(messages).map((m) => ({ role: m.role, content: m.content })),
@@ -154,9 +210,43 @@ ${DOCUMENT_CONTEXT_RULE}`, instructions), cache: '1h' },
         { status: 502 },
       )
     }
-    const text = result.text
+    const parsed = agent.id === 'small-claims' && !lawyerIntake
+      ? parseHandoverBlock(result.text)
+      : { response: result.text, handover: null }
+    if (parsed.handover) {
+      try {
+        const caseDetails = usageCaseId
+          ? await supabaseAdmin.from('cases').select('client_email, client_phone').eq('id', usageCaseId).maybeSingle()
+          : { data: null, error: null }
+        if (caseDetails.error) throw caseDetails.error
+        const firstUserMessage = messages.find((message) => message.role === 'user')?.content ?? ''
+        await saveLawyerHandover({
+          handover: parsed.handover,
+          caseId: usageCaseId,
+          agentId: agent.id,
+          conversationKey: conversationKey(usageCaseId, agent.id, firstUserMessage),
+          clientEmail: caseDetails.data?.client_email ?? callerData.user.email ?? null,
+          clientPhone: caseDetails.data?.client_phone ?? null,
+        })
+      } catch (err) {
+        console.error('Could not record or notify staff about lawyer handover:', err)
+      }
+    }
 
-    return Response.json({ response: text })
+    const { data: savedReply, error: saveReplyError } = await supabaseAdmin
+      .from('messages')
+      .insert({ case_id: usageCaseId, role: 'assistant', content: parsed.response, reply_to_message_id: userMessageId })
+      .select('id')
+      .single()
+    if (saveReplyError) {
+      if (saveReplyError.code === '23505') {
+        const { data: existing } = await supabaseAdmin.from('messages').select('id, content').eq('reply_to_message_id', userMessageId).maybeSingle()
+        if (existing) return Response.json({ response: existing.content, messageId: existing.id, replayed: true })
+      }
+      console.error('Could not save assistant reply:', saveReplyError)
+      return Response.json({ error: 'Could not save the agent response. Please retry.' }, { status: 500 })
+    }
+    return Response.json({ response: parsed.response, messageId: savedReply.id })
   } catch (err) {
     console.error('Chat route error:', err)
     return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 })

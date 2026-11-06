@@ -19,7 +19,7 @@ export const LIVE_PRACTICES: LivePractice[] = [
     href: '/agents/debt-recovery',
     agentId: 'small-claims',
     name: 'Debt recovery',
-    price: 'From ₦10,000',
+    price: 'From ₦20,000',
     line: 'Demand letter, Day 7 and Day 14 follow-ups, then filing at the Small Claims Court.',
     documents: ['Letter of demand', 'Day 7 and Day 14 follow-ups', 'Small Claims filing'],
   },
@@ -54,7 +54,7 @@ export const DRAFTED_DOCUMENTS: {
     practice: 'Debt recovery',
     agentId: 'small-claims',
     title: 'Letter of demand',
-    price: '₦10,000, or ₦25,000 served by us',
+    price: '₦20,000, or ₦40,000 served by us',
     reference: 'PLP · Debt recovery',
     body: [
       'Our client instructs us that you owe the sum stated below, being the balance due on the invoice attached to this letter.',

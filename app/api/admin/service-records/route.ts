@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { buildServiceMessage, buildNegotiationReplyMessage, buildWhatsAppLink, hashMessage, generateAccessToken } from '@/lib/whatsappService'
+import { CASE_DOCUMENT_BUCKET, reviewedDocumentPath, servedDocumentPath } from '@/lib/reviewedDocuments'
 
 const RATE_LIMIT = 20
 const RATE_WINDOW_MS = 5 * 60 * 1000
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
 
   const { data: caseData, error: caseErr } = await supabaseAdmin
     .from('cases')
-    .select('id, case_number, created_at, document_title')
+    .select('id, case_number, created_at, document_title, reviewed_at')
     .eq('id', caseId)
     .single()
   if (caseErr || !caseData) {
@@ -46,11 +47,15 @@ export async function POST(req: Request) {
   if (!caseData.document_title) {
     return Response.json({ error: 'This case has no document to serve yet.' }, { status: 400 })
   }
+  if (!negotiationId && !caseData.reviewed_at) {
+    return Response.json({ error: 'A practitioner must review the document before it can be served.' }, { status: 409 })
+  }
 
   // Serving a specific negotiation reply rather than the case's original document — confirm
   // the round actually exists, belongs to this case, is our side of the thread, and has a
   // stamped attachment before dispatching. Staff should never be able to serve a reply with
   // nothing behind it, or one that belongs to a different case entirely.
+  let sourcePath = reviewedDocumentPath(caseId)
   if (negotiationId) {
     const { data: round, error: roundErr } = await supabaseAdmin
       .from('case_negotiations')
@@ -67,6 +72,7 @@ export async function POST(req: Request) {
     if (!round.attachment_path) {
       return Response.json({ error: 'Attach the stamped reply before serving it.' }, { status: 409 })
     }
+    sourcePath = round.attachment_path
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
@@ -74,6 +80,15 @@ export async function POST(req: Request) {
   const caseRef = caseData.case_number != null ? `PLP/${year}/${String(caseData.case_number).padStart(6, '0')}` : `PLP/${year}/PENDING`
 
   const accessToken = generateAccessToken()
+  const servedPath = servedDocumentPath(accessToken)
+  const { error: copyError } = await supabaseAdmin.storage
+    .from(CASE_DOCUMENT_BUCKET)
+    .copy(sourcePath, servedPath)
+  if (copyError) {
+    console.error('Failed to prepare stamped PDF for service:', copyError)
+    return Response.json({ error: 'Could not prepare the stamped PDF. Check that the source PDF is uploaded and try again.' }, { status: 500 })
+  }
+
   const serveUrl = `${siteUrl}/serve/${accessToken}`
   const messageBuilder = negotiationId ? buildNegotiationReplyMessage : buildServiceMessage
   const message = messageBuilder({ caseRef, documentTitle: caseData.document_title, serveUrl })
@@ -86,10 +101,13 @@ export async function POST(req: Request) {
     message_text: message,
     message_hash: hashMessage(message),
     access_token: accessToken,
+    document_path: servedPath,
     status: 'dispatched',
     negotiation_id: negotiationId || null,
   })
   if (insertErr) {
+    const { error: cleanupError } = await supabaseAdmin.storage.from(CASE_DOCUMENT_BUCKET).remove([servedPath])
+    if (cleanupError) console.error('Failed to remove orphaned served PDF:', cleanupError)
     console.error('Failed to record service dispatch:', insertErr)
     return Response.json({ error: 'Failed to record this service attempt.' }, { status: 500 })
   }

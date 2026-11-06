@@ -100,8 +100,10 @@ export default function Footer() {
           <nav className={styles.footerCol} aria-label="Businesses">
             <h2>Businesses</h2>
             <ul>
-              <li><Link href="/businesses">Loan recovery for lenders</Link></li>
-              <li><Link href="/developers/api">Borrower API</Link></li>
+              <li><Link href="/debt-recovery-for-businesses">Business debt recovery</Link></li>
+              <li><Link href="/debt-recovery-for-lenders">Lender portfolio pilots</Link></li>
+              <li><Link href="/businesses">Borrower API and bulk recovery</Link></li>
+              <li><Link href="/developers/api">API documentation</Link></li>
               <li><Link href="/blog">Notes</Link></li>
             </ul>
           </nav>

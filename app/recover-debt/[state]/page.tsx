@@ -141,7 +141,7 @@ export default async function RecoverDebtStatePage({ params }: Props) {
             </h3>
             <p style={{ color: 'var(--text-muted)', margin: '0 0 24px', fontSize: 14, lineHeight: 1.65 }}>
               We interview you, draft your Letter of Demand on firm letterhead, and file at the Small Claims Court
-              on your behalf, from ₦10,000.
+              on your behalf, from ₦20,000.
             </p>
             <Link href="/agent/small-claims" className="btn btn-primary" style={{ display: 'inline-flex', textDecoration: 'none' }}>
               Start Your Claim →

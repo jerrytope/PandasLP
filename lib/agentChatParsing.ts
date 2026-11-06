@@ -10,6 +10,9 @@ export interface DraftDocument {
   priceLabel?: string
 }
 
+export const LAWYER_INTAKE_STARTER_MESSAGE =
+  "Hi — tell me about the case you picked up. Who owes the client money, roughly how much, and how did the debt come about? I'll ask you anything else I need as we go, and flag anything you'll need to go back and confirm with the client."
+
 const DOCUMENT_BLOCK_RE =
   /<<<DOCUMENT>>>\s*TITLE:\s*(.+?)\s*\n(?:PRICE:\s*(.+?)\s*\n)?(?:PRICE_LABEL:\s*(.+?)\s*\n)?-{3,}\n([\s\S]*?)<<<END_DOCUMENT>>>/
 
@@ -19,7 +22,7 @@ const CLIENT_PHONE_BLOCK_RE = /<<<CLIENT_PHONE>>>\s*([\s\S]*?)\s*<<<END_CLIENT_P
 const CLIENT_EMAIL_BLOCK_RE = /<<<CLIENT_EMAIL>>>\s*([\s\S]*?)\s*<<<END_CLIENT_EMAIL>>>/
 const RECIPIENT_PHONE_BLOCK_RE = /<<<RECIPIENT_PHONE>>>\s*([\s\S]*?)\s*<<<END_RECIPIENT_PHONE>>>/
 
-// Some agents (e.g. small-claims, once the ₦25,000 "Pandas LP serves it" option is chosen)
+// Some agents (e.g. small-claims, once the ₦40,000 "Pandas LP serves it" option is chosen)
 // ask for a callback number so a lawyer can reach the client after payment. The model hands
 // it back in this block so it never leaks into the visible chat or the letter itself.
 export function extractClientPhone(content: string): { visible: string; phone: string | null } {

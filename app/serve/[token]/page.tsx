@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
-import { renderFormattedText } from '@/lib/renderFormattedText'
+import { CASE_DOCUMENT_BUCKET } from '@/lib/reviewedDocuments'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -16,7 +16,7 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
 
   const { data: record, error: recordErr } = await supabaseAdmin
     .from('service_records')
-    .select('id, case_id, status, negotiation_id')
+    .select('id, case_id, status, negotiation_id, document_path')
     .eq('access_token', token)
     .single()
 
@@ -31,18 +31,14 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
     )
   }
 
-  const { data: caseData } = await supabaseAdmin
+  const { data: caseData, error: caseError } = await supabaseAdmin
     .from('cases')
-    .select('document_title, document_body')
+    .select('document_title')
     .eq('id', record.case_id)
     .single()
-
-  // A reply logged in NegotiationPanel.tsx, not the case's original document — see
-  // supabase-schema.sql's service_records.negotiation_id comment. Reuses this same page and
-  // token mechanism rather than a second serve system; only the body and heading differ.
-  const negotiationReply = record.negotiation_id
-    ? (await supabaseAdmin.from('case_negotiations').select('summary').eq('id', record.negotiation_id).single()).data
-    : null
+  const { data: signed, error: signedError } = record.document_path
+    ? await supabaseAdmin.storage.from(CASE_DOCUMENT_BUCKET).createSignedUrl(record.document_path, 60 * 60, { download: `${caseData?.document_title ?? 'Legal document'}.pdf` })
+    : { data: null, error: new Error('No stamped PDF was attached to this service record.') }
 
   // Only ever moves 'dispatched' -> 'link_opened' — never overwrites 'acknowledged', and
   // never re-fires link_opened_at on a repeat visit (real first-view timestamp, not "last
@@ -58,8 +54,9 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
       })
   }
 
-  const bodyText = negotiationReply?.summary ?? caseData?.document_body
-  if (!bodyText) {
+  if (caseError || signedError || !signed?.signedUrl) {
+    if (caseError) console.error('Could not load served case title:', caseError)
+    if (signedError) console.error('Could not sign the served PDF URL:', signedError)
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-0)', color: 'var(--text-1)', padding: 24 }}>
         <p style={{ color: 'var(--text-2)', fontSize: 14 }}>This document is not yet available. Contact pandaslegalpractitioners@gmail.com.</p>
@@ -71,14 +68,18 @@ export default async function ServePage({ params }: { params: Promise<{ token: s
     <div style={{ minHeight: '100vh', background: 'var(--bg-0)', color: 'var(--text-1)', padding: '64px 20px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <div style={{ fontSize: 12, letterSpacing: '0.15em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: 16 }}>
-          {negotiationReply ? 'Pandas LP — Reply on Your Matter' : 'Pandas LP — Notice of Service'}
+          {record.negotiation_id ? 'Pandas LP — Reply on Your Matter' : 'Pandas LP — Notice of Service'}
         </div>
         <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 28, lineHeight: 1.3 }}>
-          {negotiationReply ? `Re: ${caseData?.document_title ?? 'Your Matter'}` : caseData?.document_title}
+          {record.negotiation_id ? `Re: ${caseData?.document_title ?? 'Your Matter'}` : caseData?.document_title}
         </h1>
-        <div style={{ background: '#FFFFFF', border: '1px solid #E8E4DF', borderRadius: 8, padding: '32px 28px', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-          {renderFormattedText(bodyText)}
-        </div>
+        <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 14 }}>
+          The reviewed, signed and stamped PDF is ready to view or download.
+        </p>
+        <a href={signed.signedUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-block', padding: '12px 18px', borderRadius: 6, background: 'var(--accent)', color: 'white', fontWeight: 600, textDecoration: 'none' }}>
+          Open or download the PDF
+        </a>
+        <iframe title="Reviewed and stamped legal document" src={signed.signedUrl} style={{ display: 'block', width: '100%', height: '75vh', marginTop: 24, border: '1px solid #E8E4DF', borderRadius: 8, background: 'white' }} />
         <p style={{ marginTop: 28, fontSize: 12, color: 'var(--text-2)' }}>
           Pandas LP — Licensed Legal Practitioners, Lagos, Nigeria — CAC BN 9646741<br />
           pandaslegalpractitioners@gmail.com · +234 811 808 0189

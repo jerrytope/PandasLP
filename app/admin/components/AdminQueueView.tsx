@@ -5,6 +5,8 @@ import CaseCard from './CaseCard'
 import AwaitingBrandDecision from './brands/AwaitingBrandDecision'
 import PropertyLawyerQueue from './PropertyLawyerQueue'
 import NegotiationFollowUps from './NegotiationFollowUps'
+import LawyerHandovers from './LawyerHandovers'
+import ReadyToFile from './ReadyToFile'
 import { AlertTriangle, Clock, Scale, Inbox } from 'lucide-react'
 
 interface AdminQueueViewProps {
@@ -63,6 +65,10 @@ export default function AdminQueueView({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
       {/* Property Law Agent matters escalated, or documents the firm must take forward */}
       <PropertyLawyerQueue cases={cases} onOpenDrawer={onOpenDrawer} />
+
+      <LawyerHandovers />
+
+      <ReadyToFile cases={cases} onOpenDrawer={onOpenDrawer} />
 
       {/* Negotiation next actions falling due — undertakings, reply deadlines */}
       <NegotiationFollowUps cases={cases} onOpenDrawer={onOpenDrawer} />

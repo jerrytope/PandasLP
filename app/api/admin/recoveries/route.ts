@@ -2,6 +2,8 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin'
 import { requireAdmin } from '@/lib/adminAuth'
 import { checkRateLimit, getClientIp } from '@/lib/rateLimit'
 import { sendCaseEmail } from '@/lib/sendCaseEmail'
+import { syncRecoveryToRegister } from '@/lib/matterRegisterSync'
+import { after } from 'next/server'
 
 export const runtime = 'nodejs'
 
@@ -158,6 +160,14 @@ export async function POST(req: Request) {
     }
   }
 
+  after(() => syncRecoveryToRegister({
+    recoveryId: inserted.id,
+    caseId,
+    amount: amountRecovered,
+    note: proofNote,
+    isFull,
+  }).then(() => undefined))
+
   return Response.json({ ok: true, id: inserted.id, proofPath, warning: proofWarning, emailSent, emailError })
 }
 
@@ -191,13 +201,29 @@ export async function GET(req: Request) {
   }
 
   // Short-lived signed URLs so proof is viewable in the admin UI without making the bucket public.
+  const registerSyncsResult = (data || []).length > 0
+    ? await supabaseAdmin
+        .from('matter_register_syncs')
+        .select('record_id, status, error, last_attempt_at')
+        .eq('record_type', 'recovery')
+        .in('record_id', (data || []).map((r) => r.id))
+    : { data: [], error: null }
+  if (registerSyncsResult.error) console.error('Could not load recovery register sync statuses:', registerSyncsResult.error)
+  const syncByRecoveryId = new Map((registerSyncsResult.data || []).map((sync) => [sync.record_id, sync]))
+
   const recoveries = await Promise.all(
     (data || []).map(async (r) => {
-      if (!r.proof_path) return { ...r, proofUrl: null }
+      const registerSync = syncByRecoveryId.get(r.id) ?? null
+      if (!r.proof_path) return { ...r, proofUrl: null, registerSync }
       const { data: signed } = await supabaseAdmin.storage.from(BUCKET).createSignedUrl(r.proof_path, 60 * 10)
-      return { ...r, proofUrl: signed?.signedUrl ?? null }
+      return { ...r, proofUrl: signed?.signedUrl ?? null, registerSync }
     }),
   )
 
-  return Response.json({ recoveries })
+  return Response.json({
+    recoveries,
+    registerSyncStatusError: registerSyncsResult.error
+      ? 'Matter register status is unavailable; apply add-matter-register-sync.sql.'
+      : null,
+  })
 }

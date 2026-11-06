@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type
 import type { Agent, AgentId } from '@/lib/agents'
 import { textDocumentBlobUrl } from '@/lib/pdfGenerator'
 import { supabase, authedFetch } from '@/lib/supabaseClient'
-import { extractDocument, extractOptions, extractClientPhone, extractClientEmail, extractRecipientPhone, type DraftDocument } from '@/lib/agentChatParsing'
+import { extractDocument, extractOptions, extractClientPhone, extractClientEmail, extractRecipientPhone, LAWYER_INTAKE_STARTER_MESSAGE, type DraftDocument } from '@/lib/agentChatParsing'
 import { useFocusTrap } from '@/lib/useFocusTrap'
 import { getAttribution } from '@/lib/attribution'
 import { trackEvent } from '@/lib/analytics'
@@ -19,6 +19,7 @@ import styles from './AgentChat.module.css'
 export interface Message {
   role: 'user' | 'assistant'
   content: string
+  id?: string
 }
 
 export type { DraftDocument }
@@ -56,9 +57,6 @@ interface AgentChatProps {
   // recorded separately (see the Cases tab's "Mark Paid (Offline)" action).
   lawyerIntake?: boolean
 }
-
-const LAWYER_INTAKE_STARTER_MESSAGE =
-  "Hi — tell me about the case you picked up. Who owes the client money, roughly how much, and how did the debt come about? I'll ask you anything else I need as we go, and flag anything you'll need to go back and confirm with the client."
 
 function renderContent(text: string): ReactNode {
   const lines = text.split('\n')
@@ -284,16 +282,10 @@ export default function AgentChat({
   // state — the Supabase client resolves {error} on a failed write rather than throwing, so
   // a bare `await` here would otherwise swallow that failure silently (see the caller in
   // sendToAgent, which used to fire-and-forget this with only a .catch for network-level throws).
-  async function saveTurn(userMsg: Message, assistantMsg: Message, newDoc: DraftDocument | null): Promise<boolean> {
+  async function saveTurn(newDoc: DraftDocument | null): Promise<boolean> {
     const caseInfo = await ensureCase()
     if (!caseInfo) return false
     const id = caseInfo.id
-
-    const { error: msgErr } = await supabase.from('messages').insert([
-      { case_id: id, role: 'user', content: userMsg.content },
-      { case_id: id, role: 'assistant', content: assistantMsg.content },
-    ])
-    if (msgErr) console.error('Failed to save conversation turn:', msgErr)
 
     if (newDoc) {
       const confirmedPrice = await saveDocument(id, newDoc)
@@ -429,7 +421,7 @@ export default function AgentChat({
   // Single request/response/persistence pipeline shared by every place a message can be
   // sent to the agent (typed input, quick-reply options, and auto-kickoff on mount) — keeps
   // the request contract in one place instead of re-implemented per call site.
-  async function sendToAgent(nextMessages: Message[], msgToPersist: Message) {
+  async function sendToAgent(nextMessages: Message[], msgToPersist: Message, existingUserMessageId?: string) {
     if (sendingRef.current) return
     sendingRef.current = true
     if (messages.length === 0) trackEvent('interview_started', { agent_id: agent.id })
@@ -437,20 +429,40 @@ export default function AgentChat({
     setError('')
     setLoading(true)
     try {
-      // The Property Law Agent keeps a saved record of each matter on the server
-      // (property_matters, keyed by the case), so its case must exist before the first
-      // message rather than after the first reply like the other agents.
-      if (agent.id === 'recovery-of-premises' && !caseIdRef.current) {
-        if (!(await ensureCase())) {
-          setError("We couldn't start your case. Please check your connection and try again.")
+      const caseInfo = await ensureCase()
+      if (!caseInfo) {
+        setError("We couldn't start your case. Please check your connection and try again.")
+        return
+      }
+
+      let userMessageId = existingUserMessageId
+      if (!userMessageId) {
+        const { data: savedUserMessage, error: saveUserError } = await supabase
+          .from('messages')
+          .insert({ case_id: caseInfo.id, role: 'user', content: msgToPersist.content })
+          .select('id')
+          .single()
+        if (saveUserError || !savedUserMessage) {
+          console.error('Failed to save user message:', saveUserError)
+          setError("We couldn't save your message. Please try again.")
           return
         }
+        userMessageId = savedUserMessage.id
+        const withId = nextMessages.map((message, index) =>
+          index === nextMessages.length - 1 ? { ...message, id: userMessageId } : message,
+        )
+        setMessages(withId)
       }
+
       const res = await authedFetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        // caseId lets the server count this turn's AI cost toward the matter (ownership is checked there).
-        body: JSON.stringify({ messages: nextMessages, agentId: agent.id, ...(caseIdRef.current ? { caseId: caseIdRef.current } : {}), ...(lawyerIntake ? { lawyerIntake: true } : {}) }),
+        body: JSON.stringify({
+          agentId: agent.id,
+          caseId: caseInfo.id,
+          userMessageId,
+          ...(lawyerIntake ? { lawyerIntake: true } : {}),
+        }),
       })
       const data = await res.json()
       if (!res.ok || data.error) {
@@ -461,7 +473,7 @@ export default function AgentChat({
       const { visible: afterRecipientPhone, phone: recipientPhone } = extractRecipientPhone(afterPhone)
       const { visible: afterEmail, email: clientEmail } = extractClientEmail(afterRecipientPhone)
       const { visible, doc: rawDoc } = extractDocument(afterEmail)
-      const assistantMsg: Message = { role: 'assistant', content: visible }
+      const assistantMsg: Message = { role: 'assistant', content: visible, ...(data.messageId ? { id: data.messageId } : {}) }
       setMessages((prev) => [...prev, assistantMsg])
       const doc = await finalizeDocument(rawDoc)
       if (doc) setDraftDoc(doc)
@@ -471,7 +483,7 @@ export default function AgentChat({
       // Awaited (not fire-and-forget) specifically so a failed document save can be surfaced
       // before the user reaches the payment button — otherwise they'd pay against a document
       // that only ever existed in this tab's memory and vanishes on refresh (see saveTurn).
-      const saved = await saveTurn(msgToPersist, assistantMsg, doc).catch((err) => {
+      const saved = await saveTurn(doc).catch((err) => {
         console.error('Failed to save conversation turn:', err)
         return false
       })
@@ -494,12 +506,23 @@ export default function AgentChat({
   // an existing case) so the user doesn't have to retype what already happened.
   const autoSentRef = useRef(false)
   useEffect(() => {
-    if (!initialAutoMessage || autoSentRef.current) return
+    if (!initialAutoMessage || autoSentRef.current || loading) return
+    const lastMessage = messages[messages.length - 1]
+    if (lastMessage?.role === 'user' && lastMessage.id) return
     autoSentRef.current = true
     const userMsg: Message = { role: 'user', content: initialAutoMessage }
     sendToAgent([...messages, userMsg], userMsg)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialAutoMessage])
+  }, [initialAutoMessage, messages, loading])
+
+  const pendingRetryStartedRef = useRef(false)
+  useEffect(() => {
+    const lastMessage = initialMessages?.[initialMessages.length - 1]
+    if (!initialCaseId || !lastMessage || lastMessage.role !== 'user' || !lastMessage.id || pendingRetryStartedRef.current) return
+    pendingRetryStartedRef.current = true
+    sendToAgent(initialMessages, lastMessage, lastMessage.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCaseId, initialMessages])
 
   // ----- File upload -----
 
@@ -805,6 +828,19 @@ export default function AgentChat({
               )}
 
               {error && <div className={styles.bubbleError}>{error}</div>}
+              {error && messages[messages.length - 1]?.role === 'user' && (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => {
+                    const pendingMessage = messages[messages.length - 1]
+                    sendToAgent(messages, pendingMessage, pendingMessage.id)
+                  }}
+                  disabled={loading}
+                >
+                  Retry response
+                </button>
+              )}
             </div>
 
             {draftDoc && (
