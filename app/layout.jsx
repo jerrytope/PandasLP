@@ -89,10 +89,10 @@ export const metadata = {
 // object in Next 14+) — this is what colors the Android status bar / task switcher when the
 // app is installed, matching the manifest's own theme_color. One per theme; the theme script
 // (lib/theme.ts) rewrites both when the visitor picks a theme that differs from the device.
-// The site starts dark for everyone (lib/theme.ts), so the bar starts dark too; the theme
-// script rewrites it when a visitor picks light.
+// The site starts light for everyone (lib/theme.ts), so the bar starts light too; the theme
+// script rewrites it when a visitor picks dark.
 export const viewport = {
-  themeColor: THEME_COLOR.dark,
+  themeColor: THEME_COLOR.light,
 }
 
 const legalServiceJsonLd = {

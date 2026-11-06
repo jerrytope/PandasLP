@@ -19,6 +19,9 @@ declare global {
 }
 
 const DISMISS_KEY = 'pandas_install_dismissed'
+// First-time visitors never see the prompt: on the first visit it covered the hero's buttons.
+// It is offered from the second visit on, to people who have come back.
+const VISITS_KEY = 'pandas_home_visits'
 
 // Marketing pages only (homepage) — mirrors WhatsAppFab's placement. Shows Chrome/Edge/Android's
 // real install prompt when available; iOS Safari never fires beforeinstallprompt, so it gets
@@ -29,7 +32,20 @@ export default function InstallAppPrompt() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISS_KEY) === 'true') return
+    let visits = 1
+    try {
+      if (localStorage.getItem(DISMISS_KEY) === 'true') return
+      visits = Number(localStorage.getItem(VISITS_KEY) || '0')
+      // Counted once per browser session, so reloads (and dev's double effects) aren't visits.
+      if (sessionStorage.getItem(VISITS_KEY) !== 'counted') {
+        visits += 1
+        localStorage.setItem(VISITS_KEY, String(visits))
+        sessionStorage.setItem(VISITS_KEY, 'counted')
+      }
+    } catch {
+      return
+    }
+    if (visits < 2) return
 
     const isStandalone =
       window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true

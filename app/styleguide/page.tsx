@@ -54,7 +54,7 @@ export default async function StyleguidePage() {
         <h1 style={{ fontSize: 'var(--fs-display)', maxWidth: '14ch', margin: '8px 0 24px' }}>Legal work, drafted by AI. Signed by a lawyer.</h1>
         <Lede>Every block the new site is built from, in one place. Switch the theme to check both. The numbers and the quote on this page are samples; the live site shows only what is published in Admin → Site content.</Lede>
         <div style={{ display: 'flex', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
-          <a className="btn btn-primary btn-lg" href="#">Start a matter</a>
+          <a className="btn btn-primary btn-lg" href="#">Start a case</a>
           <a className="btn btn-outline btn-lg" href="#">Talk to a lawyer</a>
           <a className="btn btn-ghost" href="#">Read more</a>
         </div>

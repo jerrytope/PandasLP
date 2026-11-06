@@ -9,13 +9,13 @@
 
 .rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border-subtle); }
 .rows li { display: grid; grid-template-columns: 32px 1fr; gap: 14px; padding: 20px 0; border-bottom: 1px solid var(--border-subtle); }
-.rows li > span:first-child { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--accent); padding-top: 4px; }
+.rows li > span:first-child { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); padding-top: 4px; }
 .rows strong { display: block; font-weight: 600; font-size: 17px; color: var(--text-1); margin-bottom: 4px; }
 .rows p { font-size: 15px; color: var(--text-2); line-height: 1.6; margin: 0; }
 
 .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-top: 1px solid var(--border-subtle); }
 .fact { padding: 22px 22px 26px 0; border-bottom: 1px solid var(--border-subtle); display: grid; gap: 6px; }
-.factLabel { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.factLabel { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); }
 .factValue { font-family: var(--font-display), sans-serif; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: var(--text-1); }
 .factNote { font-size: 14px; color: var(--text-2); line-height: 1.5; }
 
@@ -27,7 +27,7 @@
 
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); border-top: 1px solid var(--border-subtle); counter-reset: s; }
 .steps li { counter-increment: s; padding: 24px 24px 28px 0; border-bottom: 1px solid var(--border-subtle); display: grid; gap: 8px; align-content: start; }
-.steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-mono), monospace; font-size: 12px; color: var(--accent); letter-spacing: 0.1em; }
+.steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); }
 .steps h3 { font-size: 19px; }
 .steps p { font-size: 15px; color: var(--text-2); line-height: 1.55; }
 

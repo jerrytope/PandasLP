@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
+import { FRONTEND_ONLY, offlineFetch } from './frontendOnly'
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export const supabase = createClient(url, anon)
+export const supabase = createClient(url, anon, FRONTEND_ONLY ? { global: { fetch: offlineFetch } } : {})
 
 // Attaches the current user's session token so API routes can verify who's calling
 // (see app/api/send-email/route.ts, which rejects requests without it). Falls back to
