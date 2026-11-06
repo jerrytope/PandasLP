@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import RecoveredCounter from './RecoveredCounter'
-import { Carousel, DocumentPreview, Eyebrow, H2, Lede, Pipeline, QuoteCard, RunLog, Section, SitePhoto, StatRow } from './ui'
+import { Carousel, DocumentPreview, Eyebrow, H2, Lede, Pipeline, QuoteCard, Section, SignedLetter, SitePhoto, StatRow } from './ui'
 import { DRAFTED_DOCUMENTS, FIRM } from '@/lib/sitePractices'
 import { safeJsonLd } from '@/lib/jsonLd'
 import styles from './home/home.module.css'
@@ -10,8 +10,12 @@ import styles from './home/home.module.css'
 /* ─────────────────────────────────────────────────────────────
    Homepage ("Ink & Brass", docs/frontend-revamp-plan.md).
 
-   Order: hero with the run-log → credentials (and published numbers) → photo band →
-   how a matter moves → what we draft → what it will not do → client words (only if
+   Plain words first (27 Oct 2026 review: the page read as a tech product). "Case", not
+   "matter"; "lawyer", not "practitioner"; "deliver", not "serve". Code and API detail live on
+   /businesses and /developers/api, not here.
+
+   Order: hero with a signed letter → credentials (and published numbers) → photo band →
+   how it works → what we prepare → what we will not do → client words (only if
    published) → confidentiality → for businesses → fees → notes → questions → what
    happens next.
 
@@ -23,21 +27,21 @@ import styles from './home/home.module.css'
 const PROPERTY_AGENT = 'recovery-of-premises'
 const DEBT_AGENT = 'small-claims'
 
-const RUN_LOG = [
-  { status: 'done', text: 'Facts captured from your answers', detail: '9 facts' },
-  { status: 'done', text: 'Amount owed confirmed', detail: '₦2,400,000' },
-  { status: 'done', text: 'Evidence and limitation period checked' },
-  { status: 'done', text: 'Letter of demand drafted' },
-  { status: 'done', text: 'You read the draft and paid', detail: '₦20,000' },
-  { status: 'next', text: 'Awaiting review and signature by a lawyer' },
-]
+const LETTER_NOTES = ['You read it before you pay', 'Reminders sent on Day 7 and Day 14']
 
 const PIPELINE = [
-  { title: 'Interview', ai: 'Asks plain questions in your own words and saves each fact.', lawyer: 'Steps in when a matter is contested or unclear.' },
-  { title: 'Draft', ai: 'Fills the firm’s own template. Never a blank page.', lawyer: 'Wrote the templates and the rules the agent follows.' },
-  { title: 'You read it', ai: 'Shows you the whole draft before you pay.', lawyer: 'Nothing has gone anywhere yet.' },
-  { title: 'Review and sign', ai: 'Waits.', lawyer: 'Reads, corrects and signs every document.' },
-  { title: 'Serve and follow up', ai: 'Sends the Day 7 and Day 14 follow-ups.', lawyer: 'Serves it if you ask, and files at court if it comes to that.' },
+  { title: 'Tell us what happened', ai: 'Asks simple questions. Answer in your own words, the way you would explain it to a friend.', lawyer: 'Steps in if your case is disputed or unclear.' },
+  { title: 'We prepare it', ai: 'Fills in the firm’s own letter, written by our lawyers.', lawyer: 'Wrote the letters and the rules the AI follows.' },
+  { title: 'You read it', ai: 'Shows you the full letter before you pay anything.', lawyer: 'Nothing has been sent yet.' },
+  { title: 'A lawyer signs', ai: 'Waits for the lawyer.', lawyer: 'Reads, corrects and signs every document.' },
+  { title: 'Delivered and followed up', ai: 'Sends reminders on Day 7 and Day 14.', lawyer: 'Delivers it for you if you ask, and goes to court if it comes to that.' },
+]
+
+const BIZ_STEPS = [
+  { t: 'Share your list', b: 'Overdue borrowers in a shared Google Sheet, or sent from your own system.' },
+  { t: 'A lawyer approves each letter', b: 'One letter per loan, never sent twice.' },
+  { t: 'We email the borrower', b: 'You are copied in, with reminders on Day 7 and Day 14.' },
+  { t: 'One invoice a month', b: 'Only for the letters a lawyer approved.' },
 ]
 
 /* Two from each practice page, word for word (lib/agentPagesData.js). */
@@ -45,38 +49,38 @@ const LIMITS = [
   { practice: 'Debt recovery', t: 'It will not tell you your odds', b: 'No prediction of winning, no guaranteed timeline. It will tell you where your evidence is thin, which is the useful version.' },
   { practice: 'Debt recovery', t: 'It will not invent authority', b: 'No case references, statute sections or monetary limits it is not certain of. It asks you to confirm instead.' },
   { practice: 'Property law', t: 'It will not advise self-help eviction', b: 'Changing locks or removing a tenant without a court order is never on the table. Notice, then court, every time.' },
-  { practice: 'Property law', t: 'It stands down on contested matters', b: 'Live litigation, disputed ownership, squatters, or skipping Governor’s Consent go to a practitioner before any drafting.' },
+  { practice: 'Property law', t: 'It hands disputed cases to a lawyer', b: 'Ongoing court cases, disputed ownership, squatters, or skipping Governor’s Consent go to a lawyer before anything is written.' },
 ]
 
 /* From the privacy policy (app/privacy/page.tsx), not a new promise. */
 const SAFEGUARDS = [
-  { t: 'Only the people working on your matter see it', b: 'Access to case data is restricted to you and to the Pandas LP staff who need it to work on your matter.' },
+  { t: 'Only the people working on your case see it', b: 'Access to case data is restricted to you and to the Pandas LP staff who need it to work on your case.' },
   { t: 'Not sold. Not used to train AI', b: 'We do not sell your data, and it is not used to train any AI model beyond the single request needed to draft your document.' },
   { t: 'We never see your card', b: 'Payments are processed by Paystack. We receive confirmation and the amount, never your card or bank details.' },
   { t: 'Your rights under the NDPA 2023', b: 'You can ask to see, correct or delete the personal data we hold about you.' },
 ]
 
 const FEE_LEAD = {
-  value: '₦20,000',
-  label: 'Letter of demand, yours to serve',
-  note: 'Drafted from the firm’s template, reviewed and signed by a licensed practitioner before it goes anywhere. You read the draft before you pay.',
+  value: '₦10,000',
+  label: 'Letter of demand, delivered by you',
+  note: 'Prepared from the firm’s own letter, then checked and signed by a lawyer before it goes anywhere. You see the letter before you pay.',
 }
 
 const FEES = [
-  { label: 'The same letter, served by us', value: '₦40,000', best: 'Best if you would rather the firm delivers it.' },
-  { label: 'Day 7 and Day 14 follow-ups', value: 'Included', accent: true, best: 'Sent for you once the letter is served.' },
+  { label: 'The same letter, delivered by us', value: '₦25,000', best: 'If you would rather we deliver it for you.' },
+  { label: 'Reminders on Day 7 and Day 14', value: 'Included', accent: true, best: 'Sent for you once the letter is delivered.' },
   { label: 'Each tenancy or lease document', value: '₦25,000', best: 'Notices to quit, tenancy and lease agreements.' },
-  { label: 'Deeds transferring title, invoiced by the firm', value: '2.5% of the consideration', best: 'No drafting fee on top.' },
-  { label: 'Court filing fees', value: 'Set by the court', muted: true, best: 'Only if a matter goes that far.' },
+  { label: 'Deeds transferring land or property', value: '2.5% of the price', best: 'Invoiced by the firm. No drafting fee on top.' },
+  { label: 'Court filing fees', value: 'Set by the court', muted: true, best: 'Only if a case goes that far.' },
 ]
 
 /* Every answer restates a fact already on this page. No outcome or speed promises. */
 const FAQS = [
   { q: 'What does Pandas LP do?', a: 'Pandas LP is a licensed Nigerian law firm (CAC BN 9646741) handling debt recovery and property law: letters of demand, follow-ups, filing at the Small Claims Court, notices to quit, tenancy and lease documents, deeds of assignment and property searches.' },
-  { q: 'How much does a letter of demand cost?', a: 'A letter of demand is ₦20,000 if you serve it yourself, or ₦40,000 if we serve it for you. The Day 7 and Day 14 follow-ups are included. Court filing fees, if the matter goes further, are set by the court.' },
-  { q: 'Who prepares and signs the documents?', a: 'Each document is drafted from the firm’s template, then reviewed and signed by a licensed legal practitioner before it goes anywhere. You read the draft before you pay.' },
-  { q: 'What happens if the debtor still does not pay?', a: 'After the letter is served, a follow-up goes out on Day 7 and the response window closes on Day 14. If the debt is still unpaid, the matter can move to filing at the Small Claims Court.' },
-  { q: 'How much do property documents cost?', a: 'Each tenancy or lease document is ₦25,000. Deeds transferring title are invoiced by the firm at 2.5% of the consideration.' },
+  { q: 'How much does a letter of demand cost?', a: 'A letter of demand is ₦10,000 if you deliver it yourself, or ₦25,000 if we deliver it for you. Reminders on Day 7 and Day 14 are included. Court filing fees, if the case goes further, are set by the court.' },
+  { q: 'Who prepares and signs the documents?', a: 'Each document is prepared from the firm’s own template, then checked and signed by a licensed lawyer before it goes anywhere. You read it before you pay.' },
+  { q: 'What happens if the debtor still does not pay?', a: 'After the letter is delivered, a reminder goes out on Day 7 and the time to respond ends on Day 14. If the debt is still unpaid, we can take the case to the Small Claims Court.' },
+  { q: 'How much do property documents cost?', a: 'Each tenancy or lease document is ₦25,000. Deeds transferring land or property are invoiced by the firm at 2.5% of the price paid.' },
   { q: 'I am not sure my debt is worth chasing. Where do I start?', a: 'Use the free debt check. It is seven quick questions, takes about a minute, and shows how strong your case looks and what it would cost.' },
 ]
 
@@ -107,19 +111,19 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
                 Tell us what happened. <em>We take it from there.</em>
               </h1>
               <p className={styles.heroLede}>
-                Recover money you are owed with a letter of demand from ₦20,000, reviewed and signed by a licensed practitioner.
-                Day 7 and Day 14 follow-ups are included.
+                Owed money, or dealing with a tenant or landlord? Answer a few simple questions. We prepare the letter,
+                a lawyer checks and signs it, and we follow up for you. Letters of demand from ₦10,000.
               </p>
               <div className={styles.heroActions}>
                 <button type="button" className="btn btn-primary btn-lg" onClick={() => onOpenAgent(DEBT_AGENT)}>Recover a debt</button>
-                <button type="button" className="btn btn-outline btn-lg" onClick={() => onOpenAgent(PROPERTY_AGENT)}>I have a property matter</button>
+                <button type="button" className="btn btn-outline btn-lg" onClick={() => onOpenAgent(PROPERTY_AGENT)}>Property or tenancy matter</button>
               </div>
               <div className={styles.heroLinks}>
                 <span>Not sure it is worth chasing? <Link href="/debt-check?ref=home-hero">Take the free 1-minute debt check</Link></span>
-                <button type="button" onClick={onStartLawyerConsult}>Speak to a lawyer first</button>
+                <button type="button" onClick={onStartLawyerConsult}>Talk to a lawyer first</button>
               </div>
             </div>
-            <RunLog title="matter PLP-0142 · Letter of demand · Lagos" steps={RUN_LOG} />
+            <SignedLetter reference="PLP · Debt recovery" recipient="Mr. A. Okafor, Ikeja, Lagos" amount="₦2,400,000" notes={LETTER_NOTES} />
           </div>
         </div>
       </section>
@@ -127,10 +131,10 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
       {/* ══ CREDENTIALS, and numbers once published ══ */}
       <div className="container" style={{ maxWidth: 'var(--max-width)', padding: '0 var(--gutter) 64px' }}>
         <ul className={styles.proof} aria-label="About the firm">
-          <li>{FIRM.registration}</li>
-          <li>Signed by a licensed practitioner</li>
-          <li>You read the draft before you pay</li>
-          <li>No retainer. No hourly rate.</li>
+          <li>Registered business, {FIRM.registration}</li>
+          <li>Every letter signed by a lawyer</li>
+          <li>See the letter before you pay</li>
+          <li>Fixed fees, no hourly rate</li>
         </ul>
         {stats.items.length > 0 && (
           <div className={styles.proofStats}>
@@ -139,11 +143,11 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
         )}
       </div>
 
-      {/* ══ PHOTO BAND ══ */}
-      <Section tone="band" label="Our work" flush>
-        <SitePhoto photo={content?.photos?.hero} label="The firm at work" ratio="21 / 9" />
+      {/* ══ PHOTO BAND ══ the photo only once a real one is uploaded; an empty placeholder looked unfinished */}
+      <Section tone="band" label="Our work" flush={Boolean(content?.photos?.hero?.url)}>
+        {content?.photos?.hero?.url && <SitePhoto photo={content.photos.hero} label="The firm at work" ratio="21 / 9" />}
         <p className={styles.bandLine}>
-          The agent drafts. <span>A licensed practitioner signs.</span> Nothing reaches a debtor, a tenant or a court before that.
+          Our AI prepares the paperwork. <span>A lawyer checks and signs it.</span> Nothing reaches the other side before that.
         </p>
       </Section>
 
@@ -151,9 +155,9 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
       <RecoveredCounter />
 
       {/* ══ HOW A MATTER MOVES ══ */}
-      <Section id="how-it-works" label="How a matter moves">
-        <Eyebrow>How a matter moves</Eyebrow>
-        <H2>Five steps, and one of them is always a person.</H2>
+      <Section id="how-it-works" label="How it works">
+        <Eyebrow>How it works</Eyebrow>
+        <H2>Five steps. A lawyer signs before anything is sent.</H2>
         <div style={{ marginTop: 48 }}>
           <Pipeline steps={PIPELINE} />
         </div>
@@ -163,7 +167,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
       <Section tone="muted" id="services" label="What we draft">
         <Carousel
           label="Documents we draft"
-          heading={<><Eyebrow>What we draft</Eyebrow><H2>Two practices open today. Every document on paper.</H2></>}
+          heading={<><Eyebrow>What we prepare</Eyebrow><H2>Documents we can prepare for you today.</H2></>}
         >
           {DRAFTED_DOCUMENTS.map((d) => (
             <Link key={d.title} href={`/agent/${d.agentId}`} className={styles.docCard} aria-label={`Start: ${d.title}, ${d.price}`}>
@@ -179,13 +183,13 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
       </Section>
 
       {/* ══ WHAT IT WILL NOT DO ══ */}
-      <Section label="What it will not do">
+      <Section label="What we will not do">
         <div className={styles.sectionIntro}>
           <div>
-            <Eyebrow>What it will not do</Eyebrow>
-            <H2>The refusals tell you more than the features.</H2>
+            <Eyebrow>What we will not do</Eyebrow>
+            <H2>Some things are always left to a lawyer.</H2>
           </div>
-          <Link href="/agents" className="btn btn-outline">Read them all</Link>
+          <Link href="/agents" className="btn btn-outline">See the full list</Link>
         </div>
         <div className={styles.limits}>
           {LIMITS.map((l) => (
@@ -214,7 +218,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
           <div>
             <Eyebrow>Confidentiality</Eyebrow>
             <H2>What you tell us stays with the firm.</H2>
-            <Lede>The same duty of confidence as any law firm, written down in plain words.</Lede>
+            <Lede>The same duty of confidence as any law firm, in plain words.</Lede>
           </div>
           <div>
             <ul className={styles.rows}>
@@ -235,30 +239,18 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
         <div className={styles.split}>
           <div>
             <Eyebrow>For lenders and businesses</Eyebrow>
-            <H2>Send borrowers in bulk. We do the rest.</H2>
-            <Lede>By a shared Google Sheet or by API. Each borrower gets a lawyer-approved letter, served by email, with Day 7 and Day 14 reminders, billed monthly.</Lede>
-            <ul className={styles.bizList}>
-              <li>One case per loan, never twice</li>
-              <li>Webhooks at each step, signed</li>
-              <li>A test mode before any real borrower</li>
-            </ul>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/businesses" className="btn btn-primary">For businesses</Link>
-              <Link href="/developers/api" className="btn btn-outline">Read the API docs</Link>
+            <H2>Many overdue borrowers? Send them all at once.</H2>
+            <Lede>Share your list and we handle the rest: a lawyer-approved letter for each borrower, delivered by email, with reminders, and one invoice a month.</Lede>
+            <div className={styles.bizActions}>
+              <Link href="/businesses" className="btn btn-primary">See how it works for businesses</Link>
+              <Link href="/developers/api" className={styles.rowsLink}>Developers: API docs</Link>
             </div>
           </div>
-          <div className={styles.code} aria-label="Example API request">
-            <div className={styles.codeBar}><span>POST /api/v1/borrowers</span><span>plp_test_…</span></div>
-            <pre>{`{
-  `}<span className={styles.k}>"loan_id"</span>{`: `}<span className={styles.s}>"LN-2026-0042"</span>{`,
-  `}<span className={styles.k}>"borrower_full_name"</span>{`: `}<span className={styles.s}>"Adebayo Ogunleye"</span>{`,
-  `}<span className={styles.k}>"phone_number"</span>{`: `}<span className={styles.s}>"08031234567"</span>{`,
-  `}<span className={styles.k}>"amount_outstanding"</span>{`: 380000,
-  `}<span className={styles.k}>"loan_date"</span>{`: `}<span className={styles.s}>"2026-03-15"</span>{`
-}
-
-→ 201  { "case_id": "ACME-0004", "status": "new" }`}</pre>
-          </div>
+          <ol className={styles.bizSteps}>
+            {BIZ_STEPS.map((step) => (
+              <li key={step.t}><span><strong>{step.t}</strong><p>{step.b}</p></span></li>
+            ))}
+          </ol>
         </div>
       </Section>
 
@@ -266,7 +258,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
       <Section id="fees" label="Fees">
         <span id="pricing" />
         <Eyebrow>Fees</Eyebrow>
-        <H2>No retainer. No hourly rate.</H2>
+        <H2>Fixed fees. No hourly rate.</H2>
         <div className={styles.feeLead} style={{ marginTop: 40 }}>
           <div>
             <span className={styles.feeFigure}>{FEE_LEAD.value}</span>
@@ -325,7 +317,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
       </Section>
 
       {/* ══ WHAT HAPPENS NEXT ══ */}
-      <Section tone="band" label="Start a matter">
+      <Section tone="band" label="Start a case">
         <div className={styles.close}>
           <div>
             <h2 className={styles.closeTitle}>Start with the problem, not the paperwork.</h2>
@@ -340,7 +332,7 @@ export default function LandingPage({ onOpenAgent, onStartLawyerConsult, content
               <li><span><strong>You answer plain questions</strong> in your own words. About ten minutes.</span></li>
               <li><span><strong>You read the whole draft</strong> before anything is paid.</span></li>
               <li><span><strong>You pay the fixed fee</strong> shown on the draft. No retainer.</span></li>
-              <li><span><strong>A licensed practitioner signs it,</strong> and it is served, by you or by us.</span></li>
+              <li><span><strong>A lawyer signs it,</strong> and it is delivered, by you or by us.</span></li>
             </ol>
           </div>
         </div>

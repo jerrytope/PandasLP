@@ -72,16 +72,16 @@
   grid-template-columns: 1.4fr 1fr 0.9fr;
   gap: 40px;
 }
-.megaLabel { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 14px; }
+.megaLabel { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); margin-bottom: 14px; }
 .megaLive { display: grid; gap: 4px; }
 .megaLink { display: grid; gap: 4px; padding: 14px; margin: 0 -14px; border-radius: var(--radius-md); color: inherit; text-decoration: none; }
 .megaLink:hover { background: var(--bg-1); }
 .megaLink:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
 .megaLinkHead { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .megaLinkHead strong { font-family: var(--font-display), sans-serif; font-size: 17px; font-weight: 600; color: var(--text-1); }
-.megaPrice { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--accent); white-space: nowrap; }
+.megaPrice { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--accent); white-space: nowrap; }
 .megaLine { font-size: 14px; color: var(--text-2); line-height: 1.5; }
-.megaDocs { font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-3); }
+.megaDocs { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); }
 .megaLater { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .megaLater li strong { display: block; font-size: 14px; font-weight: 600; color: var(--text-2); }
 .megaLater li span { font-size: 13px; color: var(--text-3); }
@@ -130,7 +130,7 @@
 .footer { border-top: 1px solid var(--border-subtle); background: var(--bg-0); padding: 72px 0 32px; }
 .footerTop { display: grid; grid-template-columns: 1.3fr repeat(4, 1fr); gap: 40px; }
 .footerBrand p { font-size: 14px; color: var(--text-2); line-height: 1.6; margin: 14px 0 0; max-width: 34ch; }
-.footerCol h2 { font-family: var(--font-mono), monospace; font-weight: 500; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); margin-bottom: 14px; }
+.footerCol h2 { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 500; font-size: 13px; color: var(--text-3); margin-bottom: 14px; }
 .footerCol ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
 .footerCol a { font-size: 14px; color: var(--text-2); text-decoration: none; }
 .footerCol a:hover { color: var(--text-1); }
@@ -140,7 +140,7 @@
 .newsletterRow input { flex: 1; min-width: 0; min-height: 40px; padding: 8px 12px; font-size: 14px; }
 .newsletterNote { font-size: 11.5px; line-height: 1.45; color: var(--text-3); margin: 0; }
 .locations { margin-top: 48px; border-top: 1px solid var(--border-subtle); padding-top: 20px; }
-.locations summary { cursor: pointer; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); list-style: none; }
+.locations summary { cursor: pointer; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); list-style: none; }
 .locations summary::-webkit-details-marker { display: none; }
 .locations summary::after { content: ' +'; }
 .locations[open] summary::after { content: ' −'; }
@@ -151,7 +151,7 @@
 .locationGroups a { font-size: 13px; color: var(--text-3); text-decoration: none; }
 .locationGroups a:hover { color: var(--text-1); }
 .footerBottom { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-.credentials { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.credentials { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-3); }
 .disclaimer { margin-top: 16px; font-size: 12px; line-height: 1.6; color: var(--text-3); max-width: 90ch; }
 
 @media (max-width: 960px) {

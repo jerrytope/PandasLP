@@ -202,7 +202,8 @@ Where the owner and the lead lawyer decide how each agent drafts its documents, 
 
 ### Design System ("Ink & Brass", frontend revamp in progress)
 - **Plan and progress:** `docs/frontend-revamp-plan.md` (phases, craft rules, checklists). Tick items there as they finish.
-- **Theme:** `app/globals.css`. **Dark first:** `lib/theme.ts` (`DEFAULT_THEME = 'dark'`) and its head script start every visitor on dark until they pick light. `:root` holds the light ("parchment") values and `:root[data-theme="dark"]` the dark ("ink") ones.
+- **Theme:** `app/globals.css`. **Light first** (changed 27 Oct 2026; dark read as a tech product): `lib/theme.ts` (`DEFAULT_THEME = 'light'`) and its head script start every visitor on light until they pick dark. `:root` holds the light ("parchment") values and `:root[data-theme="dark"]` the dark ("ink") ones.
+- **Plain, not technical** (27 Oct 2026 review): labels and figures use the sans font in sentence case; the mono font is only for code, document reference lines and case references. Public copy says "case", "lawyer", "deliver", not "matter", "practitioner", "serve". No code samples on the homepage (they belong on `/businesses` and `/developers/api`). The hero picture is `SignedLetter` (`components/ui`).
 - **Tokens:**
   - Dark: `--bg-0 #0B0A09`, `--bg-1 #141311`, `--bg-2 #1C1A17`, cream `--text-1 #EDE6D9`, and one brass `--accent #E2B04A`.
   - Light: `#F4F1EA` / ink `#12110F` / brass `#8A5E0F`.
@@ -279,6 +280,8 @@ npm install
 #   https://pandaslp.com.ng/auth/callback
 npm run dev
 ```
+
+**Frontend only (no keys, no database):** `npm run dev:frontend` (`scripts/dev-frontend.mjs`, optional port: `npm run dev:frontend -- 3001`). It fills in placeholder Supabase settings and sets `NEXT_PUBLIC_FRONTEND_ONLY=1`, which makes both Supabase clients fail every call at once (`lib/frontendOnly.ts`, ignored in a production build), so the public pages render with their defaults. Sign-in, chat, payments and the admin need the real keys.
 
 ### Local database (optional, recommended for development)
 `supabase/` holds a local Supabase setup (Docker + `npx supabase`). `npx supabase start` runs Postgres/Auth/Storage locally and applies `supabase/migrations/` — copies of the root `supabase-schema.sql` + `add-*.sql`/`fix-*.sql` files, in order. A new root SQL migration must also be copied into `supabase/migrations/` (next timestamp) or the local DB won't have it. `project_id` in `supabase/config.toml` must stay a plain name (`pandaslp`) — the folder name `NAIJACLAI.-APP` is an invalid hostname and breaks startup. Locally: API `http://127.0.0.1:54321`, Studio (DB browser) `:54323`, magic-link emails land in Mailpit `:54324` instead of a real inbox.

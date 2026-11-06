@@ -211,11 +211,10 @@ p { text-wrap: pretty; }
 
 /* ── Typography ── */
 .label-mono {
-  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
-  font-size: 12px;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
   color: var(--text-2);
 }
 
@@ -223,7 +222,7 @@ p { text-wrap: pretty; }
 .text-muted  { color: var(--text-2); }
 .text-dim    { color: var(--text-3); }
 
-/* ── Eyebrow — the small mono label above every H2: a brass dot and a few upper-case words
+/* ── Eyebrow — the small brass label above every H2: a dot and a few words in sentence case
    (components/ui/Eyebrow.tsx; components/SectionLabel.jsx renders the same thing). ── */
 .section-label,
 .eyebrow {
@@ -231,12 +230,11 @@ p { text-wrap: pretty; }
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
-  font-family: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-2);
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-accent);
 }
 .section-label::before,
 .eyebrow::before {
@@ -410,7 +408,8 @@ p { text-wrap: pretty; }
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-2);
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 14px;
   pointer-events: none;
 }
@@ -430,11 +429,10 @@ p { text-wrap: pretty; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
@@ -825,11 +823,10 @@ p { text-wrap: pretty; }
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
   color: var(--text-2);
   margin-bottom: 28px;
 }
@@ -896,11 +893,10 @@ p { text-wrap: pretty; }
   align-items: center;
   gap: 14px;
   flex-wrap: wrap;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--text-3);
   padding-top: 28px;
   border-top: 1px solid var(--border-subtle);
@@ -1118,10 +1114,9 @@ p { text-wrap: pretty; }
   font-variant-numeric: tabular-nums;
 }
 .orbit-center-label {
-  font-family: var(--font-mono), monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-3);
 }
 
@@ -1168,10 +1163,10 @@ p { text-wrap: pretty; }
   border-radius: var(--radius-sm);
   padding: 16px 16px 16px 42px;
   color: var(--text-1);
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 22px;
   font-weight: 500;
-  letter-spacing: 0.01em;
   width: 100%;
   outline: none;
   transition: border-color var(--anim-fast);
@@ -1197,7 +1192,8 @@ p { text-wrap: pretty; }
 }
 .pricing-row-label { color: var(--text-2); }
 .pricing-row-value {
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
   font-size: 14px;
   color: var(--text-1);
   font-weight: 500;
@@ -1502,10 +1498,10 @@ p { text-wrap: pretty; }
 }
 
 .service-card { display: flex; flex-direction: column; }
-.service-tagline { font-family: var(--font-mono), monospace; font-size: 11px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.08em; }
+.service-tagline { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--text-2); }
 .service-title { font-family: var(--font-display), sans-serif; font-size: 20px; font-weight: 600; margin: 6px 0; letter-spacing: -0.01em; }
 .service-description { font-size: 14px; color: var(--text-2); line-height: 1.65; flex: 1; }
-.service-price { font-family: var(--font-mono), monospace; font-size: 13px; color: var(--accent); margin-top: 12px; }
+.service-price { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--accent); margin-top: 12px; }
 
 .nav-links { display: flex; gap: 4px; align-items: center; list-style: none; }
 .nav-actions { display: flex; gap: 10px; align-items: center; }
@@ -1514,7 +1510,7 @@ p { text-wrap: pretty; }
 .escalation-path { padding: 48px 0; background: var(--bg-1); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
 .escalation-steps { display: flex; align-items: flex-start; gap: 0; flex-wrap: wrap; justify-content: center; }
 .escalation-step { display: flex; align-items: flex-start; gap: 14px; padding: 16px 24px; min-width: 200px; flex: 1; }
-.escalation-num { font-family: var(--font-mono), monospace; font-size: 11px; font-weight: 500; color: var(--accent); background: var(--accent-glow); border: 1px solid rgba(var(--accent-rgb), 0.2); padding: 4px 8px; border-radius: var(--radius-pill); margin-top: 2px; flex-shrink: 0; }
+.escalation-num { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 500; color: var(--accent); background: var(--accent-glow); border: 1px solid rgba(var(--accent-rgb), 0.2); padding: 4px 8px; border-radius: var(--radius-pill); margin-top: 2px; flex-shrink: 0; }
 .escalation-body { display: flex; flex-direction: column; gap: 4px; }
 .escalation-title { font-weight: 600; font-size: 14px; color: var(--text-1); }
 .escalation-desc { font-size: 13px; color: var(--text-2); line-height: 1.5; }
@@ -1637,10 +1633,9 @@ p { text-wrap: pretty; }
 .ai-feature-tag {
   display: inline-block;
   margin-top: 16px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   background: rgba(var(--accent-rgb), 0.08);
@@ -1673,10 +1668,9 @@ p { text-wrap: pretty; }
 }
 
 .ai-demo-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-2);
 }
 
@@ -1701,10 +1695,9 @@ p { text-wrap: pretty; }
 }
 
 .ai-demo-msg-sender {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-3);
 }
 
@@ -1753,10 +1746,9 @@ p { text-wrap: pretty; }
 }
 
 .ai-annotation-tag {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--accent);
   margin-bottom: 4px;
 }
@@ -1826,8 +1818,9 @@ p { text-wrap: pretty; }
 .lp-muted     { background: var(--bg-1); border-top: 1px solid var(--border-subtle); }
 
 .lp-eyebrow {
-  font-family: var(--font-mono), monospace;
-  font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-3);
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px; color: var(--text-3);
 }
 
 .lp-h1 { font-size: clamp(36px, 4.6vw, 60px); line-height: 1.02; letter-spacing: -0.035em; font-weight: 500; margin: 20px 0 22px; }
@@ -1873,7 +1866,7 @@ p { text-wrap: pretty; }
 .lp-hero-sub a, .lp-hero-sub button { color: var(--on-band); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(250, 250, 248, 0.4); background: none; border: none; padding: 0; font: inherit; cursor: pointer; }
 .lp-hero-sub a:hover, .lp-hero-sub button:hover { text-decoration-color: var(--accent); }
 .lp-hero-sep { margin: 0 10px; opacity: 0.5; }
-.lp-hero-proof { list-style: none; margin: 40px 0 0; padding: 18px 0 0; border-top: 1px solid rgba(250, 250, 248, 0.22); display: flex; flex-wrap: wrap; gap: 8px 28px; max-width: 760px; font-family: var(--font-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(250, 250, 248, 0.7); }
+.lp-hero-proof { list-style: none; margin: 40px 0 0; padding: 18px 0 0; border-top: 1px solid rgba(250, 250, 248, 0.22); display: flex; flex-wrap: wrap; gap: 8px 28px; max-width: 760px; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: rgba(250, 250, 248, 0.7); }
 @media (max-width: 1080px) {
   .lp-hero-full { min-height: 0; }
   .lp-hero-inner { padding-top: 56px; padding-bottom: 48px; }
@@ -1915,8 +1908,9 @@ p { text-wrap: pretty; }
 .lp-trust {
   display: flex; flex-wrap: wrap; gap: 8px 28px; margin-top: 26px; padding-top: 18px;
   border-top: 1px solid var(--border-focus);
-  font-family: var(--font-mono), monospace;
-  font-size: 10.5px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-3);
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px; color: var(--text-3);
 }
 
 /* ── Agent cards ── */
@@ -1929,7 +1923,7 @@ p { text-wrap: pretty; }
 .lp-agent-body { padding: 12px 24px 20px; display: flex; flex-direction: column; gap: 14px; }
 .lp-agent-body p { font-size: 15px; line-height: 1.55; color: var(--text-2); }
 .lp-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.lp-chip { font-family: var(--font-mono), monospace; font-size: 10px; letter-spacing: 0.06em; color: var(--text-body); border: 1px solid var(--border-focus); padding: 5px 9px; }
+.lp-chip { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 10px; color: var(--text-body); border: 1px solid var(--border-focus); padding: 5px 9px; }
 .lp-agent-foot { margin-top: auto; padding: 0 24px 22px; }
 
 /* ── Day rail ── */
@@ -1943,7 +1937,7 @@ p { text-wrap: pretty; }
 /* ── Fees ── */
 .lp-row { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 20px; padding: 14px 0; border-top: 1px solid var(--border-subtle); font-size: 16.5px; }
 .lp-row-first { border-top: 2px solid var(--text-1); }
-.lp-row-val { text-align: right; font-family: var(--font-mono), monospace; font-size: 15.5px; }
+.lp-row-val { text-align: right; font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 15.5px; }
 
 /* ── Closing band ── */
 .lp-cta-band { display: flex; align-items: center; justify-content: space-between; gap: 48px; flex-wrap: wrap; }
@@ -1981,8 +1975,9 @@ p { text-wrap: pretty; }
 
 .ap-crumb {
   padding-top: 18px; padding-bottom: 18px;
-  font-family: var(--font-mono), monospace;
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-3);
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px; color: var(--text-3);
   border-bottom: 1px solid var(--border-subtle);
 }
 .ap-crumb a { color: var(--text-3); }
@@ -2103,8 +2098,9 @@ p { text-wrap: pretty; }
 
 .hiw-body { padding: 22px 24px 26px; }
 .hiw-n {
-  font-family: var(--font-mono), monospace;
-  font-size: 11px; letter-spacing: 0.2em;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
   color: var(--accent); margin-bottom: 14px;
 }
 .hiw-step.is-on .hiw-n { color: var(--accent-hover); }
@@ -2140,8 +2136,9 @@ p { text-wrap: pretty; }
 .hiw-draft { display: flex; flex-direction: column; gap: 12px; }
 .hiw-fields { display: flex; flex-direction: column; gap: 5px; }
 .hiw-field {
-  font-family: var(--font-mono), monospace;
-  font-size: 10.5px; letter-spacing: 0.02em;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 10.5px;
   color: var(--text-2);
   padding: 5px 9px;
   background: var(--bg-1);
@@ -2185,8 +2182,9 @@ p { text-wrap: pretty; }
 .hiw-seal { position: absolute; left: 0; right: 24px; bottom: 6px; opacity: 0; }
 .hiw-seal-line { display: block; height: 1px; background: color-mix(in srgb, var(--bg-0) 28%, transparent); margin-bottom: 7px; }
 .hiw-seal-text {
-  font-family: var(--font-mono), monospace;
-  font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: color-mix(in srgb, var(--bg-0) 60%, transparent);
 }
 .is-live .hiw-seal { animation: hiwFade 0.6s ease forwards 2.1s; }
@@ -2297,8 +2295,9 @@ p { text-wrap: pretty; }
 }
 .lp-fee-figure { display: flex; flex-direction: column; }
 .lp-fee-from {
-  font-family: var(--font-mono), monospace;
-  font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-3); margin-bottom: 10px;
 }
 .lp-fee-amount {
@@ -2344,8 +2343,9 @@ p { text-wrap: pretty; }
 .ds-item.is-on { background: var(--bg-2); border-left-color: var(--accent); }
 .ds-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .ds-item-k {
-  font-family: var(--font-mono), monospace;
-  font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-3);
 }
 .ds-item.is-on .ds-item-k { color: var(--accent); }
@@ -2362,8 +2362,9 @@ p { text-wrap: pretty; }
 .ds-sheet-head { border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; margin-bottom: 18px; }
 .ds-sheet-k {
   display: block;
-  font-family: var(--font-mono), monospace;
-  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--accent); margin-bottom: 9px;
 }
 .ds-sheet-t { font-size: 27px; letter-spacing: -0.02em; line-height: 1.15; }
@@ -2382,8 +2383,9 @@ p { text-wrap: pretty; }
 .ds-sheet-foot { margin-top: 30px; }
 .ds-sheet-sig { display: block; width: 148px; height: 1px; background: var(--text-1); margin-bottom: 8px; }
 .ds-sheet-note {
-  font-family: var(--font-mono), monospace;
-  font-size: 9.5px; letter-spacing: 0.13em; text-transform: uppercase;
+  font-family: var(--font-sans), "Inter", system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
   color: var(--text-3);
 }
 
@@ -2415,7 +2417,7 @@ p { text-wrap: pretty; }
 .lp-check:hover { border-color: var(--text-1); border-left-color: var(--accent); transform: translateY(-1px); }
 .lp-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lp-check-copy { display: grid; gap: 4px; min-width: 0; }
-.lp-check-kicker { font-family: var(--font-mono), monospace; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent-deep); }
+.lp-check-kicker { font-family: var(--font-sans), "Inter", system-ui, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; color: var(--accent-deep); }
 .lp-check-title { font-size: 18px; font-weight: 600; line-height: 1.3; }
 .lp-check-sub { font-size: 14.5px; line-height: 1.45; color: var(--text-2); }
 .lp-check-btn {
